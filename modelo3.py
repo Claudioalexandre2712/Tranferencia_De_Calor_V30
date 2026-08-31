@@ -266,7 +266,49 @@ def calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta
         # Padrão para o caso adiabático se a condição for inválida
         return np.tanh(m * l)
 
+
+def normalizar_tipo_aleta(tipo_str):
+    """
+    Normaliza qualquer formato de nome de aleta para a string canônica padrão.
+    Suporta variações com acento, sem acento, com número, sem número, maiúsculas,
+    minúsculas, espaços e hífens.
+    """
+    if not tipo_str:
+        return "1)aletas retangulares retas"
+    
+    t = str(tipo_str).strip().lower()
+    t = t.replace("á", "a").replace("ã", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c").replace("_", " ").replace("-", " ")
+    
+    # 1. Retangular Reta
+    if "1" in t or ("retangular" in t and "reta" in t) or ("retangular" in t and "circular" not in t and "perfil" not in t):
+        return "1)aletas retangulares retas"
+    # 2. Triangular Reta
+    elif "2" in t or ("triangular" in t and "reta" in t) or ("triangular" in t and "perfil" not in t):
+        return "2)aletas triangulares retas"
+    # 3. Parabólica Reta
+    elif "3" in t or ("parabolica" in t and "reta" in t) or ("parabolica" in t and "perfil" not in t and "pino" not in t):
+        return "3)aletas parabolicas retas"
+    # 4. Circular de Perfil Retangular
+    elif "4" in t or ("circular" in t and "retangular" in t) or "circular" in t:
+        return "4)aletas circulares de perfil retangular"
+    # 5. Perfil Retangular (Pino Retangular)
+    elif "5" in t or ("perfil retangular" in t) or ("pino retangular" in t):
+        return "5)aletas de perfil retangular"
+    # 6. Perfil Triangular (Pino Cônico)
+    elif "6" in t or ("perfil triangular" in t) or ("pino triangular" in t):
+        return "6)aletas de perfil triangular"
+    # 7. Perfil Parabólico
+    elif "7" in t or ("perfil parabolico" in t) or ("pino parabolico" in t and "arredondada" not in t):
+        return "7)aletas de perfil parabolico"
+    # 8. Pino Parabólico com Ponta Arredondada
+    elif "8" in t or "arredondada" in t or "ponta arredondada" in t:
+        return "8)aletas de pino de perfilparabolico (ponta arredondada)"
+    
+    # Fallback seguro
+    return "1)aletas retangulares retas"
+
 def calcular_eficiencia(tipo_aleta, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', T_L=None):
+    tipo_aleta = normalizar_tipo_aleta(tipo_aleta)
     # Verificações de parâmetros obrigatórios
     if T_b is None or T_inf is None:
         raise ValueError("T_b e T_inf são obrigatórios")
@@ -1099,4 +1141,4 @@ def gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, cond
     
     return dados
 
-__all__ = ['calcular_eficiencia', 'mostrar_formula', 'gerar_distribuicao_temperatura', 'salvar_resultados', 'gerar_dados_didaticos']
+__all__ = ['normalizar_tipo_aleta', 'calcular_eficiencia', 'mostrar_formula', 'gerar_distribuicao_temperatura', 'salvar_resultados', 'gerar_dados_didaticos']
