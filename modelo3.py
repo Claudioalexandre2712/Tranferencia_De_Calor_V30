@@ -4,20 +4,25 @@
 
 import sys
 import os
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
+
 import math
 import datetime
 import numpy as np
 from scipy.special import i0, i1, k0, k1, i0e, i1e
 import scipy.special as sp
-import matplotlib
 
-# Configurar backend do Matplotlib para evitar conflitos com threads do Flask
-if matplotlib.get_backend().lower() not in ['agg', 'svg', 'pdf']:
-    try:
-        matplotlib.use('Agg')
-    except Exception:
-        pass
-import matplotlib.pyplot as plt
+# Configuração segura do Matplotlib para Serverless / Vercel
+try:
+    import matplotlib
+    if matplotlib.get_backend().lower() not in ['agg', 'svg', 'pdf']:
+        try:
+            matplotlib.use('Agg')
+        except Exception:
+            pass
+    import matplotlib.pyplot as plt
+except Exception:
+    plt = None
 
 # Importação condicional do CustomTkinter e PIL para uso exclusivo quando em modo Desktop GUI
 try:
