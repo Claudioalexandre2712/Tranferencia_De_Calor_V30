@@ -840,127 +840,139 @@ def main():
 
    
 def salvar_resultados(filepath, tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados):
-    with open(filepath, 'w', encoding='utf-8') as file:
-        file.write("Resultados das Aletas\n")
-        for resultado in resultados:
-            if len(resultado) == 8:  # Novo formato com métricas de desempenho
-                tipo_aleta, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado
-                file.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
-                file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
-                file.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
-                file.write(f"Parâmetro m: {m:.6f} m^-1\n")
-                file.write(f"Perímetro P: {P:.6f} m\n")
-                file.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
-            else:  # Formato antigo para compatibilidade
-                tipo_aleta, eta_aleta, Q_aleta, A_aleta = resultado
-                file.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
-                file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
-            file.write("Comprimento (m) x Temperatura (°C):\n")
-            x = np.linspace(0, l, 15)  
-            if tipo_aleta == "1)aletas retangulares retas":
-                T_x = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
-            elif tipo_aleta == "2)aletas triangulares retas":
-                T_x = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
-            elif tipo_aleta == "3)aletas parabolicas retas":
-                T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
-            elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                T_x = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
-            elif tipo_aleta == "5)aletas de perfil retangular":
-                T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
-            elif tipo_aleta == "6)aletas de perfil triangular":
-                T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
-            elif tipo_aleta == "7)aletas de perfil parabolico":
-                T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
-            elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
-            else:
-                T_x = np.zeros_like(x)
-            for xi, Ti in zip(x, T_x):
-                file.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
-            file.write("\n")
-    output_dir = "Resultados"
-    os.makedirs(output_dir, exist_ok=True)
-    results_filepath = os.path.join(output_dir, "resultados_aletas.txt")
-    with open(results_filepath, 'w') as file:
-        file.write(f"Tipos de Aletas: {tipos_aletas}\n")
-        file.write(f"h: {h}, k: {k}, l: {l}, t: {t}, w: {w}, D: {D}, r1: {r1}, r2: {r2}, T_b: {T_b}, T_inf: {T_inf}\n")
-        for resultados in resultados:
-            file.write(f"{resultados}\n")
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
+        with open(filepath, 'w', encoding='utf-8') as file:
+            file.write("Resultados das Aletas\n")
+            for resultado in resultados:
+                if len(resultado) == 8:  # Novo formato com métricas de desempenho
+                    tipo_aleta, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado
+                    file.write(f"Tipo de Aleta: {tipo_aleta}\n")
+                    file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
+                    file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
+                    file.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
+                    file.write(f"Parâmetro m: {m:.6f} m^-1\n")
+                    file.write(f"Perímetro P: {P:.6f} m\n")
+                    file.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
+                else:  # Formato antigo para compatibilidade
+                    tipo_aleta, eta_aleta, Q_aleta, A_aleta = resultado
+                    file.write(f"Tipo de Aleta: {tipo_aleta}\n")
+                    file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
+                    file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
+                file.write("Comprimento (m) x Temperatura (°C):\n")
+                x = np.linspace(0, l, 15)  
+                if tipo_aleta == "1)aletas retangulares retas":
+                    T_x = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
+                elif tipo_aleta == "2)aletas triangulares retas":
+                    T_x = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
+                elif tipo_aleta == "3)aletas parabolicas retas":
+                    T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
+                elif tipo_aleta == "4)aletas circulares de perfil retangular":
+                    T_x = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
+                elif tipo_aleta == "5)aletas de perfil retangular":
+                    T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
+                elif tipo_aleta == "6)aletas de perfil triangular":
+                    T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
+                elif tipo_aleta == "7)aletas de perfil parabolico":
+                    T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
+                elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
+                    T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
+                else:
+                    T_x = np.zeros_like(x)
+                for xi, Ti in zip(x, T_x):
+                    file.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
+                file.write("\n")
+    except Exception as e:
+        print(f"[AVISO] Erro ao salvar relatório em {filepath}: {e}")
+
+    try:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Resultados")
+        os.makedirs(output_dir, exist_ok=True)
+        results_filepath = os.path.join(output_dir, "resultados_aletas.txt")
+        with open(results_filepath, 'w', encoding='utf-8') as file:
+            file.write(f"Tipos de Aletas: {tipos_aletas}\n")
+            file.write(f"h: {h}, k: {k}, l: {l}, t: {t}, w: {w}, D: {D}, r1: {r1}, r2: {r2}, T_b: {T_b}, T_inf: {T_inf}\n")
+            for res in resultados:
+                file.write(f"{res}\n")
+    except Exception as e2:
+        print(f"[AVISO] Erro ao salvar resultados_aletas.txt: {e2}")
             
 def salvar_sresultados(filepath, sele_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados_sele):
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write("Resultados das Aletas\n")
-        f.write(f"Seleção de Aletas: {', '.join(sele_aleta)}\n")
-        for resultado_sele in resultados_sele:
-            if len(resultado_sele) == 10:  # Novo formato com métricas de desempenho
-                tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado_sele
-                f.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                f.write(f"Material: {material}\n")
-                f.write(f"k: {valor_k}\n")
-                f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
-                f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
-                f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
-                f.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
-                f.write(f"Parâmetro m: {m:.6f} m^-1\n")
-                f.write(f"Perímetro P: {P:.6f} m\n")
-                f.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
-            else:  # Formato antigo para compatibilidade
-                tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta = resultado_sele
-                f.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                f.write(f"Material: {material}\n")
-                f.write(f"k: {valor_k}\n")
-                f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
-                f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
-                f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
-            f.write("Comprimento (m) x Temperatura (°C):\n")
-            x = np.linspace(0, l, 15)
-            if tipo_aleta == "1)aletas retangulares retas":
-                if t is not None and w is not None:
-                    T_x = T_aleta_retangular(x, l, T_b, T_inf, h, valor_k, t, w)
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write("Resultados das Aletas\n")
+            f.write(f"Seleção de Aletas: {', '.join(sele_aleta)}\n")
+            for resultado_sele in resultados_sele:
+                if len(resultado_sele) == 10:  # Novo formato com métricas de desempenho
+                    tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado_sele
+                    f.write(f"Tipo de Aleta: {tipo_aleta}\n")
+                    f.write(f"Material: {material}\n")
+                    f.write(f"k: {valor_k}\n")
+                    f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
+                    f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
+                    f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
+                    f.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
+                    f.write(f"Parâmetro m: {m:.6f} m^-1\n")
+                    f.write(f"Perímetro P: {P:.6f} m\n")
+                    f.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
+                else:  # Formato antigo para compatibilidade
+                    tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta = resultado_sele
+                    f.write(f"Tipo de Aleta: {tipo_aleta}\n")
+                    f.write(f"Material: {material}\n")
+                    f.write(f"k: {valor_k}\n")
+                    f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
+                    f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
+                    f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
+                f.write("Comprimento (m) x Temperatura (°C):\n")
+                x = np.linspace(0, l, 15)
+                if tipo_aleta == "1)aletas retangulares retas":
+                    if t is not None and w is not None:
+                        T_x = T_aleta_retangular(x, l, T_b, T_inf, h, valor_k, t, w)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "2)aletas triangulares retas":
+                    if t is not None and w is not None:
+                        T_x = T_aleta_triangular(x, l, T_b, T_inf, h, valor_k, t, w)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "3)aletas parabolicas retas":
+                    if t is not None and w is not None:
+                        T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, valor_k, t, w)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "4)aletas circulares de perfil retangular":
+                    if t is not None and r1 is not None and r2 is not None:
+                        T_x = T_aleta_circular(x, l, T_b, T_inf, h, valor_k, t, r1, r2)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "5)aletas de perfil retangular":
+                    if D is not None:
+                        T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, valor_k, D)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "6)aletas de perfil triangular":
+                    if D is not None:
+                        T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, valor_k, D)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "7)aletas de perfil parabolico":
+                    if D is not None:
+                        T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, valor_k, D)
+                    else:
+                        T_x = np.zeros_like(x)
+                elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
+                    if D is not None:
+                        T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, valor_k, D)
+                    else:
+                        T_x = np.zeros_like(x)
                 else:
-                    raise ValueError("Espessura (t) e largura (w) são necessárias para aletas retangulares retas.")
-            elif tipo_aleta == "2)aletas triangulares retas":
-                if t is not None and w is not None:
-                    T_x = T_aleta_triangular(x, l, T_b, T_inf, h, valor_k, t, w)
-                else:
-                    raise ValueError("Espessura (t) e largura (w) são necessárias para aletas triangulares retas.")
-            elif tipo_aleta == "3)aletas parabolicas retas":
-                if t is not None and w is not None:
-                    T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, valor_k, t, w)
-                else:
-                    raise ValueError("Espessura (t) e largura (w) são necessárias para aletas parabolicas retas.")
-            elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                if t is not None and r1 is not None and r2 is not None:
-                    T_x = T_aleta_circular(x, l, T_b, T_inf, h, valor_k, t, r1, r2)
-                else:
-                    raise ValueError("Espessura (t), raio interno (r1) e raio externo (r2) são necessários para aletas circulares de perfil retangular.")
-            elif tipo_aleta == "5)aletas de perfil retangular":
-                if D is not None:
-                    T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, valor_k, D)
-                else:
-                    raise ValueError("Diâmetro (D) é necessário para aletas de perfil retangular.")
-            elif tipo_aleta == "6)aletas de perfil triangular":
-                if D is not None:
-                    T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, valor_k, D)
-                else:
-                    raise ValueError("Diâmetro (D) é necessário para aletas de perfil triangular.")
-            elif tipo_aleta == "7)aletas de perfil parabolico":
-                if D is not None:
-                    T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, valor_k, D)
-                else:
-                    raise ValueError("Diâmetro (D) é necessário para aletas de perfil parabolico.")
-            elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                if D is not None:
-                    T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, valor_k, D)
-                else:
-                    raise ValueError("Diâmetro (D) é necessário para aletas de pino de perfilparabolico (ponta arredondada).")
-            else:
-                T_x = np.zeros_like(x)
-            for xi, Ti in zip(x, T_x):
-                f.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
-            f.write("\n")
+                    T_x = np.zeros_like(x)
+                for xi, Ti in zip(x, T_x):
+                    f.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
+                f.write("\n")
+    except Exception as e_s:
+        print(f"[AVISO] Erro ao salvar selerelatorio em {filepath}: {e_s}")
             
 if __name__ == "__main__":
     main()
