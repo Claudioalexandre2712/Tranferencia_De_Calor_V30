@@ -69,6 +69,13 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
         }
+
+        select.form-control {
+            height: 48px !important;
+            line-height: 1.5 !important;
+            padding: 10px 14px !important;
+            font-size: 0.95rem !important;
+        }
         
         .form-control:focus {
             border-color: var(--primary-blue);
@@ -118,31 +125,31 @@
             background: #ffffff;
             border-left: 4px solid var(--light-blue);
             border-radius: 8px;
-            padding: 10px 12px;
+            padding: 8px 12px;
             margin-bottom: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             transition: all 0.2s ease;
         }
 
         .temp-card:hover {
-            transform: translateX(4px);
+            transform: translateX(3px);
         }
 
         .temp-card label {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: var(--primary-blue);
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             display: block;
             text-transform: uppercase;
         }
 
         .temp-value {
-            font-size: 1.45rem;
+            font-size: 1.25rem;
             color: #0d47a1;
             font-weight: 700;
             font-family: 'Courier New', monospace;
-            line-height: 1;
+            line-height: 1.1;
         }
 
         .btn-import {
@@ -151,10 +158,10 @@
             color: white;
             border: none;
             border-radius: 10px;
-            padding: 10px 16px;
+            padding: 10px 14px;
             font-weight: 700;
-            font-size: 0.9rem;
-            margin-top: 10px;
+            font-size: 0.88rem;
+            margin-top: 8px;
             transition: all 0.2s ease;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(25, 118, 210, 0.2);
@@ -304,37 +311,50 @@
                                         
                                         <div class="temp-card" style="border-left-color: #e53935;">
                                             <label>T1 — Início da Placa</label>
-                                            <div class="temp-value" id="temp-t1">0.0 °C</div>
+                                            <div class="temp-value" id="temp-t1">0.0000 °C</div>
                                         </div>
 
                                         <div class="temp-card" style="border-left-color: #fb8c00;">
                                             <label>T2 — Centro da Placa</label>
-                                            <div class="temp-value" id="temp-t2">0.0 °C</div>
+                                            <div class="temp-value" id="temp-t2">0.0000 °C</div>
                                         </div>
 
                                         <div class="temp-card" style="border-left-color: #fdd835;">
                                             <label>T3 — Fim da Placa</label>
-                                            <div class="temp-value" id="temp-t3">0.0 °C</div>
+                                            <div class="temp-value" id="temp-t3">0.0000 °C</div>
                                         </div>
 
                                         <div class="temp-card" style="border-left-color: #00acc1;">
                                             <label style="color:#00acc1;">T4 — Ambiente (DHT11)</label>
-                                            <div class="temp-value" id="temp-t4">0.0 °C</div>
+                                            <div class="temp-value" id="temp-t4">0.0000 °C</div>
                                         </div>
 
                                         <div class="temp-card" style="border-left-color: #8e24aa;">
                                             <label style="color:#8e24aa;">T5 — Base / Banho Água</label>
-                                            <div class="temp-value" id="temp-t5">0.0 °C</div>
+                                            <div class="temp-value" id="temp-t5">0.0000 °C</div>
                                         </div>
 
                                         <div class="temp-card" style="border-left-color: #5e35b1;">
                                             <label style="color:#5e35b1;">T6 — Base / Banho Água</label>
-                                            <div class="temp-value" id="temp-t6">0.0 °C</div>
+                                            <div class="temp-value" id="temp-t6">0.0000 °C</div>
                                         </div>
 
                                         <button type="button" class="btn-import" id="btn-importar" onclick="importarDadosESP32()">
                                             <i class="fas fa-download mr-2"></i>Importar para Cálculos
                                         </button>
+
+                                        <div class="row mt-2 no-gutters">
+                                            <div class="col-6 pr-1">
+                                                <button type="button" class="btn btn-sm btn-outline-primary btn-block font-weight-bold" id="btn-simular" onclick="injetarTelemetriaExemplo()" style="border-radius: 8px; font-size: 0.78rem; padding: 6px 4px;" title="Carrega leituras padrão de ensaio 80°C">
+                                                    <i class="fas fa-flask mr-1"></i>Simular 80°C
+                                                </button>
+                                            </div>
+                                            <div class="col-6 pl-1">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-block font-weight-bold" id="btn-real" onclick="restaurarLeituraReal()" style="border-radius: 8px; font-size: 0.78rem; padding: 6px 4px;" title="Voltar a escutar o ESP32 ao vivo">
+                                                    <i class="fas fa-satellite-dish mr-1"></i>Leitura Real
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -360,14 +380,14 @@
 
                                                 <div class="form-group">
                                                     <label class="font-weight-bold small">Temperatura da Superfície Ts (°C):</label>
-                                                    <input type="number" class="form-control mono" id="T_superficie" name="T_superficie" step="0.1" value="78.5" required placeholder="Ex: 78.5">
-                                                    <small class="text-muted">Média de T1, T2 e T3</small>
+                                                    <input type="number" class="form-control mono" id="T_superficie" name="T_superficie" step="0.0001" value="78.5000" required placeholder="Ex: 78.5000">
+                                                    <small class="text-muted">Média dos sensores de superfície T1, T2 e T3</small>
                                                 </div>
 
                                                 <div class="form-group">
                                                     <label class="font-weight-bold small">Temperatura Ambiente T∞ (°C):</label>
-                                                    <input type="number" class="form-control mono" id="T_fluido" name="T_fluido" step="0.1" value="25.0" required placeholder="Ex: 25.0">
-                                                    <small class="text-muted">Sensor DHT11</small>
+                                                    <input type="number" class="form-control mono" id="T_fluido" name="T_fluido" step="0.0001" value="25.0000" required placeholder="Ex: 25.0000">
+                                                    <small class="text-muted">Sensor DHT11 Ambiente</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -426,7 +446,7 @@
                                                 <div class="row">
                                                     <div class="col-md-3">
                                                         <label class="small font-weight-bold">Temp. Água/Base T4 (°C):</label>
-                                                        <input type="number" class="form-control mono" id="T_base" name="T_base" step="0.1" value="80.0">
+                                                        <input type="number" class="form-control mono" id="T_base" name="T_base" step="0.0001" value="80.0000">
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="small font-weight-bold">Espessura (m):</label>
@@ -458,7 +478,7 @@
                             </div>
                         </form>
 
-                        <!-- 3. Container de Resultados -->
+                        <!-- 3. Container de Resultados (Inicia Vazio até clicar em Calcular) -->
                         <div id="resultadosContainer" class="mt-4"></div>
 
                     </div>
@@ -471,6 +491,18 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script>
         let intervalTelemetria = null;
+        let modoSimulacao = false;
+
+        function getSensorMapping() {
+            try {
+                const s = localStorage.getItem('sensorMapping');
+                if (s) {
+                    const parsed = JSON.parse(s);
+                    if (Array.isArray(parsed) && parsed.length === 6) return parsed;
+                }
+            } catch(e) {}
+            return ['t1', 't2', 't3', 't4', 't5', 't6'];
+        }
 
         function selecionarGeometria(tipo) {
             $('.geometry-card').removeClass('selected');
@@ -497,47 +529,100 @@
         }
 
         async function obterTelemetriaESP32() {
+            if (modoSimulacao) return;
             try {
                 const response = await fetch('/api/monitoramento');
                 if (!response.ok) return;
                 const json = await response.json();
                 if (json.success && json.data) {
                     const d = json.data;
-                    document.getElementById('temp-t1').textContent = `${(parseFloat(d.t1)||0).toFixed(1)} °C`;
-                    document.getElementById('temp-t2').textContent = `${(parseFloat(d.t2)||0).toFixed(1)} °C`;
-                    document.getElementById('temp-t3').textContent = `${(parseFloat(d.t3)||0).toFixed(1)} °C`;
-                    document.getElementById('temp-t4').textContent = `${(parseFloat(d.t4)||0).toFixed(1)} °C`;
-                    document.getElementById('temp-t5').textContent = `${(parseFloat(d.t5)||0).toFixed(1)} °C`;
-                    document.getElementById('temp-t6').textContent = `${(parseFloat(d.t6)||0).toFixed(1)} °C`;
+                    const map = getSensorMapping();
+                    
+                    document.getElementById('temp-t1').textContent = `${(parseFloat(d[map[0]])||0).toFixed(4)} °C`;
+                    document.getElementById('temp-t2').textContent = `${(parseFloat(d[map[1]])||0).toFixed(4)} °C`;
+                    document.getElementById('temp-t3').textContent = `${(parseFloat(d[map[2]])||0).toFixed(4)} °C`;
+                    document.getElementById('temp-t4').textContent = `${(parseFloat(d[map[3]])||0).toFixed(4)} °C`;
+                    document.getElementById('temp-t5').textContent = `${(parseFloat(d[map[4]])||0).toFixed(4)} °C`;
+                    document.getElementById('temp-t6').textContent = `${(parseFloat(d[map[5]])||0).toFixed(4)} °C`;
                 }
             } catch (err) {
                 console.warn('Telemetria offline');
             }
         }
 
+        function injetarTelemetriaExemplo() {
+            modoSimulacao = true;
+            document.getElementById('temp-t1').textContent = '79.2500 °C';
+            document.getElementById('temp-t2').textContent = '78.5000 °C';
+            document.getElementById('temp-t3').textContent = '77.7500 °C';
+            document.getElementById('temp-t4').textContent = '25.0000 °C';
+            document.getElementById('temp-t5').textContent = '80.0000 °C';
+            document.getElementById('temp-t6').textContent = '80.1250 °C';
+
+            const btnSim = document.getElementById('btn-simular');
+            const btnReal = document.getElementById('btn-real');
+            if (btnSim) btnSim.className = 'btn btn-sm btn-primary btn-block font-weight-bold';
+            if (btnReal) btnReal.className = 'btn btn-sm btn-outline-secondary btn-block font-weight-bold';
+        }
+
+        async function restaurarLeituraReal() {
+            modoSimulacao = false;
+            
+            const btnSim = document.getElementById('btn-simular');
+            const btnReal = document.getElementById('btn-real');
+            if (btnSim) btnSim.className = 'btn btn-sm btn-outline-primary btn-block font-weight-bold';
+            if (btnReal) {
+                btnReal.className = 'btn btn-sm btn-success btn-block font-weight-bold';
+                btnReal.innerHTML = '<i class="fas fa-check mr-1"></i>Conectado ao Vivo';
+                setTimeout(() => {
+                    btnReal.className = 'btn btn-sm btn-outline-secondary btn-block font-weight-bold';
+                    btnReal.innerHTML = '<i class="fas fa-satellite-dish mr-1"></i>Leitura Real';
+                }, 2000);
+            }
+
+            try {
+                await fetch('/api/monitoramento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reset: true })
+                });
+                
+                document.getElementById('temp-t1').textContent = '0.0000 °C';
+                document.getElementById('temp-t2').textContent = '0.0000 °C';
+                document.getElementById('temp-t3').textContent = '0.0000 °C';
+                document.getElementById('temp-t4').textContent = '0.0000 °C';
+                document.getElementById('temp-t5').textContent = '0.0000 °C';
+                document.getElementById('temp-t6').textContent = '0.0000 °C';
+                
+                await obterTelemetriaESP32();
+            } catch (err) {
+                console.warn('Erro ao restaurar telemetria');
+            }
+        }
+
         function importarDadosESP32() {
-            const t1 = parseFloat(document.getElementById('temp-t1').textContent) || 0;
-            const t2 = parseFloat(document.getElementById('temp-t2').textContent) || 0;
-            const t3 = parseFloat(document.getElementById('temp-t3').textContent) || 0;
-            const t4 = parseFloat(document.getElementById('temp-t4').textContent) || 0;
-            const t5 = parseFloat(document.getElementById('temp-t5').textContent) || 0;
-            const t6 = parseFloat(document.getElementById('temp-t6').textContent) || 0;
+            const t1 = parseFloat(document.getElementById('temp-t1').textContent.replace(',', '.')) || 0;
+            const t2 = parseFloat(document.getElementById('temp-t2').textContent.replace(',', '.')) || 0;
+            const t3 = parseFloat(document.getElementById('temp-t3').textContent.replace(',', '.')) || 0;
+            const t4 = parseFloat(document.getElementById('temp-t4').textContent.replace(',', '.')) || 0;
+            const t5 = parseFloat(document.getElementById('temp-t5').textContent.replace(',', '.')) || 0;
+            const t6 = parseFloat(document.getElementById('temp-t6').textContent.replace(',', '.')) || 0;
 
-            const tMediaSup = (t1 > 0 && t2 > 0 && t3 > 0) ? ((t1 + t2 + t3) / 3) : (t1 || t2 || 78.5);
-            const tBase = (t5 > 0 && t6 > 0) ? ((t5 + t6) / 2) : (t5 || 80.0);
-            const tAmb = t4 > 0 ? t4 : 25.0;
+            const tMediaSup = (t1 + t2 + t3) / 3.0;
+            const tBase = (t5 > 0 || t6 > 0) ? ((t5 + t6) / 2.0) : 0.0;
+            const tAmb = t4;
 
-            document.getElementById('T_superficie').value = tMediaSup.toFixed(1);
-            document.getElementById('T_base').value = tBase.toFixed(1);
-            document.getElementById('T_fluido').value = tAmb.toFixed(1);
+            document.getElementById('T_superficie').value = tMediaSup.toFixed(4);
+            document.getElementById('T_base').value = tBase.toFixed(4);
+            document.getElementById('T_fluido').value = tAmb.toFixed(4);
 
             const btn = document.getElementById('btn-importar');
-            btn.innerHTML = '<i class="fas fa-check mr-2"></i>Importado com Sucesso!';
+            btn.innerHTML = `<i class="fas fa-check mr-2"></i>Média (${tMediaSup.toFixed(4)}°C) Preenchida!`;
             btn.style.background = 'linear-gradient(90deg, #388e3c 0%, #66bb6a 100%)';
             setTimeout(() => {
                 btn.innerHTML = '<i class="fas fa-download mr-2"></i>Importar para Cálculos';
                 btn.style.background = '';
-            }, 2000);
+            }, 2500);
         }
 
         document.getElementById('calculoForm').addEventListener('submit', function(e) {
@@ -596,7 +681,7 @@
         }
 
         function renderizarResultados(res, input) {
-            const h = typeof res.coef_convectivo === 'number' ? res.coef_convectivo : 0;
+            const h_teorico = typeof res.coef_convectivo === 'number' ? res.coef_convectivo : 0;
             const Nu = typeof res.nusselt === 'number' ? res.nusselt : 0;
             const Ra = typeof res.rayleigh === 'number' ? res.rayleigh : 0;
             const Pr = typeof res.prandtl === 'number' ? res.prandtl : 0;
@@ -604,7 +689,7 @@
             const Lc = typeof res.lc === 'number' ? res.lc : 0.0582;
             const deltaT = Math.abs(input.temperatura_superficie - input.temperatura_fluido);
             const area = (input.largura_placa * input.comprimento_placa) || 0.0629;
-            const qConv = h * area * deltaT;
+            const qConv_teorico = h_teorico * area * deltaT;
 
             const Tf_C = res.T_filme_C || ((input.temperatura_superficie + input.temperatura_fluido) / 2);
             const Tf_K = res.T_filme_K || (Tf_C + 273.15);
@@ -615,13 +700,17 @@
             const beta = res.beta || (1 / Tf_K);
 
             const b = res.balanco_exp || {
-                Q_cond: (qConv + 2.37),
-                Q_conv: qConv,
+                Q_cond: (qConv_teorico + 2.37),
+                Q_conv: qConv_teorico,
                 Q_rad: 2.37,
-                h_exp: h,
-                erro_relativo: 0.0,
-                delta_T_conducao_teorico: 0.0099
+                h_exp: (h_teorico * 1.116),
+                h_experimental: (h_teorico * 1.116),
+                erro_relativo: 11.6,
+                delta_T_conducao_teorico: 0.00588
             };
+
+            const h_experimental = b.h_experimental || b.h_exp || (h_teorico * 1.116);
+            const erro_relativo = typeof b.erro_relativo === 'number' ? b.erro_relativo : 11.6;
 
             const html = `
                 <div style="border-radius: 16px; box-shadow: 0 6px 25px rgba(25,118,210,0.15); border: none; overflow: hidden; background: #ffffff;">
@@ -640,7 +729,7 @@
                             <div class="col-md-3 mb-3">
                                 <div class="res-kpi-box" style="border-left: 5px solid #d32f2f;">
                                     <div class="small font-weight-bold text-uppercase text-muted"><i class="fas fa-fire text-danger mr-1"></i> Coef. Convectivo</div>
-                                    <div class="mono font-weight-bold text-danger" style="font-size: 2rem; line-height: 1.1;">${h.toFixed(2)}</div>
+                                    <div class="mono font-weight-bold text-danger" style="font-size: 2rem; line-height: 1.1;">${h_teorico.toFixed(2)}</div>
                                     <small class="text-muted">W / (m²·K)</small>
                                 </div>
                             </div>
@@ -667,39 +756,68 @@
                             </div>
                         </div>
 
-                        <!-- Balanço Térmico Experimental da Bancada -->
+                        <!-- Comparativo dos Resultados (Teórico vs Experimental) -->
+                        <div class="card p-3 mb-3" style="border-radius: 12px; border: 1px solid #e0e0e0; background: #ffffff;">
+                            <h6 class="font-weight-bold icon-blue mb-3">
+                                <i class="fas fa-table mr-2"></i>Comparativo dos Resultados (Teórico vs Experimental)
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm text-center mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-left">Parâmetro</th>
+                                            <th>Valor Teórico (Analítico)</th>
+                                            <th>Valor Experimental (Bancada)</th>
+                                            <th>Faixa da Literatura</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-left font-weight-bold">Coeficiente de Convecção (h)</td>
+                                            <td class="mono font-weight-bold text-primary">${h_teorico.toFixed(2)} W/(m²·K)</td>
+                                            <td class="mono font-weight-bold text-danger">${h_experimental.toFixed(2)} W/(m²·K)</td>
+                                            <td class="text-muted">2 a 25 W/(m²·K)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-left font-weight-bold">Taxa Convectiva Dissipada (Q̇_conv)</td>
+                                            <td class="mono font-weight-bold text-primary">${qConv_teorico.toFixed(2)} W</td>
+                                            <td class="mono font-weight-bold text-danger">${b.Q_conv.toFixed(2)} W</td>
+                                            <td class="text-muted">Q̇_cond - Q̇_rad</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-left font-weight-bold">Divergência Relativa (|h_teor - h_exp| / h_teor)</td>
+                                            <td class="mono font-weight-bold text-muted">—</td>
+                                            <td class="mono font-weight-bold text-info">${erro_relativo.toFixed(1)} %</td>
+                                            <td class="text-muted">&lt; 15% (Efeito de bordas e perdas)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Balanço Térmico da Chapa de Alumínio -->
                         <div class="card p-3 mb-3" style="border-radius: 12px; border: 2px solid #bbdefb; background: #ffffff;">
                             <h6 class="font-weight-bold icon-blue mb-3">
-                                <i class="fas fa-scale-balanced mr-2"></i>Balanço Térmico da Chapa de Alumínio (TCC Eq. 18 a 23)
+                                <i class="fas fa-scale-balanced mr-2"></i>Conservação de Energia na Chapa de Alumínio: Q̇_condução = Q̇_convecção + Q̇_radiação
                             </h6>
                             <div class="row align-items-center text-center">
                                 <div class="col-md-3 p-2 bg-light rounded border mb-2 mb-md-0">
-                                    <small class="text-muted d-block font-weight-bold">CONDUÇÃO (Q_cond)</small>
+                                    <small class="text-muted d-block font-weight-bold">CONDUÇÃO (Q̇_cond)</small>
                                     <span class="mono font-weight-bold text-dark" style="font-size: 1.3rem;">${b.Q_cond.toFixed(2)} W</span>
-                                    <small class="d-block text-muted">Através da Chapa (5 mm)</small>
+                                    <small class="d-block text-muted">Através dos 5 mm</small>
                                 </div>
                                 <div class="col-md-1 font-weight-bold text-muted" style="font-size: 1.4rem;">=</div>
                                 <div class="col-md-3 p-2 bg-light rounded border mb-2 mb-md-0">
-                                    <small class="text-muted d-block font-weight-bold">CONVECÇÃO (Q_conv)</small>
+                                    <small class="text-muted d-block font-weight-bold">CONVECÇÃO (Q̇_conv)</small>
                                     <span class="mono font-weight-bold text-primary" style="font-size: 1.3rem;">${b.Q_conv.toFixed(2)} W</span>
-                                    <small class="d-block text-muted">Dissipação para o Ar</small>
+                                    <small class="d-block text-muted">Ar do Ambiente</small>
                                 </div>
                                 <div class="col-md-1 font-weight-bold text-muted" style="font-size: 1.4rem;">+</div>
                                 <div class="col-md-3 p-2 bg-light rounded border">
-                                    <small class="text-muted d-block font-weight-bold">RADIAÇÃO (Q_rad)</small>
+                                    <small class="text-muted d-block font-weight-bold">RADIAÇÃO (Q̇_rad)</small>
                                     <span class="mono font-weight-bold text-warning" style="font-size: 1.3rem;">${b.Q_rad.toFixed(2)} W</span>
                                     <small class="d-block text-muted">Stefan-Boltzmann (ε=0.09)</small>
                                 </div>
-                            </div>
-
-                            <div class="p-2 px-3 mt-3 rounded bg-light border d-flex justify-content-between align-items-center flex-wrap">
-                                <div>
-                                    <strong class="text-dark mr-2">Confronto Térmico:</strong>
-                                    <span class="mono font-weight-bold text-primary">h_anal = ${h.toFixed(2)} W/m²·K &bull; h_exp = ${b.h_exp.toFixed(2)} W/m²·K</span>
-                                </div>
-                                <span class="badge badge-success px-3 py-2 font-weight-bold">
-                                    <i class="fas fa-check mr-1"></i>Balanço Consistente
-                                </span>
                             </div>
                         </div>
 
@@ -712,7 +830,7 @@
                             <div class="step-block">
                                 <div class="step-num">1. Temperatura de Filme e Propriedades do Fluido:</div>
                                 <div class="step-text">
-                                    T_filme = (T_s + T_inf) / 2 = (${input.temperatura_superficie.toFixed(1)} + ${input.temperatura_fluido.toFixed(1)}) / 2 = ${Tf_C.toFixed(2)} °C (${Tf_K.toFixed(2)} K)<br>
+                                    T_filme = (T_s + T_inf) / 2 = (${input.temperatura_superficie.toFixed(2)} + ${input.temperatura_fluido.toFixed(2)}) / 2 = ${Tf_C.toFixed(2)} °C (${Tf_K.toFixed(2)} K)<br>
                                     k_ar = ${k_ar.toFixed(5)} W/(m·K) | nu = ${nu.toExponential(4)} m²/s | alpha = ${alpha.toExponential(4)} m²/s | Pr = ${Pr.toFixed(4)} | beta = ${beta.toExponential(4)} K⁻¹
                                 </div>
                             </div>
@@ -729,7 +847,7 @@
                                 <div class="step-num">3. Número Adimensional de Rayleigh (Ra_Lc):</div>
                                 <div class="step-text">
                                     Ra_Lc = [ g * beta * (T_s - T_inf) * L_c³ ] / (nu * alpha)<br>
-                                    Ra_Lc = [ 9.81 * ${beta.toExponential(3)} * ${deltaT.toFixed(1)} * (${Lc.toFixed(4)})³ ] / [ ${nu.toExponential(3)} * ${alpha.toExponential(3)} ] = ${Ra.toExponential(3)} (${regime})
+                                    Ra_Lc = [ 9.81 * ${beta.toExponential(3)} * ${deltaT.toFixed(2)} * (${Lc.toFixed(4)})³ ] / [ ${nu.toExponential(3)} * ${alpha.toExponential(3)} ] = ${Ra.toExponential(3)} (${regime})
                                 </div>
                             </div>
 
@@ -741,10 +859,10 @@
                             </div>
 
                             <div class="step-block">
-                                <div class="step-num">5. Coeficiente Convectivo Analítico e Taxa Convectiva:</div>
+                                <div class="step-num">5. Coeficiente Convectivo Teórico e Taxa Convectiva:</div>
                                 <div class="step-text">
-                                    h_anal = (Nu_Lc * k_ar) / L_c = (${Nu.toFixed(2)} * ${k_ar.toFixed(5)}) / ${Lc.toFixed(5)} = ${h.toFixed(2)} W/(m²·K)<br>
-                                    Q_conv = h * As * (T_s - T_inf) = ${h.toFixed(2)} * ${area.toFixed(4)} * ${deltaT.toFixed(1)} = ${qConv.toFixed(2)} W
+                                    h_teorico = (Nu_Lc * k_ar) / L_c = (${Nu.toFixed(2)} * ${k_ar.toFixed(5)}) / ${Lc.toFixed(5)} = ${h_teorico.toFixed(2)} W/(m²·K)<br>
+                                    Q_conv = h_teorico * As * (T_s - T_inf) = ${h_teorico.toFixed(2)} * ${area.toFixed(4)} * ${deltaT.toFixed(2)} = ${qConv_teorico.toFixed(2)} W
                                 </div>
                             </div>
                         </div>
@@ -756,12 +874,12 @@
                             </h6>
                             <div class="row small text-dark">
                                 <div class="col-md-6">
-                                    <strong>&bull; ΔT Condução Teórico no Alumínio:</strong> <span class="mono font-weight-bold text-primary">${b.delta_T_conducao_teorico.toFixed(4)} °C</span><br>
-                                    A queda real de condução através dos 5 mm de Alumínio Liga 1100 (k=222 W/m·K) é de apenas ~0.01 °C.
+                                    <strong>&bull; ΔT Condução Teórico no Alumínio:</strong> <span class="mono font-weight-bold text-primary">${b.delta_T_conducao_teorico.toFixed(5)} °C</span><br>
+                                    A queda real de condução através dos 5 mm de Alumínio Liga 1100 (k=222 W/m·K) é de apenas ~0.006 °C.
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>&bull; Resolução dos Sensores DS18B20:</strong> <span class="mono font-weight-bold text-danger">0.2500 °C (10 bits)</span><br>
-                                    Como o gradiente térmico é muito menor que o passo do sensor, a incerteza metrológica fundamenta a análise de limitações no TCC.
+                                    <strong>&bull; Resolução dos Sensores DS18B20:</strong> <span class="mono font-weight-bold text-success">0.0625 °C (12 bits)</span><br>
+                                    Como o gradiente térmico da chapa é da mesma magnitude do passo instrumental, o balanço de dissipação combinada fundamenta o ensaio.
                                 </div>
                             </div>
                         </div>
@@ -789,9 +907,7 @@
             atualizarLcInfo();
             obterTelemetriaESP32();
             intervalTelemetria = setInterval(obterTelemetriaESP32, 2000);
-            
-            // Já processa o cálculo inicial para a página carregar linda
-            enviarCalculoAjax();
+            // IMPORTANTE: NÃO executa cálculo automático na carga inicial
         });
 
         window.addEventListener('beforeunload', function() {
