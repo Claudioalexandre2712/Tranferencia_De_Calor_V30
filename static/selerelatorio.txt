@@ -1,29 +1,110 @@
 Resultados das Aletas
-Seleção de Aletas: 6)aletas de perfil triangular
-Tipo de Aleta: 6)aletas de perfil triangular
-Material: Alumínio
-k: 240.0
-Eficiência da Aleta: 0.494863
-Taxa de Transferência de Calor: 2.292855 W
-Área da Aleta: 0.000789 m²
-Efetividade (epsilon_a): 19.462359
-Parâmetro m: 5.773503 m^-1
-Perímetro P: 0.031416 m
-Área Transversal A_tr: 0.000078540 m^2
+Seleção de Aletas: 1)aletas retangulares retas, 2)aletas triangulares retas
+Tipo de Aleta: 1)aletas retangulares retas
+Material: aluminio
+k: 222.0
+Eficiência da Aleta: 0.923862
+Taxa de Transferência de Calor: 41.241204 W
+Área da Aleta: 0.014400 m²
+Efetividade (epsilon_a): 28.639725
+Parâmetro m: 8.355826 m^-1
+Perímetro P: 0.248000 m
+Área Transversal A_tr: 0.000480000 m^2
 Comprimento (m) x Temperatura (°C):
-0.000000 m: 100.000000 °C
-0.003571 m: 99.914817 °C
-0.007143 m: 99.835973 °C
-0.010714 m: 99.763461 °C
-0.014286 m: 99.697274 °C
-0.017857 m: 99.637408 °C
-0.021429 m: 99.583858 °C
-0.025000 m: 99.536618 °C
-0.028571 m: 99.495685 °C
-0.032143 m: 99.461055 °C
-0.035714 m: 99.432725 °C
-0.039286 m: 99.410693 °C
-0.042857 m: 99.394958 °C
-0.046429 m: 99.385517 °C
-0.050000 m: 99.382370 °C
+0.000000 m: 120.000000 °C
+0.004286 m: 119.944309 °C
+0.008571 m: 119.892752 °C
+0.012857 m: 119.845328 °C
+0.017143 m: 119.802035 °C
+0.021429 m: 119.762869 °C
+0.025714 m: 119.727831 °C
+0.030000 m: 119.696919 °C
+0.034286 m: 119.670130 °C
+0.038571 m: 119.647465 °C
+0.042857 m: 119.628922 °C
+0.047143 m: 119.614501 °C
+0.051429 m: 119.604200 °C
+0.055714 m: 119.598020 °C
+0.060000 m: 119.595960 °C
+
+Tipo de Aleta: 1)aletas retangulares retas
+Material: cobre
+k: 398.0
+Eficiência da Aleta: 0.955746
+Taxa de Transferência de Calor: 42.664521 W
+Área da Aleta: 0.014400 m²
+Efetividade (epsilon_a): 29.628140
+Parâmetro m: 6.240571 m^-1
+Perímetro P: 0.248000 m
+Área Transversal A_tr: 0.000480000 m^2
+Comprimento (m) x Temperatura (°C):
+0.000000 m: 120.000000 °C
+0.004286 m: 119.968898 °C
+0.008571 m: 119.940102 °C
+0.012857 m: 119.913613 °C
+0.017143 m: 119.889429 °C
+0.021429 m: 119.867550 °C
+0.025714 m: 119.847976 °C
+0.030000 m: 119.830705 °C
+0.034286 m: 119.815738 °C
+0.038571 m: 119.803074 °C
+0.042857 m: 119.792713 °C
+0.047143 m: 119.784655 °C
+0.051429 m: 119.778899 °C
+0.055714 m: 119.775446 °C
+0.060000 m: 119.774295 °C
+
+Tipo de Aleta: 2)aletas triangulares retas
+Material: aluminio
+k: 222.0
+Eficiência da Aleta: 0.485373
+Taxa de Transferência de Calor: 40.048728 W
+Área da Aleta: 0.014408 m²
+Efetividade (epsilon_a): 27.811617
+Parâmetro m: 8.224510 m^-1
+Perímetro P: 0.240266 m
+Área Transversal A_tr: 0.000480000 m^2
+Comprimento (m) x Temperatura (°C):
+0.000000 m: 120.000000 °C
+0.004286 m: 119.888866 °C
+0.008571 m: 119.786001 °C
+0.012857 m: 119.691396 °C
+0.017143 m: 119.605045 °C
+0.021429 m: 119.526938 °C
+0.025714 m: 119.457071 °C
+0.030000 m: 119.395437 °C
+0.034286 m: 119.342031 °C
+0.038571 m: 119.296849 °C
+0.042857 m: 119.259887 °C
+0.047143 m: 119.231142 °C
+0.051429 m: 119.210612 °C
+0.055714 m: 119.198294 °C
+0.060000 m: 119.194188 °C
+
+Tipo de Aleta: 2)aletas triangulares retas
+Material: cobre
+k: 398.0
+Eficiência da Aleta: 0.491698
+Taxa de Transferência de Calor: 41.390682 W
+Área da Aleta: 0.014408 m²
+Efetividade (epsilon_a): 28.743529
+Parâmetro m: 6.142497 m^-1
+Perímetro P: 0.240266 m
+Área Transversal A_tr: 0.000480000 m^2
+Comprimento (m) x Temperatura (°C):
+0.000000 m: 120.000000 °C
+0.004286 m: 119.937858 °C
+0.008571 m: 119.880331 °C
+0.012857 m: 119.827415 °C
+0.017143 m: 119.779109 °C
+0.021429 m: 119.735411 °C
+0.025714 m: 119.696317 °C
+0.030000 m: 119.661827 °C
+0.034286 m: 119.631939 °C
+0.038571 m: 119.606652 °C
+0.042857 m: 119.585964 °C
+0.047143 m: 119.569874 °C
+0.051429 m: 119.558382 °C
+0.055714 m: 119.551487 °C
+0.060000 m: 119.549188 °C
 
