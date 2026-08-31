@@ -491,12 +491,7 @@ def resultado():
     dados_didaticos_lista = []  # Lista para armazenar dados didáticos de cada aleta
     
     for tipo_aleta in tipos_aletas:
-        if tipo_aleta in ["1)aletas retangulares retas", "2)aletas triangulares retas", "3)aletas parabolicas retas"]:
-            resultado_calc = calcular_eficiencia(tipo_aleta, h, k, l, t, w, None, None, None, T_b, T_inf, condicao_ponta, T_L)
-        elif tipo_aleta == "4)aletas circulares de perfil retangular":
-            resultado_calc = calcular_eficiencia(tipo_aleta, h, k, l, t, None, None, r1, r2, T_b, T_inf, condicao_ponta, T_L)
-        else:
-            resultado_calc = calcular_eficiencia(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, T_L)
+        resultado_calc = calcular_eficiencia(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, T_L)
         
         # Extrair resultados (com ou sem dados didáticos)
         if len(resultado_calc) == 8:  # Com dados didáticos
