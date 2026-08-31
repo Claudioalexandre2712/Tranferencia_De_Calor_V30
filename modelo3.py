@@ -279,32 +279,38 @@ def normalizar_tipo_aleta(tipo_str):
     t = str(tipo_str).strip().lower()
     t = t.replace("á", "a").replace("ã", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c").replace("_", " ").replace("-", " ")
     
-    # 1. Retangular Reta
-    if "1" in t or ("retangular" in t and "reta" in t) or ("retangular" in t and "circular" not in t and "perfil" not in t):
-        return "1)aletas retangulares retas"
-    # 2. Triangular Reta
-    elif "2" in t or ("triangular" in t and "reta" in t) or ("triangular" in t and "perfil" not in t):
-        return "2)aletas triangulares retas"
-    # 3. Parabólica Reta
-    elif "3" in t or ("parabolica" in t and "reta" in t) or ("parabolica" in t and "perfil" not in t and "pino" not in t):
-        return "3)aletas parabolicas retas"
-    # 4. Circular de Perfil Retangular
-    elif "4" in t or ("circular" in t and "retangular" in t) or "circular" in t:
+    # 4. Circular
+    if "4" in t or "circular" in t:
         return "4)aletas circulares de perfil retangular"
-    # 5. Perfil Retangular (Pino Retangular)
-    elif "5" in t or ("perfil retangular" in t) or ("pino retangular" in t):
-        return "5)aletas de perfil retangular"
-    # 6. Perfil Triangular (Pino Cônico)
-    elif "6" in t or ("perfil triangular" in t) or ("pino triangular" in t):
-        return "6)aletas de perfil triangular"
-    # 7. Perfil Parabólico
-    elif "7" in t or ("perfil parabolico" in t) or ("pino parabolico" in t and "arredondada" not in t):
-        return "7)aletas de perfil parabolico"
-    # 8. Pino Parabólico com Ponta Arredondada
-    elif "8" in t or "arredondada" in t or "ponta arredondada" in t:
+    
+    # 8. Pino Parabólico com ponta arredondada
+    elif "8" in t or "arredondada" in t or ("pino" in t and "parabol" in t):
         return "8)aletas de pino de perfilparabolico (ponta arredondada)"
     
-    # Fallback seguro
+    # 7. Perfil Parabólico
+    elif "7" in t or ("perfil" in t and "parabol" in t):
+        return "7)aletas de perfil parabolico"
+    
+    # 6. Perfil Triangular
+    elif "6" in t or ("perfil" in t and "triangul" in t):
+        return "6)aletas de perfil triangular"
+    
+    # 5. Perfil Retangular
+    elif "5" in t or ("perfil" in t and "retangul" in t):
+        return "5)aletas de perfil retangular"
+    
+    # 3. Parabólica Reta
+    elif "3" in t or "parabol" in t:
+        return "3)aletas parabolicas retas"
+    
+    # 2. Triangular Reta
+    elif "2" in t or "triangul" in t:
+        return "2)aletas triangulares retas"
+    
+    # 1. Retangular Reta
+    elif "1" in t or "retangul" in t:
+        return "1)aletas retangulares retas"
+    
     return "1)aletas retangulares retas"
 
 def calcular_eficiencia(tipo_aleta, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', T_L=None):
