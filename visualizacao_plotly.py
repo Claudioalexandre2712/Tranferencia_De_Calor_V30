@@ -6,12 +6,33 @@ import os
 import datetime
 
 def gerar_grafico_temperatura_interativo(tipos_aletas, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica'):
-  
-    
-    # Importar funções de temperatura do modelo3
+    # Auto-dedução de variáveis
+    if T_b is None: T_b = 100.0
+    if T_inf is None: T_inf = 25.0
+    if h is None or h <= 0: h = 25.0
+    if k is None or k <= 0: k = 222.0
+    if l is None or l <= 0: l = 0.05
+    if D is not None and D > 0:
+        if t is None or t <= 0: t = D
+        if w is None or w <= 0: w = D
+        if r1 is None or r1 <= 0: r1 = D / 2.0
+        if r2 is None or r2 <= 0: r2 = D
+    if D is None or D <= 0:
+        if t is not None and w is not None and (t + w) > 0:
+            D = 2.0 * (w * t) / (w + t)
+        elif t is not None and t > 0: D = t
+        elif w is not None and w > 0: D = w
+        else: D = 0.01
+    if t is None or t <= 0: t = D if (D and D > 0) else 0.002
+    if w is None or w <= 0: w = D if (D and D > 0) else 0.1
+    if r1 is None or r1 <= 0: r1 = (D / 2.0) if (D and D > 0) else 0.01
+    if r2 is None or r2 <= r1: r2 = (r1 * 2.0) if r1 > 0 else 0.02
+
     from modelo3 import (T_aleta_retangular, T_aleta_triangular, T_aleta_parabolica, 
                         T_aleta_circular, T_aleta_perfil_retangular, T_aleta_perfil_triangular,
-                        T_aleta_perfil_parabolico, T_aleta_pino_parabolico)
+                        T_aleta_perfil_parabolico, T_aleta_pino_parabolico, normalizar_tipo_aleta)
+    
+    tipos_aletas = [normalizar_tipo_aleta(ta) for ta in tipos_aletas]
     
     x = np.linspace(0, l, 100)
     
