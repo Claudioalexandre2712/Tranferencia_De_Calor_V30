@@ -14,15 +14,49 @@ import scipy.special as sp
 import time
 import threading
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+def find_folder(folder_name):
+    base = os.path.abspath(os.path.dirname(__file__))
+    candidates = [
+        os.path.join(base, folder_name),
+        os.path.join(base, 'V29', folder_name),
+        os.path.join(os.getcwd(), folder_name),
+        os.path.join(os.getcwd(), 'V29', folder_name),
+    ]
+    for c in candidates:
+        if os.path.exists(c) and os.path.isdir(c):
+            return c
+    return candidates[0]
+
+static_dir = find_folder('static')
+template_dir = find_folder('templates')
 
 app = handler = Flask(
     __name__,
-    static_folder=os.path.join(BASE_DIR, 'static'),
-    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=static_dir,
+    template_folder=template_dir,
     static_url_path='/static'
 )
 app.secret_key = 'transferencia-calor-laboratorio-flask-2025'
+
+@app.errorhandler(Exception)
+def handle_all_exceptions(e):
+    import traceback
+    err_tb = traceback.format_exc()
+    print(f"[ERRO 500 SERVER]: {err_tb}")
+    return f'''
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head><meta charset="utf-8"><title>Erro no Servidor</title></head>
+    <body style="font-family: sans-serif; background: #fdf2f2; padding: 30px;">
+        <div style="max-width: 800px; margin: 0 auto; background: white; border: 2px solid #e53935; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h2 style="color: #c62828; margin-top: 0;">⚠️ Detalhes do Erro Interno (500)</h2>
+            <p><strong>Exceção:</strong> {type(e).__name__}: {str(e)}</p>
+            <pre style="background: #1e1e1e; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.4;">{err_tb}</pre>
+            <a href="/" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #1976d2; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">← Voltar para o Início</a>
+        </div>
+    </body>
+    </html>
+    ''', 500
 
 @app.after_request
 def add_no_cache_headers(resp):
