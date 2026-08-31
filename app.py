@@ -1,3 +1,6 @@
+import os
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
+
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from modelo3 import calcular_eficiencia, mostrar_formula, salvar_resultados, salvar_sresultados
 from visualizacao_plotly import gerar_grafico_temperatura_interativo, gerar_grafico_temperatura_multiplos_materiais
@@ -8,27 +11,18 @@ from escoamento_interno import escoamento_interno_tubo_circular
 from escoamento_dutos import escoamento_interno_duto
 import numpy as np
 import scipy.special as sp
-import os
 import time
 import threading
 
-
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(
+app = handler = Flask(
     __name__,
     static_folder=os.path.join(BASE_DIR, 'static'),
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_url_path='/static'
 )
 app.secret_key = 'transferencia-calor-laboratorio-flask-2025'
-
-
-app.config['TEMPLATES_AUTO_RELOAD'] = True          
-app.jinja_env.auto_reload = True                    
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0         
-app.config['ENV'] = 'development'
-app.config['DEBUG'] = True
 
 @app.after_request
 def add_no_cache_headers(resp):
