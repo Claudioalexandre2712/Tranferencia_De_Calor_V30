@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Aletas - Início</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #fff;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    .floating-aletas {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .aleta-img {
+      position: absolute;
+      width: 90px;
+      opacity: 0.93;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25));
+      animation: floatAnim linear infinite;
+      will-change: transform, filter, opacity;
+      transition: 
+        transform 0.3s cubic-bezier(.23,1.02,.64,.98),
+        filter 0.3s cubic-bezier(.23,1.02,.64,.98),
+        opacity 0.3s;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    .aleta-img:hover {
+      transform: scale(1.25) rotate(10deg);
+      filter: drop-shadow(0 12px 32px rgba(33,150,243,0.35)) brightness(1.15);
+      opacity: 1;
+      z-index: 2;
+    }
+
+    @keyframes floatAnim {
+      from {
+        transform: translateY(110vh) rotate(0deg) scale(1);
+        opacity: 0.7;
+      }
+      10% {
+        opacity: 0.93;
+      }
+      to {
+        transform: translateY(-20vh) rotate(360deg) scale(1.1);
+        opacity: 0.7;
+      }
+    }
+
+    .main-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .main-title {
+      font-size: 3.2rem;
+      font-weight: bold;
+      color: #111;
+      margin-bottom: 1rem;
+      text-shadow: none;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    .main-desc {
+      font-size: 1.3rem;
+      color: #37474f;
+      margin-bottom: 2rem;
+      max-width: 650px;
+      animation: fadeIn 3s ease forwards;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .main-btn {
+      background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+      color: #fff;
+      font-size: 1.2rem;
+      padding: 0.9rem 2.5rem;
+      border: none;
+      border-radius: 2rem;
+      box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
+      cursor: pointer;
+      font-weight: 600;
+      transition: 
+        background 0.3s, 
+        transform 0.25s cubic-bezier(.23,1.02,.64,.98),
+        box-shadow 0.25s cubic-bezier(.23,1.02,.64,.98),
+        filter 0.25s;
+      animation: fadeInUp 2.5s ease forwards;
+      margin-bottom: 0.5rem;
+    }
+
+    .main-btn:hover, .main-btn:focus {
+      background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
+      transform: scale(1.12) translateY(-4px);
+      box-shadow: 0 8px 28px rgba(25, 118, 210, 0.32), 0 1.5px 6px rgba(33,150,243,0.12);
+      filter: brightness(1.08) saturate(1.2);
+      outline: none;
+    }
+
+    /* Animações de entrada */
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    @keyframes fadeInUp {
+      from {opacity: 0; transform: translateY(40px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-aletas" id="floatingAletas"></div>
+
+  <div class="main-content">
+    <div class="main-title">Bem-vindo ao Simulador de Aletas</div>
+    <div class="main-desc">
+      Explore diferentes tipos de aletas, visualize fórmulas, distribuições de temperatura e compare materiais.
+    </div>
+    <div class="btn-group">
+      <a href="{{ url_for('tipos_aletas') }}">
+        <button class="main-btn">Comparar Tipos de Aletas</button>
+      </a>
+      <a href="{{ url_for('sele_aleta') }}">
+        <button class="main-btn">Comparar Materiais</button>
+      </a>
+      <a href="{{ url_for('calculadora_convectivo') }}">
+        <button class="main-btn">Calculadora de Convecção</button>
+      </a>
+      <a href="{{ url_for('painel_status') }}">
+        <button class="main-btn">Painel de Status</button>
+      </a>
+      <a href="{{ url_for('circuito_termico') }}">
+        <button class="main-btn">
+          Laboratório Térmico Virtual
+        </button>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // FUNCIONALIDADE EXISTENTE DE ALETAS FLUTUANTES
+    // =========================================================================
+    const aletasImgs = [
+      "{{ url_for('static', filename='aletas/1.png') }}",
+      "{{ url_for('static', filename='aletas/2.png') }}",
+      "{{ url_for('static', filename='aletas/3.png') }}",
+      "{{ url_for('static', filename='aletas/4.png') }}",
+      "{{ url_for('static', filename='aletas/5.png') }}",
+      "{{ url_for('static', filename='aletas/6.png') }}",
+      "{{ url_for('static', filename='aletas/7.png') }}",
+      "{{ url_for('static', filename='aletas/8.png') }}"
+    ];
+    
+    const floatingAletas = document.getElementById('floatingAletas');
+    const numAletas = 20;
+
+    function ale(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    for (let i = 0; i < numAletas; i++) {
+      const img = document.createElement('img');
+      img.src = aletasImgs[i % aletasImgs.length];
+      img.className = 'aleta-img';
+      img.style.left = ale(0, 100) + 'vw';
+      img.style.animationDuration = ale(12, 25) + 's';
+      img.style.animationDelay = ale(-20, 0) + 's';
+      img.style.width = ale(70, 140) + 'px';
+      floatingAletas.appendChild(img);
+
+      img.addEventListener('mousemove', function(e) {
+        img.style.transform = 'scale(1.35) rotate(12deg)';
+        img.style.filter = 'drop-shadow(0 16px 40px rgba(33,150,243,0.45)) brightness(1.22)';
+        img.style.opacity = '1';
+      });
+      img.addEventListener('mouseleave', function(e) {
+        img.style.transform = '';
+        img.style.filter = '';
+        img.style.opacity = '';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tipos de Aletas</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        header {
+            width: 100%;
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            color: #fff;
+            padding: 18px 0 12px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(25, 118, 210, 0.08);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.3rem;
+            letter-spacing: 1px;
+        }
+        .aletas-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2.2rem;
+            justify-items: center;
+            margin-bottom: 2.5rem;
+            width: 100%;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .aleta-card {
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 4px 24px rgba(25, 118, 210, 0.13);
+            width: 210px;
+            padding: 28px 18px 22px 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: box-shadow 0.25s, transform 0.22s, border 0.22s;
+            border: 2.5px solid transparent;
+            position: relative;
+            user-select: none;
+            margin-bottom: 0;
+        }
+        .aleta-card.selected {
+            border: 2.5px solid #1976d2;
+            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.22);
+            transform: scale(1.06) translateY(-6px);
+            animation: pulse 0.5s;
+        }
+        .aleta-card:hover {
+            box-shadow: 0 12px 36px rgba(25, 118, 210, 0.18);
+            transform: scale(1.04) translateY(-2px);
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 #1976d2aa; }
+            70% { box-shadow: 0 0 0 12px #1976d220; }
+            100% { box-shadow: 0 8px 32px rgba(25, 118, 210, 0.22);}
+        }
+        .aleta-card img {
+            width: 130px;
+            height: 130px;
+            object-fit: contain;
+            margin-bottom: 18px;
+            filter: drop-shadow(0 2px 12px rgba(25, 118, 210, 0.13));
+            transition: filter 0.2s, transform 0.2s;
+            border-radius: 12px;
+            background: #f4f8ff;
+        }
+        .aleta-card.selected img,
+        .aleta-card:hover img {
+            filter: drop-shadow(0 8px 28px #1976d2bb) brightness(1.08);
+            transform: scale(1.08) rotate(-2deg);
+        }
+        .aleta-name {
+            font-size: 1.18rem;
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 0;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .aleta-checkbox {
+            display: none;
+        }
+        .btns-bottom {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 10px;
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(0deg, #e0eafc 80%, #fff0 100%);
+            z-index: 10;
+            padding-bottom: 1.2rem;
+            padding-top: 0.5rem;
+        }
+        .confirm-btn, .back-btn {
+            display: none;
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            color: #fff;
+            font-size: 1.25rem;
+            padding: 0.8rem 2.5rem;
+            border: none;
+            border-radius: 2rem;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .confirm-btn.show {
+            display: block;
+            animation: fadeInUp 1s;
+        }
+        .back-btn {
+            display: block;
+            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
+            color: #222;
+            font-size: 1.1rem;
+            padding: 0.7rem 2.2rem;
+            margin-right: 0;
+            margin-left: 0;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+        }
+        .confirm-btn:hover, .confirm-btn:focus {
+            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.32), 0 1.5px 6px rgba(33,150,243,0.12);
+            filter: brightness(1.08) saturate(1.2);
+            outline: none;
+        }
+        .back-btn:hover, .back-btn:focus {
+            background: linear-gradient(90deg, #78909c 0%, #90caf9 100%);
+            color: #111;
+            transform: scale(1.05);
+            outline: none;
+        }
+        @keyframes fadeInUp {
+            from {opacity: 0; transform: translateY(40px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        @media (max-width: 900px) {
+            .aletas-container { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; }
+            .aleta-card { width: 44vw; min-width: 140px; }
+        }
+        @media (max-width: 600px) {
+            .aletas-container { grid-template-columns: 1fr; }
+            .aleta-card { width: 90vw; min-width: 0; }
+            .aleta-card img { width: 90px; height: 90px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Tipos de Aletas</h1>
+    </header>
+    <form method="POST" action="{{ url_for('tipos_aletas') }}">
+        <div class="aletas-container">
+            <!-- Cards de seleção de aletas -->
+            <label class="aleta-card" data-value="1)aletas retangulares retas">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="1)aletas retangulares retas">
+                <img src="{{ url_for('static', filename='aletas/1.png') }}" alt="Aleta Retangular Reta">
+                <div class="aleta-name">Aletas Retangulares Retas</div>
+            </label>
+            <label class="aleta-card" data-value="2)aletas triangulares retas">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="2)aletas triangulares retas">
+                <img src="{{ url_for('static', filename='aletas/2.png') }}" alt="Aleta Triangular Reta">
+                <div class="aleta-name">Aletas Triangulares Retas</div>
+            </label>
+            <label class="aleta-card" data-value="3)aletas parabolicas retas">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="3)aletas parabolicas retas">
+                <img src="{{ url_for('static', filename='aletas/3.png') }}" alt="Aleta Parabólica Reta">
+                <div class="aleta-name">Aletas Parabólicas Retas</div>
+            </label>
+            <label class="aleta-card" data-value="4)aletas circulares de perfil retangular">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="4)aletas circulares de perfil retangular">
+                <img src="{{ url_for('static', filename='aletas/4.png') }}" alt="Aleta Circular de Perfil Retangular">
+                <div class="aleta-name">Aletas Circulares de Perfil Retangular</div>
+            </label>
+            <label class="aleta-card" data-value="5)aletas de perfil retangular">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="5)aletas de perfil retangular">
+                <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aleta de Perfil Retangular">
+                <div class="aleta-name">Aletas de Perfil Retangular</div>
+            </label>
+            <label class="aleta-card" data-value="6)aletas de perfil triangular">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="6)aletas de perfil triangular">
+                <img src="{{ url_for('static', filename='aletas/6.png') }}" alt="Aleta de Perfil Triangular">
+                <div class="aleta-name">Aletas de Perfil Triangular</div>
+            </label>
+            <label class="aleta-card" data-value="7)aletas de perfil parabolico">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="7)aletas de perfil parabolico">
+                <img src="{{ url_for('static', filename='aletas/7.png') }}" alt="Aleta de Perfil Parabólico">
+                <div class="aleta-name">Aletas de Perfil Parabólico</div>
+            </label>
+            <label class="aleta-card" data-value="8)aletas de pino de perfilparabolico (ponta arredondada)">
+                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="8)aletas de pino de perfilparabolico (ponta arredondada)">
+                <img src="{{ url_for('static', filename='aletas/8.png') }}" alt="Aleta de Pino de Perfil Parabólico">
+                <div class="aleta-name">Aletas de Pino de Perfil Parabólico<br>(Ponta Arredondada)</div>
+            </label>
+        </div>
+        <div class="btns-bottom">
+            <a href="{{ url_for('index') }}">
+                <button type="button" class="back-btn" style="display:block;">Voltar</button>
+            </a>
+            <button type="submit" class="confirm-btn" id="confirmBtn" style="display:none;">Próximo</button>
+        </div>
+    </form>
+    <script>
+        // Seleção visual dos cards (funciona em desktop e mobile)
+        document.querySelectorAll('.aleta-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Evita seleção de texto ao clicar rápido
+                e.preventDefault();
+                // Não altera se o clique for no link do botão Voltar
+                if (e.target.closest('.back-btn')) return;
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                card.classList.toggle('selected', checkbox.checked);
+                updateConfirmBtn();
+            });
+        });
+
+        function updateConfirmBtn() {
+            const anyChecked = document.querySelectorAll('.aleta-checkbox:checked').length > 0;
+            const btn = document.getElementById('confirmBtn');
+            if (anyChecked) {
+                btn.classList.add('show');
+                btn.style.display = "block";
+            } else {
+                btn.classList.remove('show');
+                btn.style.display = "none";
+            }
+        }
+        window.onload = function() {
+            document.querySelectorAll('.aleta-card').forEach(card => {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                card.classList.toggle('selected', checkbox.checked);
+            });
+            updateConfirmBtn();
+        };
+    </script>
+</body>
+</html>

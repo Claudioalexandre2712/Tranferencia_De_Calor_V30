@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Escoamento Interno</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --primary-blue: #1976d2;
+            --secondary-blue: #42a5f5;
+            --success-green: #4caf50;
+            --warning-orange: #ff9800;
+            --error-red: #f44336;
+            --background-gray: #f5f5f5;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-gray) 0%, #e3f2fd 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .header-banner {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-left: 5px solid var(--success-green);
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left: 5px solid var(--warning-orange);
+        }
+
+        .correlacao-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .math-formula {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid var(--primary-blue);
+            font-size: 1.05em;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        
+        .math-formula small {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Estilos para Painel de Status - Dark Mode */
+        .monitoring-sidebar {
+            position: sticky;
+            top: 20px;
+        }
+
+        .monitoring-panel {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .monitoring-panel h5 {
+            color: #42a5f5;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            border-bottom: 2px solid #42a5f5;
+            padding-bottom: 1rem;
+        }
+
+        .temp-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+            border-left: 4px solid #42a5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .temp-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(66, 165, 245, 0.2);
+        }
+
+        .temp-card label {
+            font-size: 0.85rem;
+            color: #90caf9;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .temp-value {
+            font-size: 1.8rem;
+            color: #42a5f5;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .temp-unit {
+            font-size: 0.9rem;
+            color: #64b5f6;
+            margin-left: 5px;
+        }
+
+        .btn-import {
+            width: 100%;
+            background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-import:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.3);
+            background: linear-gradient(135deg, #42a5f5 0%, #64b5f6 100%);
+        }
+
+        .btn-import:active {
+            transform: translateY(0);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header-banner">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-arrows-alt-h mr-3"></i>
+                        Calculadora - Escoamento Interno
+                    </h1>
+                </div>
+                <div class="col-md-4 text-right">
+                    <a href="{{ url_for('calculadora_convectivo') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar à Convecção
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%); color: white;">
+                        <h5 class="mb-0"><i class="fas fa-book mr-2"></i>Correlações Implementadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Regime Laminar Desenvolvido:</h6>
+                                <div class="math-formula">
+                                    <strong>Ts constante:</strong> $Nu = 3.66$<br>
+                                    <strong>qs constante:</strong> $Nu = 4.36$
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success">Regime Turbulento:</h6>
+                                <div class="math-formula">
+                                    <strong>Gnielinski:</strong> $Nu = \frac{(f/8)(Re-1000)Pr}{1+12.7(f/8)^{0.5}(Pr^{2/3}-1)}$<br>
+                                    <small>$3000 \leq Re \leq 5 \times 10^6$, $0.5 \leq Pr \leq 2000$</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                        <h5 class="mb-0"><i class="fas fa-calculator mr-2"></i>Parâmetros de Entrada</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/calculadora_escoamento_interno" onsubmit="return validarCamposEscoamento()">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary mb-3"><i class="fas fa-ruler mr-2"></i>Geometria do Duto</h6>
+                                    
+                                    <div class="form-group">
+                                        <label for="geometria">Tipo de Geometria:</label>
+                                        <select class="form-control" id="geometria" name="geometria" onchange="toggleGeometria()" required>
+                                            <option value="circular">Tubo Circular</option>
+                                            <option value="quadrado">Duto Quadrado</option>
+                                            <option value="retangular">Duto Retangular</option>
+                                        </select>
+                                        <small class="form-text text-muted">Forma da seção transversal</small>
+                                    </div>
+
+                                    <div id="campos_circular">
+                                        <div class="form-group">
+                                            <label for="D">Diâmetro Interno (D) [m]:</label>
+                                            <input type="number" class="form-control" id="D" name="D" step="0.001" 
+                                                   placeholder="Ex: 0.025">
+                                            <small class="form-text text-muted">Diâmetro interno do tubo</small>
+                                        </div>
+                                    </div>
+
+                                    <div id="campos_quadrado" style="display: none;">
+                                        <div class="form-group">
+                                            <label for="a">Lado do Quadrado (a) [m]:</label>
+                                            <input type="number" class="form-control" id="a" name="a" step="0.001" 
+                                                   placeholder="Ex: 0.200">
+                                            <small class="form-text text-muted">Lado do duto quadrado</small>
+                                        </div>
+                                    </div>
+
+                                    <div id="campos_retangular" style="display: none;">
+                                        <div class="form-group">
+                                            <label for="a_ret">Altura (a) [m]:</label>
+                                            <input type="number" class="form-control" id="a_ret" name="a_ret" step="0.001" 
+                                                   placeholder="Ex: 0.150">
+                                            <small class="form-text text-muted">Altura do duto retangular</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="b">Largura (b) [m]:</label>
+                                            <input type="number" class="form-control" id="b" name="b" step="0.001" 
+                                                   placeholder="Ex: 0.300">
+                                            <small class="form-text text-muted">Largura do duto retangular</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="L">Comprimento (L) [m]:</label>
+                                        <input type="number" class="form-control" id="L" name="L" step="0.1" 
+                                               placeholder="Ex: 2.0" required>
+                                        <small class="form-text text-muted">Comprimento do duto</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h6 class="text-success mb-3"><i class="fas fa-thermometer-half mr-2"></i>Condições Térmicas</h6>
+                                    
+                                    <div class="form-group">
+                                        <label for="tipo_calculo">Tipo de Cálculo:</label>
+                                        <select class="form-control" id="tipo_calculo" name="tipo_calculo" onchange="toggleTipoCalculo()" required>
+                                            <option value="tradicional">Cálculo Tradicional (Temperatura da parede conhecida)</option>
+                                            <option value="temp_entrada_saida">Cálculo com Temperaturas de Entrada e Saída</option>
+                                        </select>
+                                        <small class="form-text text-muted">Escolha o tipo de problema</small>
+                                    </div>
+
+                                    <div id="campos_tradicional">
+                                        <div class="form-group">
+                                            <label for="condicao_termica">Condição Térmica:</label>
+                                            <select class="form-control" id="condicao_termica" name="condicao_termica">
+                                                <option value="Ts_constante">Temperatura da parede constante (Ts)</option>
+                                                <option value="qs_constante">Fluxo de calor constante (qs)</option>
+                                            </select>
+                                            <small class="form-text text-muted">Condição de contorno térmica</small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="T_s">Temperatura da Parede (T_s) [°C]:</label>
+                                            <input type="number" class="form-control" id="T_s" name="T_s" step="0.1" 
+                                                   placeholder="Ex: 80">
+                                            <small class="form-text text-muted">Temperatura da parede do tubo</small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="T_inf">Temperatura do Fluido (T_∞) [°C]:</label>
+                                            <input type="number" class="form-control" id="T_inf" name="T_inf" step="0.1" 
+                                                   placeholder="Ex: 20">
+                                            <small class="form-text text-muted">Temperatura de entrada do fluido</small>
+                                        </div>
+                                    </div>
+
+                                    <div id="campos_temp_entrada_saida" style="display: none;">
+                                        <div class="form-group">
+                                            <label for="condicao_termica_ts">Condição Térmica:</label>
+                                            <select class="form-control" id="condicao_termica_ts" name="condicao_termica_ts">
+                                                <option value="aquecimento">Aquecimento do fluido</option>
+                                                <option value="resfriamento">Resfriamento do fluido</option>
+                                            </select>
+                                            <small class="form-text text-muted">Tipo de processo térmico</small>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="T_entrada">Temperatura de Entrada (Ti) [°C]:</label>
+                                                    <input type="number" class="form-control" id="T_entrada" name="T_entrada" step="0.1"
+                                                           placeholder="Ex: 15">
+                                                    <small class="form-text text-muted">Temperatura do fluido na entrada</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="T_saida">Temperatura de Saída (Ts) [°C]:</label>
+                                                    <input type="number" class="form-control" id="T_saida" name="T_saida" step="0.1"
+                                                           placeholder="Ex: 65">
+                                                    <small class="form-text text-muted">Temperatura do fluido na saída</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-info mb-3"><i class="fas fa-tint mr-2"></i>Fluido</h6>
+                                    
+                                    <div class="form-group">
+                                        <label for="fluido">Tipo de Fluido:</label>
+                                        <select class="form-control" id="fluido" name="fluido" required>
+                                            <option value="ar">Ar</option>
+                                            <option value="agua">Água</option>
+                                            <option value="oleo">Óleo</option>
+                                            <option value="mercurio">Mercúrio</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3"><i class="fas fa-tachometer-alt mr-2"></i>Condições de Escoamento</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="v">Velocidade (v) [m/s]:</label>
+                                                <input type="number" class="form-control" id="v" name="v" step="0.01" 
+                                                       placeholder="Ex: 2.0">
+                                                <small class="form-text text-muted">Velocidade média do fluido</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="m_dot">Fluxo de Massa (ṁ) [kg/s]:</label>
+                                                <input type="number" class="form-control" id="m_dot" name="m_dot" step="0.001" 
+                                                       placeholder="Ex: 0.01">
+                                                <small class="form-text text-muted">Fluxo mássico do fluido</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="vazao_volumetrica">Vazão Volumétrica [L/min]:</label>
+                                        <input type="number" class="form-control" id="vazao_volumetrica" name="vazao_volumetrica" step="0.1"
+                                               placeholder="Ex: 10">
+                                        <small class="form-text text-muted">Vazão volumétrica do fluido</small>
+                                    </div>
+                                    
+                                    <small class="text-muted" style="font-size: 0.8em; color: #000;">
+                                        * Preencha pelo menos um dos campos: velocidade, fluxo de massa ou vazão volumétrica
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-calculator mr-2"></i>Calcular Escoamento Interno
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <div class="card">
+                    <div class="card-header" style="background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%); color: white;">
+                        <h5 class="mb-0"><i class="fas fa-question-circle mr-2"></i>Guia Rápido</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-primary">Valores Típicos:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Ar:</strong> v = 1-20 m/s</li>
+                            <li><strong>Água:</strong> v = 0.5-5 m/s</li>
+                            <li><strong>Óleo:</strong> v = 0.1-2 m/s</li>
+                        </ul>
+
+                        <h6 class="text-success mt-3">Regimes:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Laminar:</strong> Re < 2300</li>
+                            <li><strong>Transição:</strong> 2300 < Re < 4000</li>
+                            <li><strong>Turbulento:</strong> Re > 4000</li>
+                        </ul>
+
+                        <h6 class="text-info mt-3">Desenvolvimento:</h6>
+                        <div class="math-formula">
+                            <small>
+                                $L_h = 0.05 \cdot Re \cdot D$ (laminar)<br>
+                                $L_t = 0.05 \cdot Re \cdot Pr \cdot D$ (laminar)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if resultado %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-header" style="background: linear-gradient(135deg, var(--success-green) 0%, #66bb6a 100%); color: white;">
+                        <h5 class="mb-0"><i class="fas fa-chart-line mr-2"></i>Resultados do Cálculo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div cl4ss="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary"><i class="fas fa-calculator mr-2"></i>Resultados Principais</h6>
+                                <p><strong>Coeficiente de Convecção:</strong> {{ "%.1f" | format(resultado.h) }} W/m²·K</p>
+                                <p><strong>Número de Nusselt:</strong> {{ "%.2f" | format(resultado.Nu) }}</p>
+                                <p><strong>Reynolds:</strong> {{ "%.0f" | format(resultado.Re) }}</p>
+                                <p><strong>Prandtl:</strong> {{ "%.3f" | format(resultado.Pr) }}</p>
+                                <p><strong>Regime:</strong> {{ resultado.regime }}</p>
+                                {% if resultado.v %}
+                                <p><strong>Velocidade:</strong> {{ "%.2f" | format(resultado.v) }} m/s</p>
+                                {% endif %}
+                                {% if resultado.vazao_volumetrica %}
+                                <p><strong>Vazão:</strong> {{ "%.1f" | format(resultado.vazao_volumetrica) }} L/min</p>
+                                {% endif %}
+                                {% if resultado.Q_fluido %}
+                                <p><strong>Potência (fluido):</strong> {{ "%.0f" | format(resultado.Q_fluido) }} W</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="text-success"><i class="fas fa-stream mr-2"></i>Análise do Escoamento</h6>
+                                <p><strong>Desenvolvido Hidro:</strong> {{ "Sim" if resultado.desenvolvido_hidro else "Não" }}</p>
+                                <p><strong>Desenvolvido Térmico:</strong> {{ "Sim" if resultado.desenvolvido_termo else "Não" }}</p>
+                                <p><strong>L entrada hidro:</strong> {{ "%.0f" | format(resultado.L_entrada_hidro) }} mm</p>
+                                <p><strong>L entrada térmico:</strong> {{ "%.0f" | format(resultado.L_entrada_termo) }} mm</p>
+                                <p><strong>Condição Térmica:</strong> {{ resultado.condicao_termica.replace('_', ' ').title() }}</p>
+                                {% if resultado.T_entrada is defined %}
+                                <p><strong>T entrada:</strong> {{ "%.1f" | format(resultado.T_entrada) }}°C</p>
+                                <p><strong>T saída:</strong> {{ "%.1f" | format(resultado.T_saida) }}°C</p>
+                                <p><strong>T média:</strong> {{ "%.1f" | format(resultado.T_media) }}°C</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="correlacao-info mt-3">
+                            <h6 class="text-primary mb-2"><i class="fas fa-formula mr-2"></i>Correlação Utilizada</h6>
+                            <p class="mb-0"><strong>{{ resultado.correlacao }}</strong></p>
+                        </div>
+
+                        {% if resultado.avisos %}
+                        <div class="warning-card mt-3">
+                            <h6 class="text-warning mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Avisos</h6>
+                            {% for aviso in resultado.avisos %}
+                            <p class="mb-1">{{ aviso }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-3">
+                            <h6 class="text-info"><i class="fas fa-flask mr-2"></i>Propriedades do Fluido 
+                            {% if resultado.T_media is defined %}
+                            (T = {{ "%.1f" | format(resultado.T_media) }}°C)
+                            {% elif resultado.propriedades.T_filme is defined %}
+                            (T = {{ "%.1f" | format(resultado.propriedades.T_filme) }}°C)
+                            {% endif %}
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <small><strong>Densidade:</strong> {{ "%.2f" | format(resultado.propriedades.rho) }} kg/m³</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small><strong>Viscosidade:</strong> {{ "%.2e" | format(resultado.propriedades.mu) }} Pa·s</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small><strong>Condutividade:</strong> {{ "%.4f" | format(resultado.propriedades.k) }} W/m·K</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small><strong>Cp:</strong> {{ "%.0f" | format(resultado.propriedades.cp) }} J/kg·K</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function validarCamposEscoamento() {
+            const inputV = document.getElementById('v');
+            const inputMDot = document.getElementById('m_dot');
+            const inputVazao = document.getElementById('vazao_volumetrica');
+            
+            const vPreenchido = inputV.value && inputV.value !== '';
+            const mDotPreenchido = inputMDot.value && inputMDot.value !== '';
+            const vazaoPreenchida = inputVazao.value && inputVazao.value !== '';
+            
+            if (!vPreenchido && !mDotPreenchido && !vazaoPreenchida) {
+                alert('Por favor, preencha pelo menos um dos campos de escoamento: Velocidade, Fluxo de Massa ou Vazão Volumétrica');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function toggleTipoCalculo() {
+            const tipoCalculo = document.getElementById('tipo_calculo').value;
+            const camposTradicional = document.getElementById('campos_tradicional');
+            const camposTempEntradaSaida = document.getElementById('campos_temp_entrada_saida');
+            
+            const condTermica = document.getElementById('condicao_termica');
+            const inputTs = document.getElementById('T_s');
+            const inputTinf = document.getElementById('T_inf');
+            
+            const condTermicaTs = document.getElementById('condicao_termica_ts');
+            const inputTentrada = document.getElementById('T_entrada');
+            const inputTsaida = document.getElementById('T_saida');
+            
+            const inputV = document.getElementById('v');
+            const inputMDot = document.getElementById('m_dot');
+            const inputVazao = document.getElementById('vazao_volumetrica');
+
+            if (tipoCalculo === 'tradicional') {
+                camposTradicional.style.display = 'block';
+                camposTempEntradaSaida.style.display = 'none';
+                
+                condTermica.required = true;
+                inputTs.required = true;
+                inputTinf.required = true;
+                
+                condTermicaTs.required = false;
+                inputTentrada.required = false;
+                inputTsaida.required = false;
+                
+                inputTentrada.value = '';
+                inputTsaida.value = '';
+                
+            } else {
+                camposTradicional.style.display = 'none';
+                camposTempEntradaSaida.style.display = 'block';
+                
+                condTermica.required = false;
+                inputTs.required = false;
+                inputTinf.required = false;
+                
+                condTermicaTs.required = true;
+                inputTentrada.required = true;
+                inputTsaida.required = true;
+                
+                inputTs.value = '';
+                inputTinf.value = '';
+            }
+            
+            inputV.required = false;
+            inputMDot.required = false;
+            inputVazao.required = false;
+        }
+
+        function toggleGeometria() {
+            const geometria = document.getElementById('geometria').value;
+            const camposCircular = document.getElementById('campos_circular');
+            const camposQuadrado = document.getElementById('campos_quadrado');
+            const camposRetangular = document.getElementById('campos_retangular');
+            
+            camposCircular.style.display = 'none';
+            camposQuadrado.style.display = 'none';
+            camposRetangular.style.display = 'none';
+            
+            const todosInputs = document.querySelectorAll('#campos_circular input, #campos_quadrado input, #campos_retangular input');
+            todosInputs.forEach(input => {
+                input.required = false;
+                input.value = '';
+            });
+            
+            if (geometria === 'circular') {
+                camposCircular.style.display = 'block';
+                document.getElementById('D').required = true;
+            } else if (geometria === 'quadrado') {
+                camposQuadrado.style.display = 'block';
+                document.getElementById('a').required = true;
+            } else if (geometria === 'retangular') {
+                camposRetangular.style.display = 'block';
+                document.getElementById('a_ret').required = true;
+                document.getElementById('b').required = true;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inserir Dados</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .card {
+            padding: 32px 28px 28px 28px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.13);
+            width: 100%;
+            max-width: 540px;
+            background: #fff;
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 18px;
+            color: #1976d2;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .list-group-item {
+            font-size: 1.13rem;
+            color: #1976d2;
+            background: #f4f8ff;
+            border: none;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+        .form-control {
+            padding: 10px;
+            font-size: 1.08rem;
+            border-radius: 8px;
+            border: 1.5px solid #b0bec5;
+            transition: border 0.2s;
+        }
+        .form-control:focus {
+            border: 1.5px solid #1976d2;
+            box-shadow: 0 0 0 2px #bbdefb55;
+        }
+        .btn-custom {
+            margin-top: 18px;
+            width: 100%;
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            color: #fff;
+            font-size: 1.13rem;
+            padding: 0.7rem 2.2rem;
+            border: none;
+            border-radius: 2rem;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-custom:hover, .btn-custom:focus {
+            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
+            transform: scale(1.04);
+            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.22);
+            outline: none;
+            color: #fff;
+        }
+        .btn-link.btn-custom {
+            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
+            color: #333;
+        }
+        .alert {
+            margin-bottom: 20px;
+            font-size: 1.08em;
+        }
+        @media (max-width: 600px) {
+            .card {
+                max-width: 98vw;
+                padding: 10px 2vw 10px 2vw;
+            }
+            .title {
+                font-size: 1.3rem;
+            }
+            .form-control {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="title">Inserir Dados para:</h1>
+        <ul class="list-group mb-3">
+            {% if sele_aleta %}
+                <li class="list-group-item">{{ sele_aleta }}</li>
+            {% else %}
+                <li class="list-group-item">Nenhuma aleta selecionada</li>
+            {% endif %}
+        </ul>
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <form method="post">
+            <div class="form-group">
+                <label for="h">Coeficiente de transferência de calor (h):</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="h" name="h" required placeholder="Ex: 25 W/m²·K">
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-info" onclick="abrirCalculadoraConvectivo()">
+                            <i class="fas fa-calculator"></i> Calcular h
+                        </button>
+                    </div>
+                </div>
+                <small class="form-text text-muted">
+                    <span id="origem-h" style="display: none;">
+                        <i class="fas fa-check-circle text-success"></i>
+                        Valor obtido da calculadora de convecção
+                    </span>
+                </small>
+            </div>
+            <div class="form-group">
+                <label for="T_b">Temperatura da base da aleta (T_b):</label>
+                <input type="text" class="form-control" id="T_b" name="T_b" required placeholder="Ex: 100°C">
+            </div>
+            <div class="form-group">
+                <label for="T_inf">Temperatura do meio (T_inf):</label>
+                <input type="text" class="form-control" id="T_inf" name="T_inf" required placeholder="Ex: 25°C">
+            </div>
+            <div class="form-group">
+                <label for="l">Comprimento (L):</label>
+                <input type="text" class="form-control" id="l" name="l" required placeholder="Ex: 0.05 m">
+            </div>
+
+            {% if "retangulares" in sele_aleta %}
+                <div class="form-group">
+                    <label for="t">Espessura (t):</label>
+                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
+                </div>
+                <div class="form-group">
+                    <label for="w">Largura (w):</label>
+                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
+                </div>
+            {% endif %}
+
+            {% if "triangulares" in sele_aleta %}
+                <div class="form-group">
+                    <label for="t">Espessura (t):</label>
+                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
+                </div>
+                <div class="form-group">
+                    <label for="w">Largura (w):</label>
+                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
+                </div>
+            {% endif %}
+
+            {% if "parabolicas" in sele_aleta and "circulares" not in sele_aleta %}
+                <div class="form-group">
+                    <label for="t">Espessura (t):</label>
+                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
+                </div>
+                <div class="form-group">
+                    <label for="w">Largura (w):</label>
+                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
+                </div>
+            {% endif %}
+
+                        {% if "circulares" in sele_aleta %}
+                <div class="form-group">
+                    <label for="r1">Raio Interno (r1):</label>
+                    <input type="text" class="form-control" id="r1" name="r1" required placeholder="Ex: 0.01 m">
+                </div>
+                <div class="form-group">
+                    <label for="r2">Raio Externo (r2):</label>
+                    <input type="text" class="form-control" id="r2" name="r2" required placeholder="Ex: 0.02 m">
+                </div>
+                <div class="form-group">
+                    <label for="t">Espessura (t):</label>
+                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
+                </div>
+            {% endif %}
+
+            {% if "perfil" in sele_aleta %}
+                <div class="form-group">
+                    <label for="D">Diâmetro (D):</label>
+                    <input type="text" class="form-control" id="D" name="D" required placeholder="Ex: 0.01 m">
+                </div>
+            {% endif %}
+            
+            <div class="form-group mt-4">
+                <label style="font-weight: 600; color: #333; font-size: 1.1rem;">Condição de Contorno na Ponta:</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_adiabatica" value="adiabatica" checked onchange="toggleTempCampo()">
+                    <label class="form-check-label" for="cond_adiabatica">Ponta Adiabática (Padrão)</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_conveccao" value="conveccao" onchange="toggleTempCampo()">
+                    <label class="form-check-label" for="cond_conveccao">Convecção na Ponta</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_infinita" value="infinita" onchange="toggleTempCampo()">
+                    <label class="form-check-label" for="cond_infinita">Aleta Infinita</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_temp_especificada" value="temp_especificada" onchange="toggleTempCampo()">
+                    <label class="form-check-label" for="cond_temp_especificada">Temperatura Especificada na Ponta</label>
+                </div>
+            </div>
+
+            <div class="form-group" id="campo_T_L" style="display:none;">
+                <label for="T_L">Temperatura na Ponta (T_L) [°C]:</label>
+                <input type="text" class="form-control" id="T_L" name="T_L">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-custom">Gerar Gráfico</button>
+        </form>
+        <a href="{{ url_for('sele_materiais', sele_aleta=sele_aleta) }}" class="btn btn-secondary btn-custom" style="margin-top:12px;">Voltar</a>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+    function toggleTempCampo() {
+        var campo_T_L = document.getElementById('campo_T_L');
+        var input_T_L = document.getElementById('T_L');
+        if (document.getElementById('cond_temp_especificada').checked) {
+            campo_T_L.style.display = 'block';
+            input_T_L.required = true;
+        } else {
+            campo_T_L.style.display = 'none';
+            input_T_L.required = false;
+        }
+    }
+    
+    // Ativar tooltips do Bootstrap
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+    
+    // Garante o estado correto ao carregar a página (caso o usuário volte)
+    window.addEventListener('load', function() {
+        toggleTempCampo();
+        verificarCoeficienteCalculado();
+    });
+    
+    function abrirCalculadoraConvectivo() {
+        // Abrir calculadora em nova aba
+        window.open('{{ url_for("calculadora_convectivo") }}', '_blank');
+    }
+    
+    function verificarCoeficienteCalculado() {
+        // Verificar se há um coeficiente calculado no localStorage
+        const hCalculado = localStorage.getItem('coeficiente_convectivo');
+        if (hCalculado) {
+            // Preencher o campo com o valor calculado
+            document.getElementById('h').value = parseFloat(hCalculado).toFixed(2);
+            
+            // Mostrar indicador de origem
+            document.getElementById('origem-h').style.display = 'block';
+            
+            // Highlight do campo para chamar atenção
+            const campoH = document.getElementById('h');
+            campoH.style.backgroundColor = '#e8f5e8';
+            campoH.style.border = '2px solid #28a745';
+            
+            // Limpar o localStorage após uso
+            localStorage.removeItem('coeficiente_convectivo');
+        }
+    }
+    </script>
+</body>
+</html>
