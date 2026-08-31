@@ -304,14 +304,18 @@ def resultados_sele():
     # Gerar gráfico interativo com Plotly - agora com todos os materiais
     grafico_html = gerar_grafico_temperatura_multiplos_materiais(sele_aleta, smateriais, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta)
 
-    # Salvar os resultados em um arquivo
-    filepath = 'static/selerelatorio.txt'
-    salvar_sresultados(filepath, sele_aleta, h, k[0], l, t, w, D, r1, r2, T_b, T_inf, resultados_sele)
+    # Salvar os resultados em um arquivo de forma segura
+    os.makedirs(app.static_folder, exist_ok=True)
+    filepath = os.path.join(app.static_folder, 'selerelatorio.txt')
+    try:
+        salvar_sresultados(filepath, sele_aleta, h, k[0], l, t, w, D, r1, r2, T_b, T_inf, resultados_sele)
+    except Exception as e_salv:
+        print(f"[AVISO] Falha ao gravar selerelatorio.txt: {e_salv}")
 
     return render_template('resultados_sele.html', 
                          resultados=resultados_sele, 
                          materiais=smateriais, 
-                         relatorio_path=filepath, 
+                         relatorio_path='selerelatorio.txt', 
                          grafico_html=grafico_html, 
                          condicao_ponta=condicao_ponta, 
                          T_L=T_L,
@@ -491,14 +495,18 @@ def resultado():
     # Gerar gráfico interativo com Plotly
     grafico_html = gerar_grafico_temperatura_interativo(tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta)
 
-    # Salvar os resultados em um arquivo
-    filepath = 'static/relatorio.txt'
-    salvar_resultados(filepath, tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados)
+    # Salvar os resultados em um arquivo de forma segura
+    os.makedirs(app.static_folder, exist_ok=True)
+    filepath = os.path.join(app.static_folder, 'relatorio.txt')
+    try:
+        salvar_resultados(filepath, tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados)
+    except Exception as e_salv:
+        print(f"[AVISO] Falha ao gravar relatorio.txt: {e_salv}")
 
     return render_template('resultado.html', 
                          resultados=resultados, 
                          material=material, 
-                         relatorio_path=filepath, 
+                         relatorio_path='relatorio.txt', 
                          grafico_html=grafico_html, 
                          condicao_ponta=condicao_ponta, 
                          T_L=T_L,
