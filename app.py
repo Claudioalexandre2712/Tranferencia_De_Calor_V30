@@ -2,7 +2,6 @@ import os
 os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from modelo3 import calcular_eficiencia, mostrar_formula, salvar_resultados, salvar_sresultados
 from modelo3 import calcular_eficiencia, mostrar_formula, salvar_resultados, salvar_sresultados, normalizar_tipo_aleta
 from visualizacao_plotly import gerar_grafico_temperatura_interativo, gerar_grafico_temperatura_multiplos_materiais
 from metricas_engenharia import calcular_metricas_engenharia, interpretar_metricas, MATERIAIS_DB, DICIONARIO_MATERIAIS_ID
@@ -280,7 +279,6 @@ def resultados_sele():
     if not all([sele_aleta, smateriais, h, k, l, T_b, T_inf]):
         return "Parâmetros insuficientes fornecidos", 400
 
-    sele_aleta = sele_aleta.split(',') if sele_aleta else []
     sele_aleta = [normalizar_tipo_aleta(t) for t in sele_aleta.split(',') if t.strip()] if sele_aleta else []
     smateriais = smateriais.split(',') if smateriais else []
     h = float(h) if h else 0.0
@@ -466,7 +464,6 @@ def inserir_dados(tipos_aletas, material, k):
 @app.route('/resultado')
 def resultado():
     tipos_aletas_str = request.args.get('tipos_aletas')
-    tipos_aletas = tipos_aletas_str.split(',') if tipos_aletas_str else []
     tipos_aletas = [normalizar_tipo_aleta(t) for t in tipos_aletas_str.split(',') if t.strip()] if tipos_aletas_str else []
     material = request.args.get('material')
     h_str = request.args.get('h')
