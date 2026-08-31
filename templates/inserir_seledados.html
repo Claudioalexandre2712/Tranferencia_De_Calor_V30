@@ -141,57 +141,44 @@
                 <input type="text" class="form-control" id="l" name="l" required placeholder="Ex: 0.05 m">
             </div>
 
-            {% if "retangulares" in sele_aleta %}
+            {% set aleta_txt = sele_aleta|string|lower %}
+            {% set has_rect = "1)aletas retangulares retas" in sele_aleta or "retangular" in aleta_txt %}
+            {% set has_triang = "2)aletas triangulares retas" in sele_aleta or "triangular" in aleta_txt %}
+            {% set has_parab = "3)aletas parabolicas retas" in sele_aleta or "parabolica" in aleta_txt %}
+            {% set has_circ = "4)aletas circulares de perfil retangular" in sele_aleta or "circular" in aleta_txt %}
+            {% set has_perf_ret = "5)aletas de perfil retangular" in sele_aleta or "perfil retangular" in aleta_txt %}
+            {% set has_perf_tri = "6)aletas de perfil triangular" in sele_aleta or "perfil triangular" in aleta_txt %}
+            {% set has_perf_par = "7)aletas de perfil parabolico" in sele_aleta or "perfil parabolico" in aleta_txt %}
+            {% set has_pino = "8)aletas de pino de perfilparabolico (ponta arredondada)" in sele_aleta or "pino" in aleta_txt or "arredondada" in aleta_txt %}
+
+            {% if precisa_t or has_rect or has_triang or has_parab or has_circ %}
                 <div class="form-group">
-                    <label for="t">Espessura (t):</label>
+                    <label for="t">Espessura (t) [m]:</label>
                     <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
                 </div>
+            {% endif %}
+
+            {% if precisa_w or has_rect or has_triang or has_parab %}
                 <div class="form-group">
-                    <label for="w">Largura (w):</label>
+                    <label for="w">Largura (w) [m]:</label>
                     <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
                 </div>
             {% endif %}
 
-            {% if "triangulares" in sele_aleta %}
+            {% if precisa_raios or has_circ %}
                 <div class="form-group">
-                    <label for="t">Espessura (t):</label>
-                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
-                </div>
-                <div class="form-group">
-                    <label for="w">Largura (w):</label>
-                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
-                </div>
-            {% endif %}
-
-            {% if "parabolicas" in sele_aleta and "circulares" not in sele_aleta %}
-                <div class="form-group">
-                    <label for="t">Espessura (t):</label>
-                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
-                </div>
-                <div class="form-group">
-                    <label for="w">Largura (w):</label>
-                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
-                </div>
-            {% endif %}
-
-                        {% if "circulares" in sele_aleta %}
-                <div class="form-group">
-                    <label for="r1">Raio Interno (r1):</label>
+                    <label for="r1">Raio Interno (r1) [m]:</label>
                     <input type="text" class="form-control" id="r1" name="r1" required placeholder="Ex: 0.01 m">
                 </div>
                 <div class="form-group">
-                    <label for="r2">Raio Externo (r2):</label>
+                    <label for="r2">Raio Externo (r2) [m]:</label>
                     <input type="text" class="form-control" id="r2" name="r2" required placeholder="Ex: 0.02 m">
-                </div>
-                <div class="form-group">
-                    <label for="t">Espessura (t):</label>
-                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
                 </div>
             {% endif %}
 
-            {% if "perfil" in sele_aleta %}
+            {% if precisa_D or has_perf_ret or has_perf_tri or has_perf_par or has_pino or "perfil" in aleta_txt %}
                 <div class="form-group">
-                    <label for="D">Diâmetro (D):</label>
+                    <label for="D">Diâmetro (D) [m]:</label>
                     <input type="text" class="form-control" id="D" name="D" required placeholder="Ex: 0.01 m">
                 </div>
             {% endif %}
