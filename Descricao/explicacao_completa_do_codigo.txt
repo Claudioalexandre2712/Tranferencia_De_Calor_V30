@@ -1,0 +1,736 @@
+================================================================================
+EXPLICAÇÃO TÉCNICA DO CÓDIGO DA PLATAFORMA DE MONITORAMENTO E ANÁLISE TÉRMICA
+Bancada Didática Instrumentada de Transferência de Calor e Sistema Web Integrado
+Documento Técnico de Referência para Trabalho de Conclusão de Curso (TCC)
+================================================================================
+
+1. VISÃO GERAL DO PROJETO
+--------------------------------------------------------------------------------
+O sistema desenvolvido consiste em uma plataforma computacional e experimental integrada para instrumentação, aquisição contínua de dados, cálculo térmico analítico e monitoramento em tempo real de fenômenos de transferência de calor em uma bancada didática de engenharia.
+
+1.1. Problema que o sistema resolve:
+No ensino e na pesquisa de Engenharia Térmica, existe frequentemente uma lacuna entre a teoria matemática (equações diferenciais de condução, correlações empíricas de convecção natural e forçada, radiação térmica e superfícies estendidas) e a experimentação física em bancada. Este software resolve esse desafio ao:
+- Automatizar a coleta de temperaturas em múltiplos pontos de corpos de prova (placas condutoras e aletas);
+- Transmitir as grandezas medidas sem fio via Wi-Fi para um servidor central estruturado em Python/Flask;
+- Calcular dinamicamente propriedades termofísicas do ar e de outros fluidos a partir da temperatura de filme;
+- Processar os números adimensionais governantes (Reynolds, Grashof, Prandtl, Rayleigh, Nusselt);
+- Fechar o balanço de energia experimental e quantificar as perdas por condução e radiação;
+- Determinar e confrontar o coeficiente de convecção analítico (h_anal) e o experimental (h_exp);
+- Disponibilizar dashboards interativos, gráficos temporais em tempo real e relatórios de dimensionamento térmico, mássico e econômico.
+
+1.2. Finalidade da bancada didática:
+A bancada foi projetada para:
+- Monitorar a distribuição longitudinal e transversal de temperatura em uma placa plana aquecida por fonte térmica (chama ou resistência);
+- Medir o perfil térmico na face superior da placa nos pontos inicial (T1), intermediário (T2) e final (T3);
+- Medir as temperaturas na face inferior da placa (T5 e T6) e no ar ambiente circundante (T4);
+- Possibilitar ensaios de convecção natural, convecção forçada, mudança de fase (ebulição e condensação) e bancos de tubos;
+- Dimensionar e comparar o desempenho térmico de 8 geometrias de aletas sob 4 condições de contorno;
+- Avaliar a viabilidade técnica e financeira de 10 materiais de engenharia.
+
+1.3. Componentes de hardware e software encontrados no código:
+- Componentes de Hardware e Instrumentação:
+  * 2 Microcontroladores ESP32 (ESP32 #01 - Monitor da Placa; ESP32 #02 - Monitor da Base/Ambiente);
+  * 5 Sensores de temperatura digitais Dallas DS18B20 (comunicação OneWire a 10 bits de resolução);
+  * 1 Sensor digital de temperatura e umidade relativa DHT11;
+  * Rede local sem fio Wi-Fi (padrão 802.11 b/g/n, 2.4 GHz).
+- Software Embarcado (Firmware):
+  * Firmware C++/Arduino para ESP32 #01: esp32_painel_status/esp32_painel_status.ino;
+  * Firmware C++/Arduino para ESP32 #02: esp32_monitor_ambiente/esp32_monitor_ambiente.ino.
+- Backend e Servidor de Aplicação:
+  * Python 3 com framework web Flask (app.py);
+  * Mecanismo de sincronização atômica em memória através de threading.Lock().
+- Módulos Científicos de Cálculo Térmico:
+  * conveccao_calculadora.py: convecção natural e forçada, propriedades termofísicas de ar, água, óleo e mercúrio;
+  * modelo3.py: condução unidimensional e superfícies estendidas para 8 geometrias de aletas sob 4 condições de contorno;
+  * metricas_engenharia.py: banco com 10 materiais contendo condutividade térmica, massa específica e custo unitário;
+  * escoamento_interno.py e escoamento_dutos.py: convecção forçada interna em dutos circulares e cálculo de perda de carga;
+  * mudanca_fase_calculadora.py: condensação em filme vertical de Nusselt e ebulição nucleada em piscina de Rohsenow;
+  * arranjos_tubos_calculadora.py: bancos de tubos alinhados e alternados para trocadores de calor;
+  * visualizacao_plotly.py: gráficos interativos de aletas gerados via Plotly.js.
+- Frontend e Interface de Usuário:
+  * Templates HTML renderizados com Jinja2 (painel_status.html, calculadora_convectivo.html, etc.);
+  * Bibliotecas gráficas client-side: Chart.js 4 (gráficos temporais contínuos) e Plotly.js;
+  * Framework CSS Bootstrap 5, fontes Google Fonts (Inter e JetBrains Mono) e ícones FontAwesome 6.
+
+1.4. Fluxo geral dos dados:
+Sensores físicos (DS18B20 / DHT11) -> Leitura digital pelos ESP32 -> Aplicação de offsets de calibração ->
+Formatação de mensagem JSON -> Transmissão HTTP POST via Wi-Fi -> Recepção pela API Flask (/api/temperaturas) ->
+Validação e gravação atômica em cache de memória (monitoring_cache) -> Polling assíncrono via JavaScript ->
+Atualização dos KPIs e gráficos no Painel de Status -> Entrada nos módulos de cálculo analítico e balanço de calor.
+
+1.5. Principais pontos de entrada:
+- Backend: app.py (função principal iniciada com app.run(host='0.0.0.0', port=5000)).
+- Firmware ESP32 #01: esp32_painel_status/esp32_painel_status.ino (funções setup() e loop()).
+- Firmware ESP32 #02: esp32_monitor_ambiente/esp32_monitor_ambiente.ino (funções setup() e loop()).
+- Frontend: rota inicial raiz / (renderiza templates/index.html) e dashboard /painel_status.
+
+2. ESTRUTURA DOS ARQUIVOS E DIRETÓRIOS
+--------------------------------------------------------------------------------
+
+2.1. Firmware Embarcado:
+- esp32_painel_status/esp32_painel_status.ino:
+  Código-fonte em C++ para o ESP32 #01. Responsável por ler os 3 sensores DS18B20 da superfície superior da placa (T1, T2, T3) via endereços ROM fixos de 64 bits e o sensor DHT11 (T4 ambiente). Conecta ao Wi-Fi e envia requisições HTTP POST em formato JSON a cada 2 segundos para o servidor Flask.
+- esp32_monitor_ambiente/esp32_monitor_ambiente.ino:
+  Código-fonte em C++ para o ESP32 #02. Responsável por ler os 2 sensores DS18B20 instalados na parte inferior da placa (T5, T6) via barramento OneWire no pino D4. Envia os dados por HTTP POST.
+
+2.2. Backend e API:
+- app.py:
+  Arquivo central da aplicação Flask. Inicializa o servidor web, gerencia as sessões de usuário, define as rotas HTTP (GET e POST), implementa os endpoints da API REST (/api/temperaturas, /api/monitoramento, /api/status) protegidos por threading.Lock(), orquestra a chamada aos módulos de cálculo térmico e renderiza os templates HTML.
+
+2.3. Módulos de Cálculo e Engenharia:
+- conveccao_calculadora.py:
+  Módulo de cálculo de convecção. Contém funções para interpolação de propriedades termofísicas (ar, água, óleo mineral, mercúrio) em função da temperatura de filme e implementa as correlações clássicas de transferência de calor por convecção natural (placas verticais, horizontais, cilindros, esferas) e convecção forçada (placa plana, cilindros, esferas).
+- modelo3.py:
+  Módulo matemático de superfícies estendidas (aletas). Modela 8 perfis geométricos de aletas sob 4 condições de contorno (ponta convectiva, ponta adiabática, temperatura prescrita na ponta e aleta infinita). Implementa soluções analíticas exatas envolvendo funções hiperbólicas e funções de Bessel modificadas de primeira espécie (ordens 0 e 1). Configurado com backend 'Agg' do Matplotlib para execução segura em servidor web sem interface gráfica ativa.
+- metricas_engenharia.py:
+  Banco de dados unificado com 10 materiais de engenharia (Alumínio, Cobre, Aço Inox, Bronze, Ferro Fundido, Prata, Ouro, Ferro, Níquel, Chumbo), contendo condutividade térmica k [W/m.K], massa específica rho [kg/m3] e custo unitário [$ / kg]. Contém funções para cálculo de volume, massa, custo de matéria-prima e perdas de calor.
+- escoamento_interno.py e escoamento_dutos.py:
+  Cálculos de escoamento interno em dutos circulares e não circulares, determinando número de Reynolds, comprimento de entrada hidrodinâmico e térmico, fator de atrito de Darcy e número de Nusselt via correlações de Dittus-Boelter, Sieder-Tate, Gnielinski e Petukhov.
+- mudanca_fase_calculadora.py:
+  Implementa as equações de mudança de fase líquido-vapor e vapor-líquido: condensação em filme vertical (teoria de Nusselt) e ebulição nucleada em piscina (correlação de Rohsenow) com fluxo crítico de Zuber.
+- arranjos_tubos_calculadora.py:
+  Implementa o cálculo de bancos de tubos alinhados e alternados para trocadores de calor industriais utilizando as correlações empíricas de Zukauskas e Grimison.
+- visualizacao_plotly.py:
+  Gera gráficos interativos em formato HTML/JSON utilizando a biblioteca Plotly para perfis de temperatura T(x), distribuição de calor e curvas de eficiência de aletas.
+- config_otimizada.py e melhorias_sistema.py:
+  Estruturas de classes de dados (@dataclass), validações de consistência e configurações do sistema.
+
+2.4. Frontend e Templates (pasta templates/):
+- templates/index.html: Página inicial da aplicação web com menu de navegação e acesso aos módulos.
+- templates/painel_status.html: Dashboard de monitoramento em tempo real dos sensores ESP32, exibindo cards de temperatura (T1 a T6), KPIs de média e gradiente térmico, e gráfico temporal Chart.js.
+- templates/calculadora_convectivo.html: Menu de seleção dos módulos de convecção e mudança de fase com acesso direto em 1 clique e exibição das faixas características de h.
+- templates/calculadora_natural.html: Interface dedicada ao cálculo de convecção natural.
+- templates/calculadora_forcada.html: Interface dedicada ao cálculo de convecção forçada.
+- templates/calculadora_condensacao.html: Interface para análise de condensação em filme.
+- templates/calculadora_ebulicao.html: Interface para análise de regimes de ebulição.
+- templates/calculadora_arranjos_tubos.html: Interface para cálculo de bancos de tubos.
+- templates/calculadora_escoamento_interno.html: Interface para escoamento interno em dutos.
+- templates/sele_aleta.html, sele_materiais.html, inserir_seledados.html, resultados_sele.html: Fluxo de seleção, comparação e ranqueamento de aletas e materiais.
+- templates/tipos_aletas.html, tipos_materiais.html, inserir_dados.html, resultado.html: Fluxo detalhado de dimensionamento térmico e geração de relatórios de desempenho de aletas.
+
+2.5. Arquivos de Configuração e Deploy:
+- vercel.json: Arquivo de configuração de roteamento para hospedagem serverless na nuvem Vercel.
+- requirements.txt: Lista de dependências Python necessárias para compilação e execução do sistema.
+
+3. HARDWARE E INSTRUMENTAÇÃO
+--------------------------------------------------------------------------------
+
+3.1. Microcontroladores Utilizados:
+O sistema utiliza 2 módulos microcontroladores ESP32 (processador dual-core Xtensa 32-bit LX6, clock de 240 MHz, conectividade Wi-Fi 802.11 b/g/n integrada e memória flash SPI embutida).
+
+3.2. Papel de cada ESP32 e Distribuição dos Sensores:
+- ESP32 #01 (Firmware: esp32_painel_status.ino - Identificador: ESP32-PlateMonitor/1.0):
+  * Monitora a face superior da placa aquecida e a condição do ar circundante.
+  * Pinos GPIO utilizados:
+    - GPIO 4: Barramento OneWire conectado a 3 sensores de temperatura Dallas DS18B20.
+    - GPIO 27: Pino de dados bidirecional conectado ao sensor de temperatura e umidade DHT11.
+  * Variáveis físicas medidas:
+    - T1: Temperatura na posição inicial da placa (início da chama / fonte térmica).
+    - T2: Temperatura na posição intermediária da placa (meio da chapa).
+    - T3: Temperatura na posição final da placa (fim da chama / extremidade).
+    - T4: Temperatura ambiente do ar e umidade relativa pelo sensor DHT11.
+
+- ESP32 #02 (Firmware: esp32_monitor_ambiente.ino - Identificador: ESP32-AmbientMonitor/1.0):
+  * Monitora a face inferior da placa ou base de isolamento.
+  * Pinos GPIO utilizados:
+    - GPIO 4: Barramento OneWire conectado a 2 sensores Dallas DS18B20.
+  * Variáveis físicas medidas:
+    - T5: Temperatura no ponto 1 da face inferior da placa (Baixo da Placa).
+    - T6: Temperatura no ponto 2 da face inferior da placa (Baixo da Placa).
+
+3.3. Inicialização e Leitura dos Sensores DS18B20:
+- Os sensores DS18B20 operam sob o protocolo digital OneWire (Dallas Semiconductor), necessitando de apenas uma linha de dados com resistor de elevação (pull-up) de 4,7 kOhm ligado ao VCC (3,3 V).
+- Resolução configurada no código: 10 bits (precisão de 0,25 °C e tempo de conversão reduzido).
+- No ESP32 #01, os sensores são identificados univocamente pelos seus endereços ROM de 64 bits (8 bytes):
+  * Sensor T1 (Início): {0x28, 0xD8, 0x52, 0xB2, 0x00, 0x00, 0x00, 0xFB}
+  * Sensor T2 (Meio):   {0x28, 0x2E, 0x16, 0xB3, 0x00, 0x00, 0x00, 0x42}
+  * Sensor T3 (Fim):    {0x28, 0xD5, 0xE4, 0xB3, 0x00, 0x00, 0x00, 0xED}
+- No ESP32 #02, os sensores são identificados por indexação sequencial no barramento (índices 0 e 1), com diretivas #define INDICE_T5 0 e #define INDICE_T6 1 para rápida inversão lógica caso necessário.
+
+3.4. Inicialização e Leitura do Sensor DHT11:
+- Instanciado via biblioteca Adafruit DHT como DHT dht(DHT_PIN, DHT_TYPE), com DHT_PIN = 27 e DHT_TYPE = DHT11. A leitura ocorre por dht.readTemperature() no loop de leitura de 1 segundo.
+
+3.5. Tratamento de Falhas, Valores Inválidos e Desconexões:
+- A função leituraValida(float temperatura) rejeita explicitamente leituras com código de falha:
+  * temperatura == DEVICE_DISCONNECTED_C (-127.0 °C).
+  * temperatura == 85.0 °C (valor de reset de inicialização do registrador interno do DS18B20).
+  * temperatura < -55.0 °C ou temperatura > 150.0 °C (fora da faixa de operação do sensor).
+- Contador de erros consecutivos (errosConsecutivos): caso um sensor apresente 5 falhas seguidas (MAX_ERROS_CONSECUTIVOS = 5), o firmware marca o sensor como indisponível e dispara um re-scan automático do barramento OneWire a cada 10 segundos (INTERVALO_RESCAN = 10000 ms).
+- Em caso de falha transitória, o firmware não envia o campo correspondente no JSON, impedindo que valores nulos ou corrompidos contaminem o histórico do servidor.
+
+3.6. Calibração dos Sensores:
+- Rotina implementada: calibração em ponto fixo de 0 °C (banho de gelo fundente com água destilada).
+- Disparo: o operador envia o caractere 'G' ou 'g' pela interface Serial Monitor a 115200 baud.
+- Processamento da calibração: o microcontrolador realiza a coleta de 30 amostras sucessivas (NUM_AMOSTRAS_CALIBRACAO = 30) em 30 segundos. Exige no mínimo 24 amostras válidas (MIN_AMOSTRAS_CALIBRACAO).
+- Cálculo do offset: OFFSET = TEMPERATURA_REFERENCIA_CALIBRACAO - (Soma_Leituras / Total_Amostras_Validas).
+- Persistência: os offsets calculados são gravados na memória flash não-volátil do ESP32 através da biblioteca Preferences (namespace "calibracao", chaves "t1", "t2", "t3", "t5", "t6"). Na inicialização (setup), a função carregarOffsetsCalibracao() recupera automaticamente esses coeficientes.
+- O comando serial 'R' ou 'r' restaura os offsets de fábrica para 0.0 °C.
+
+4. FIRMWARE DOS ESP32
+--------------------------------------------------------------------------------
+
+4.1. Estrutura do Firmware do ESP32 #01 (esp32_painel_status.ino):
+- Bibliotecas utilizadas:
+  * WiFi.h: Gerenciamento da pilha TCP/IP e conexão à rede sem fio 802.11 b/g/n;
+  * HTTPClient.h: Construção e envio de requisições HTTP REST (método POST);
+  * OneWire.h: Protocolo de comunicação a 1 fio para barramento de sensores Dallas;
+  * DallasTemperature.h: Controle de conversão analógico-digital e leitura térmica dos DS18B20;
+  * ArduinoJson.h: Serialização eficiente de objetos e documentos JSON (StaticJsonDocument);
+  * DHT.h: Protocolo de comunicação com o sensor de umidade e temperatura DHT11;
+  * Preferences.h: Armazenamento permanente de calibrações na memória Flash NVS (Non-Volatile Storage).
+
+- Ciclo de Vida do Firmware (Fluxo de Execução):
+  1. Inicialização (setup):
+     - Inicialização da porta serial em 115200 baud;
+     - Inicialização do sensor DHT11 (dht.begin());
+     - Carregamento dos offsets de calibração da memória Flash via Preferences;
+     - Chamada a conectarWiFi() para autenticação no roteador (timeout de 20 tentativas de 500 ms);
+     - Chamada a descobrirSensores() para busca dos 3 endereços ROM cadastrados e ajuste para 10 bits;
+     - Sincronização de horário de rede via NTP (configTime(0, 0, "pool.ntp.org", "time.nist.gov")).
+  2. Loop Principal (loop):
+     - Leitura de comandos na porta serial ('G' para calibração, 'R' para reset);
+     - Verificação de conexão Wi-Fi; se desconectado, marca flag wifiConectado como false;
+     - Caso os sensores não estejam disponíveis, executa re-scan a cada 10 segundos;
+     - A cada 1000 ms (INTERVALO_LEITURA): executa lerTemperaturas() nos 3 DS18B20 e no DHT11;
+     - A cada 2000 ms (INTERVALO_ENVIO): executa enviarDados(), serializando os valores válidos de t1, t2, t3, t4 e timestamp em JSON, despachando via HTTP POST para /api/temperaturas.
+
+4.2. Estrutura do Firmware do ESP32 #02 (esp32_monitor_ambiente.ino):
+- Bibliotecas utilizadas: WiFi.h, HTTPClient.h, OneWire.h, DallasTemperature.h, ArduinoJson.h, Preferences.h, time.h.
+- Ciclo de Vida:
+  1. Inicialização (setup): Configura Serial em 115200 baud, carrega offsets de T5/T6 da Flash NVS, conecta ao Wi-Fi, descobre os 2 sensores no barramento D4 e ajusta resolução para 10 bits.
+  2. Loop Principal (loop):
+     - Escuta comandos seriais para calibração por gelo fundente ('G'/'R');
+     - Verifica integridade da conexão Wi-Fi a cada 30 segundos;
+     - A cada 1000 ms: executa lerTemperaturas() em T5 e T6;
+     - A cada 2000 ms: monta payload JSON contendo apenas "t5", "t6" e "timestamp" e envia por HTTP POST para a rota /api/temperaturas na porta 5000 do servidor;
+     - Importante: O ESP32 #02 não envia t1, t2, t3 ou t4 para evitar sobreposição de dados.
+
+5. FORMATO DOS DADOS E COMUNICAÇÃO
+--------------------------------------------------------------------------------
+
+5.1. Estrutura dos Pacotes JSON Enviados:
+- Pacote emitido pelo ESP32 #01 (Monitor da Placa Superior):
+  {
+    "t1": 45.2500,
+    "t2": 52.1250,
+    "t3": 48.7500,
+    "t4": 24.5000,
+    "timestamp": 128450
+  }
+
+- Pacote emitido pelo ESP32 #02 (Monitor da Base Inferior):
+  {
+    "t5": 38.5000,
+    "t6": 39.2500,
+    "timestamp": 128470
+  }
+
+5.2. Descrição e Tipos dos Campos:
+- "t1" (float): Temperatura medida no ponto 1 (início da chama) [°C].
+- "t2" (float): Temperatura medida no ponto 2 (meio da chapa) [°C].
+- "t3" (float): Temperatura medida no ponto 3 (fim da chama) [°C].
+- "t4" (float): Temperatura do ar ambiente medida pelo DHT11 [°C].
+- "t5" (float): Temperatura medida no ponto 1 da face inferior da placa [°C].
+- "t6" (float): Temperatura medida no ponto 2 da face inferior da placa [°C].
+- "timestamp" (unsigned long / inteiro): Tempo de operação do ESP32 desde o boot [milissegundos].
+
+5.3. Cabeçalhos HTTP Utilizados:
+- "Content-Type": "application/json"
+- "User-Agent": "ESP32-PlateMonitor/1.0" (ESP32 #01) ou "ESP32-AmbientMonitor/1.0" (ESP32 #02)
+
+5.4. Endpoints e Rotas HTTP do Backend Flask:
+- POST /api/temperaturas:
+  Recebe o JSON dos ESP32, valida a presença dos campos, converte para float, adquire o lock de thread (with monitoring_lock:), atualiza o dicionário em memória monitoring_cache e anexa ao histórico circular temporal (máximo de 50 registros).
+  Resposta de Sucesso (HTTP 200):
+  {
+    "status": "sucesso",
+    "mensagem": "Temperaturas atualizadas",
+    "dados": { "t1": 45.25, "t2": 52.125, "t3": 48.75, "t4": 24.5, "t5": 38.5, "t6": 39.25, ... }
+  }
+  Resposta de Erro (HTTP 400):
+  { "status": "erro", "mensagem": "Dados invalidos" }
+
+- GET /api/temperaturas ou GET /api/monitoramento:
+  Consumido pela interface web via JavaScript (fetch assíncrono a cada 2 segundos).
+  Retorna o estado instantâneo das temperaturas para renderização no dashboard.
+
+- GET /api/status:
+  Endpoint de diagnóstico da API. Retorna { "status": "online", "message": "API de monitoramento operacional", "timestamp": ... }.
+
+6. BACKEND E API FLASK
+--------------------------------------------------------------------------------
+
+6.1. Inicialização e Configuração:
+- Arquivo: app.py.
+- A aplicação é instanciada via app = Flask(__name__) com chave de sessão app.secret_key.
+- Controle de Concorrência: Para evitar condições de corrida (race conditions) decorrentes de requisições simultâneas enviadas pelos dois ESP32 e pelas requisições de leitura do frontend, o backend utiliza um semáforo de exclusão mútua: monitoring_lock = threading.Lock().
+
+6.2. Estrutura de Armazenamento em Memória:
+O sistema armazena as leituras no dicionário global monitoring_cache:
+monitoring_cache = {
+    't1': 0.0,
+    't2': 0.0,
+    't3': 0.0,
+    't4': 0.0,
+    't5': 0.0,
+    't6': 0.0,
+    'timestamp': 0,
+    'ultima_atualizacao': None,
+    'historico': []  # Lista circular de até 50 pontos
+}
+
+6.3. Limitações do Armazenamento em Memória:
+- O cache reside na memória RAM do processo Python.
+- Caso o servidor Flask seja reiniciado ou o processo finalizado, o histórico acumulado é zerado.
+- Os microcontroladores, contudo, continuam transmitindo a cada 2 segundos, restabelecendo as leituras instantâneas imediatamente após a inicialização do servidor.
+
+6.4. Mapeamento Completo de Rotas HTTP em app.py:
+- GET /: Renderiza templates/index.html (Página Principal com navegação).
+- GET /painel_status: Renderiza templates/painel_status.html (Dashboard ESP32 em Tempo Real).
+- GET /calculadora_convectivo: Renderiza templates/calculadora_convectivo.html (Menu de Módulos Térmicos).
+- GET /calculadora_convectivo/<tipo>: Renderiza a calculadora específica ('natural' ou 'forcada').
+- POST /calculadora_convectivo/<tipo>/calcular: Executa as correlações analíticas do módulo conveccao_calculadora.py.
+- GET /calculadora_condensacao: Renderiza calculadora de condensação em filme.
+- GET /calculadora_ebulicao: Renderiza calculadora de regimes de ebulição.
+- GET /calculadora_arranjos_tubos: Renderiza calculadora de bancos de tubos em trocadores de calor.
+- GET /calculadora_escoamento_interno: Renderiza calculadora de convecção interna em dutos.
+- GET e POST /sele_aleta, /sele_materiais, /inserir_seledados/..., /resultados_sele: Módulos de seleção e ranqueamento de aletas.
+- GET e POST /tipos_aletas, /tipos_materiais/..., /inserir_dados/..., /resultado: Módulos de dimensionamento aprofundado de aletas.
+- GET e POST /circuito_termico e /calcular_circuito_termico: Solução de circuitos térmicos equivalentes por analogia elétrica.
+- GET e POST /api/monitoramento e /api/temperaturas: Endpoints da API REST de telemetria.
+
+7. PROCESSAMENTO E CÁLCULOS TÉRMICOS
+--------------------------------------------------------------------------------
+
+7.1. Interpolação de Propriedades Termofísicas (conveccao_calculadora.py):
+- Função: interpolar_propriedades(fluido, T_kelvin)
+- Arquivo: conveccao_calculadora.py (linhas 152-298)
+- Entradas: fluido (string: 'ar', 'agua', 'mercurio', 'oleo'), T_kelvin (float, em Kelvin).
+- Processamento para o ar (Baseado em Incropera & DeWitt, Tabela A.4):
+  * Temperatura em Celsius: T_celsius = T_kelvin - 273.15
+  * Massa específica (aproximação de gás ideal a 1 atm):
+    rho = 353.0 / T_kelvin   [kg/m³]
+  * Calor específico a pressão constante:
+    cp = 1006.0 + 0.089 * T_celsius - 3.6e-5 * T_celsius^2   [J/(kg·K)]
+  * Condutividade térmica:
+    k = 0.02414 + 7.42e-5 * T_celsius - 1.73e-8 * T_celsius^2   [W/(m·K)]
+  * Viscosidade dinâmica (Equação de Sutherland com constantes para o ar):
+    mu = mu_ref * (T_kelvin / T_ref)^1.5 * (T_ref + S) / (T_kelvin + S)   [Pa·s]
+    onde: mu_ref = 1.716e-5 Pa·s, T_ref = 273.15 K, S = 110.4 K.
+  * Viscosidade cinemática:
+    nu = mu / rho   [m²/s]
+  * Difusividade térmica:
+    alpha = k / (rho * cp)   [m²/s]
+  * Número de Prandtl:
+    Pr = nu / alpha = (mu * cp) / k   [adimensional]
+  * Coeficiente de expansão volumétrica térmica (gás ideal):
+    beta = 1.0 / T_kelvin   [1/K]
+- Saída: Dicionário contendo rho, cp, k, mu, Pr, nu, alpha.
+
+7.2. Convecção Natural em Placas (conveccao_calculadora.py):
+- Temperatura Média da Superfície:
+  Ts,m = (T1 + T2 + T3) / 3   [°C]
+- Temperatura de Filme:
+  T_filme = (Ts,m + T_ambiente) / 2 + 273.15   [K]
+- Número de Grashof:
+  Gr_L = (g * beta * |Ts,m - T_ambiente| * L_c^3) / nu^2   [adimensional]
+  onde g = 9.81 m/s² e L_c é o comprimento característico (altura para placa vertical; L_c = Área / Perímetro para horizontal).
+- Número de Rayleigh:
+  Ra_L = Gr_L * Pr   [adimensional]
+- Correlação de Churchill & Chu para Placa Vertical (abrangendo regime laminar e turbulento, Ra < 10^12):
+  Nu_L = [ 0.825 + ( 0.387 * Ra_L^(1/6) ) / ( 1 + (0.492 / Pr)^(9/16) )^(8/27) ]^2
+- Coeficiente de Convecção Natural Analítico:
+  h_anal = Nu_L * k / L_c   [W/(m²·K)]
+
+7.3. Convecção Forçada sobre Placa Plana (conveccao_calculadora.py):
+- Número de Reynolds:
+  Re_L = (v * L) / nu   [adimensional]
+- Critério de Transição de Regime:
+  * Regime Laminar (Re_L < 500.000):
+    Nu_L = 0.664 * Re_L^(1/2) * Pr^(1/3)
+  * Regime Combinado / Misto (Re_L >= 500.000):
+    Nu_L = (0.037 * Re_L^(4/5) - 871.0) * Pr^(1/3)
+  * Regime Totalmente Turbulento:
+    Nu_L = 0.037 * Re_L^(4/5) * Pr^(1/3)
+- Coeficiente de Convecção Forçada Analítico:
+  h_anal = Nu_L * k / L   [W/(m²·K)]
+
+7.4. Balanço de Calor Experimental e Cálculo de h_exp:
+- Taxa de Transferência de Calor por Condução através da placa:
+  Q_cond = [ k_material * A_transversal * (Ts,superior - Ts,inferior) ] / espessura_placa   [W]
+- Taxa de Transferência de Calor por Radiação com as vizinhanças:
+  Q_rad = epsilon * sigma * A_superficial * ( Ts,m_K^4 - T_ambiente_K^4 )   [W]
+  onde sigma = 5.670374419e-8 W/(m²·K⁴) (Constante de Stefan-Boltzmann) e epsilon é a emissividade da superfície.
+- Taxa de Calor Convectivo Experimental:
+  Q_conv = Q_total - Q_cond - Q_rad   [W]
+- Coeficiente Convectivo Experimental:
+  h_exp = Q_conv / [ A_superficial * (Ts,m - T_ambiente) ]   [W/(m²·K)]
+- Erro Relativo Percentual:
+  Erro = [ |h_anal - h_exp| / h_anal ] * 100   [%]
+
+7.5. Módulo de Superfícies Estendidas / Aletas (modelo3.py):
+- Abrange 8 Geometrias de Aletas:
+  1) Aletas retangulares retas (perfil constante).
+  2) Aletas triangulares retas (perfil linear).
+  3) Aletas parabólicas retas (perfil côncavo/convexo).
+  4) Aletas circulares / anulares de perfil retangular.
+  5) Aletas de pino / espiga de perfil retangular cilíndrico.
+  6) Aletas de pino de perfil triangular cônico.
+  7) Aletas de pino de perfil parabólico.
+  8) Aletas de pino de perfil parabólico com ponta arredondada.
+- Abrange 4 Condições de Contorno na Extremidade da Aleta (x = L):
+  1) Convecção na ponta (comprimento corrigido L_c = L + t/2 para retangular e L_c = L + D/4 para pino).
+  2) Ponta adiabática (fluxo térmico nulo em x = L: dtheta/dx = 0).
+  3) Temperatura prescrita na ponta (T(L) = T_L fixada).
+  4) Aleta infinita / muito longa (L -> infinito, T(L) -> T_ambiente).
+- Parâmetro Característico de Aleta:
+  m = sqrt( (h * P) / (k * A_c) )   [1/m]
+- Equação de Desempenho (Taxa de Calor q_f e Eficiência eta_f):
+  q_f = eta_f * h * A_aleta * (T_base - T_ambiente)   [W]
+  eta_f = tanh(m * L_c) / (m * L_c)  (para aleta retangular de ponta adiabática ou corrigida).
+
+8. INTERFACE WEB E DASHBOARD
+--------------------------------------------------------------------------------
+
+8.1. Página Inicial (templates/index.html):
+- Ponto de entrada que centraliza os acessos às calculadoras térmicas, ao laboratório didático de aletas e ao painel de status em tempo real.
+
+8.2. Painel de Status em Tempo Real (templates/painel_status.html):
+- Top Navbar moderna com indicador de conectividade em tempo real ("ESP32 Conectado (2s)") e timestamp da última sincronização.
+- Linha de KPIs ao Vivo:
+  * Temperatura Média da Placa: Ts,m = (T1 + T2 + T3) / 3 [°C].
+  * Gradiente Térmico: Delta T = |T2 - T3| [°C] com badge automático de homogeneidade ("Homogêneo / Ts ≈ const" para Delta T <= 2.5 °C; "Gradiente Ativo" para Delta T > 2.5 °C).
+  * Temperatura Ambiente: T4 (DHT11) [°C].
+  * Temperatura Base Inferior: Média de T5 e T6 [°C].
+- Grid com 6 Cards de Sensores:
+  * T1: Início da Chama (Sensor #01 — ESP32 #01).
+  * T2: Meio da Chapa (Sensor #02 — ESP32 #01).
+  * T3: Final da Chama (Sensor #03 — ESP32 #01).
+  * T4: Ambiente DHT11 (ESP32 #01).
+  * T5: Baixo da Placa (Sensor #04 — ESP32 #02).
+  * T6: Baixo da Placa (Sensor #05 — ESP32 #02).
+  * Suporte a Drag & Drop: O usuário pode arrastar qualquer card para reorganizar a visualização física dos sensores na tela. A ordem é salva no localStorage do navegador.
+- Gráfico Temporal em Tempo Real:
+  * Implementado com Chart.js 4, renderizando 6 curvas contínuas com interpolação suave (tension: 0.35).
+  * Mantém histórico de 25 pontos temporais sincronizados com o polling de 2 segundos.
+  * Botões interativos para "Pausar/Continuar Gráfico" e "Limpar Histórico".
+
+8.3. Menu de Convecção (templates/calculadora_convectivo.html):
+- Apresenta os 6 módulos térmicos com acesso direto em 1 clique:
+  1) Convecção Natural (h ≈ 2 a 25 W/m²·K) -> /calculadora_convectivo/natural
+  2) Convecção Forçada (h ≈ 10 a 500 W/m²·K) -> /calculadora_convectivo/forcada
+  3) Condensação em Filme (h ≈ 2.500 a 25.000 W/m²·K) -> /calculadora_condensacao
+  4) Ebulição em Piscina (h ≈ 2.500 a 100.000 W/m²·K) -> /calculadora_ebulicao
+  5) Arranjos de Bancos de Tubos (h ≈ 50 a 1.000 W/m²·K) -> /calculadora_arranjos_tubos
+  6) Escoamento Interno em Dutos (h ≈ 50 a 10.000 W/m²·K) -> /calculadora_escoamento_interno
+
+9. FLUXO COMPLETO DE EXECUÇÃO
+--------------------------------------------------------------------------------
+
+O funcionamento cronológico de ponta a ponta do sistema ocorre em 12 etapas:
+
+Etapa 1: Energização dos dois módulos microcontroladores ESP32 na bancada experimental.
+Etapa 2: Inicialização dos barramentos OneWire (GPIO 4) e DHT11 (GPIO 27); os firmwares carregam os offsets de calibração previamente salvos na memória Flash NVS.
+Etapa 3: Autenticação e conexão automática dos ESP32 à rede Wi-Fi local ("CLAUDIO 2.4Ghz").
+Etapa 4: Aquisição física periódica das temperaturas a cada 1000 ms pelos conversores A/D internos dos sensores DS18B20 (resolução de 10 bits) e pelo elemento resistivo/capacitivo do DHT11.
+Etapa 5: Validação das leituras brutas, aplicação dos offsets individuais de calibração e descarte de falhas transitórias (-127 °C, 85 °C ou leituras fora da faixa de -55 a 150 °C).
+Etapa 6: Formatação e serialização das medições válidas em objetos JSON leves.
+Etapa 7: Disparo periódico de requisições HTTP POST a cada 2000 ms para o endpoint /api/temperaturas no IP do servidor Flask (porta 5000).
+Etapa 8: Recepção pelo servidor Flask; ativação do semáforo de exclusão mútua (monitoring_lock) para gravação thread-safe no dicionário global de memória (monitoring_cache).
+Etapa 9: Disponibilização dos dados consolidados na rota REST /api/monitoramento.
+Etapa 10: O frontend web realiza requisições assíncronas assinaladas via JavaScript a cada 2 segundos.
+Etapa 11: Renderização reativa no navegador: atualização instantânea dos mostradores numéricos, cálculo dos KPIs em tempo real (Ts,m, Delta T, Tamb, Tbase) e inserção do novo ponto na curva do Chart.js.
+Etapa 12: O usuário acessa as calculadoras de convecção ou aletas, puxa as temperaturas reais da bancada e executa o balanço de energia, obtendo h_anal, h_exp e os parâmetros de otimização térmica.
+
+10. FUNCIONALIDADES EFETIVAMENTE IMPLEMENTADAS NO CÓDIGO
+--------------------------------------------------------------------------------
+
+- Aquisição e Instrumentação:
+  * Leitura de 5 sensores de temperatura DS18B20 com identificação por ROM e índice OneWire.
+  * Leitura de temperatura ambiente e umidade relativa via sensor DHT11.
+  * Rotina de calibração em banho de gelo (0 °C) com 30 amostras e gravação permanente na Flash NVS.
+  * Detecção de falhas de hardware com contador de erros e re-scan automático a cada 10 s.
+
+- Comunicação e Rede:
+  * Conexão Wi-Fi Station com reconexão automática em caso de queda de sinal.
+  * Transmissão HTTP POST com payload JSON a cada 2 segundos.
+  * Sincronização horária de rede via protocolo NTP (Network Time Protocol).
+
+- Backend e API REST:
+  * Servidor Flask estruturado com rotas dinâmicas e tratamento de sessão.
+  * Endpoints REST: /api/temperaturas, /api/monitoramento e /api/status.
+  * Thread-safety garantido via threading.Lock() para manipulação do cache de medições.
+
+- Cálculos e Computação Científica:
+  * Interpolação de propriedades termofísicas do ar, água, óleo e mercúrio em função da temperatura.
+  * Cálculo analítico de convecção natural (placas verticais, horizontais, cilindros e esferas).
+  * Cálculo analítico de convecção forçada externa (placa plana, cilindros, esferas).
+  * Convecção interna em tubos circulares (regimes laminar, transitório e turbulento com atrito).
+  * Modelagem de mudança de fase (condensação em filme de Nusselt e ebulição nucleada de Rohsenow).
+  * Dimensionamento analítico rigoroso de 8 geometrias de aletas sob 4 condições de contorno.
+  * Banco de dados com 10 materiais contendo condutividade, massa específica e custo.
+  * Estimativa de volume, massa e custo de fabricação de aletas.
+
+- Interface Gráfica e Dashboard:
+  * Painel de instrumentação em tempo real com KPIs e alertas de gradiente térmico.
+  * Reorganização de cartões por Drag & Drop persistido no localStorage.
+  * Histórico gráfico contínuo com Chart.js 4 (interpolação cúbica, pausa e limpeza).
+  * Menu de calculadoras com navegação direta em 1 clique e faixas de h.
+  * Geração de gráficos interativos de aletas via Plotly.
+
+11. FUNCIONALIDADES NÃO IMPLEMENTADAS OU NÃO CONFIRMADAS NO CÓDIGO
+--------------------------------------------------------------------------------
+
+- Persistência em Banco de Dados Relacional / NoSQL:
+  Não foi encontrada implementação de banco de dados baseado em disco (como SQLite, PostgreSQL ou MySQL). As medições são mantidas estritamente em memória RAM (monitoring_cache).
+- Autenticação e Controle de Acesso por Usuário:
+  Não foram encontrados mecanismos de login, senhas, tokens JWT ou controle de permissões na API.
+- Criptografia HTTPS / TLS:
+  A comunicação entre os ESP32 e o Flask utiliza HTTP em texto claro sobre a rede local.
+- Sensor DHT11 no ESP32 #02:
+  O ESP32 #02 possui apenas sensores DS18B20 conectados; a leitura de ambiente (T4) provém exclusivamente do ESP32 #01.
+- Gravação Contínua de Logs em Arquivo CSV/Excel no Backend:
+  Não foi encontrada rotina automática de exportação de dados para arquivos CSV no servidor Flask. (Nota: Os dados podem ser visualizados na interface web, mas a gravação em arquivo permanente não pôde ser confirmada no código analisado).
+
+12. DEPENDÊNCIAS E GUIA DE EXECUÇÃO
+--------------------------------------------------------------------------------
+
+12.1. Bibliotecas do Firmware (Arduino IDE / PlatformIO):
+- WiFi.h (Nativa do core ESP32)
+- HTTPClient.h (Nativa do core ESP32)
+- OneWire (por Paul Stoffregen - versão 2.3.7 ou superior)
+- DallasTemperature (por Miles Burton - versão 3.9.0 ou superior)
+- ArduinoJson (por Benoit Blanchon - versão 6.x)
+- DHT sensor library (por Adafruit - versão 1.4.x)
+- Preferences.h (Nativa do core ESP32)
+
+12.2. Dependências Python (Backend):
+Conforme declarado no arquivo requirements.txt:
+- Flask >= 3.0.0
+- Werkzeug >= 3.0.0
+- Jinja2 >= 3.1.0
+- numpy >= 1.24.0
+- scipy >= 1.10.0
+- matplotlib >= 3.7.0
+- plotly >= 5.15.0
+- pandas >= 2.0.0
+- Pillow >= 10.0.0
+
+12.3. Como Instalar e Executar o Sistema:
+Passo 1: No computador servidor, abra o terminal na pasta do projeto (V29) e instale as dependências:
+         pip install -r requirements.txt
+Passo 2: Inicie o servidor Flask:
+         python app.py
+Passo 3: Verifique o endereço IP local do computador (ex.: 192.168.1.X ou 10.247.140.X).
+Passo 4: Nos arquivos .ino dos dois ESP32, confirme se as constantes WIFI_SSID, WIFI_PASSWORD e SERVER_HOST correspondem à rede e ao IP do servidor.
+Passo 5: Faça o upload dos firmwares para os respectivos ESP32 através da Arduino IDE.
+Passo 6: Abra o navegador e acesse:
+         http://localhost:5000/painel_status
+
+13. GUIA PARA APRESENTAÇÃO DO TCC (ROTEIRO ORAL)
+--------------------------------------------------------------------------------
+
+13.1. Versão Resumida (Apresentação de 2 Minutos):
+"Senhores membros da banca, o objetivo deste trabalho foi desenvolver uma plataforma integrada de instrumentação, monitoramento e análise térmica para ensaios experimentais de transferência de calor.
+A bancada física conta com dois microcontroladores ESP32 conectados a cinco sensores digitais de temperatura DS18B20 e um sensor DHT11. Os dados de temperatura são lidos com resolução de 10 bits, corrigidos por calibração em banho de gelo gravada na memória Flash e enviados via Wi-Fi em formato JSON para uma API desenvolvida em Python com Flask.
+No servidor, implementamos rotinas termofísicas rigorosas baseadas na literatura clássica de Incropera e Çengel. O sistema calcula a temperatura média superficial, temperatura de filme, propriedades do ar e determina os números adimensionais de Grashof, Reynolds, Prandtl, Rayleigh e Nusselt. Com isso, a plataforma obtém o coeficiente de convecção analítico (h_anal) e o compara com o coeficiente experimental (h_exp) obtido a partir do balanço térmico de condução e radiação na placa. Além disso, a aplicação disponibiliza um dashboard em tempo real com gráficos temporais e módulos analíticos para oito geometrias de aletas e dez materiais de engenharia, integrando hardware físico e computação científica aplicada."
+
+13.2. Versão Completa (Apresentação de 5 Minutos):
+"Prezada banca examinadora, apresento a plataforma integrada de monitoramento e modelagem térmica desenvolvida para o nosso Trabalho de Conclusão de Curso de Engenharia.
+O projeto nasceu da necessidade de unir a experimentação física em laboratório à agilidade computacional. Na parte de instrumentação e hardware, projetamos uma arquitetura distribuída com dois ESP32 operando em conjunto. O primeiro ESP32 é responsável pela superfície superior da placa condutora, lendo os sensores T1, T2 e T3 no início, meio e fim da chama com endereços OneWire de 64 bits fixos, além da temperatura ambiente T4 com DHT11. O segundo ESP32 monitora as temperaturas T5 e T6 na base inferior da placa.
+Um aspecto fundamental de engenharia foi o desenvolvimento de uma rotina de calibração em ponto fixo de gelo fundente (0 °C): ao comando do operador, o microcontrolador coleta trinta amostras, calcula o offset individual de cada sensor e grava permanentemente na memória Flash NVS via biblioteca Preferences.
+A cada dois segundos, os dados validados são despachados via HTTP POST com payload JSON estruturado.
+No backend, estruturamos uma API robusta em Python Flask com sincronização por exclusão mútua (threading.Lock), garantindo operações atômicas no cache de dados mesmo sob acessos concorrentes.
+No núcleo científico de cálculo, o software realiza a interpolação contínua das propriedades do ar pela equação de Sutherland e tabelas de Incropera. O sistema processa o gradiente térmico longitudinal e calcula os adimensionais de Rayleigh e Nusselt através das correlações de Churchill-Chu e McAdams para convecção natural, e Churchill-Bernstein para convecção forçada.
+A grande contribuição prática da bancada é o fechamento do balanço térmico experimental: ao quantificar a taxa de condução através da espessura da placa e a taxa de radiação superficial pela lei de Stefan-Boltzmann, o sistema isola a parcela convectiva e obtém o coeficiente convectivo experimental (h_exp), calculando o desvio percentual em relação ao coeficiente analítico teórico (h_anal).
+A interface web desenvolvida em Bootstrap e Chart.js oferece ao engenheiro ou aluno uma visualização dinâmica em tempo real, com diagnóstico de regime permanente, KPIs instantâneos de gradiente térmico e um laboratório virtual completo de aletas capaz de calcular a distribuição de temperatura e a viabilidade econômica de dez materiais estruturais. Dessa forma, comprovamos que a integração de hardware IoT com computação científica eleva a precisão e a qualidade pedagógica dos ensaios térmicos."
+
+14. TRECHOS MAIS IMPORTANTES DO CÓDIGO PARA O TCC
+--------------------------------------------------------------------------------
+
+14.1. Leitura e Filtragem dos Sensores DS18B20 (esp32_painel_status.ino):
+- Localização: esp32_painel_status.ino (linhas 146-175).
+- Importância: Demonstra o critério rigoroso de validação de hardware que rejeita leituras espúrias (-127 °C e 85 °C) e aplica o offset de calibração.
+- Recomendação no TCC: Corpo do texto (Capítulo de Instrumentação e Aquisição de Dados).
+
+14.2. Construção e Envio do Pacote JSON HTTP (esp32_painel_status.ino):
+- Localização: esp32_painel_status.ino (linhas 305-347).
+- Importância: Evidencia a arquitetura de comunicação IoT, serialização JSON e tratamento de timeout HTTP.
+- Recomendação no TCC: Corpo do texto ou Apêndice de Código Embarcado.
+
+14.3. Endpoint Thread-Safe de Recepção de Dados (app.py):
+- Localização: app.py (linhas 1350-1390).
+- Importância: Mostra a recepção atômica das telemetrias dos dois ESP32 via with monitoring_lock:.
+- Recomendação no TCC: Corpo do texto (Capítulo de Arquitetura de Software e Backend).
+
+14.4. Função de Interpolação de Propriedades Termofísicas (conveccao_calculadora.py):
+- Localização: conveccao_calculadora.py (linhas 152-194).
+- Importância: Implementação analítica da equação de Sutherland e correlações de Incropera & DeWitt.
+- Recomendação no TCC: Corpo do texto (Capítulo de Modelagem Matemática e Termodinâmica).
+
+14.5. Solução Analítica de Aletas com Funções Hiperbólicas (modelo3.py):
+- Localização: modelo3.py (linhas 275-350).
+- Importância: Resolução exata da equação diferencial de aletas sob as 4 condições de contorno clássicas.
+- Recomendação no TCC: Corpo do texto ou Apêndice de Formulações Matemáticas.
+
+14.6. Atualização Reativa do Dashboard via Polling (painel_status.html):
+- Localização: templates/painel_status.html (seção script).
+- Importância: Algoritmo client-side assíncrono que consome a API REST e atualiza o gráfico Chart.js.
+- Recomendação no TCC: Apêndice de Interface Gráfica.
+
+15. ORGANIZAÇÃO RECOMENDADA PARA O TEXTO DO TCC
+--------------------------------------------------------------------------------
+
+Sugestão de estrutura de capítulos para a monografia de Engenharia:
+
+- CAPÍTULO 1: INTRODUÇÃO E OBJETIVOS
+  * Contextualização do ensino de transferência de calor e instrumentação experimental.
+  * Objetivos gerais e específicos do projeto da bancada.
+
+- CAPÍTULO 2: FUNDAMENTAÇÃO TEÓRICA
+  * Condução de calor unidimensional e superfícies estendidas (aletas).
+  * Convecção natural e forçada: adimensionais (Re, Gr, Pr, Ra, Nu) e correlações empíricas.
+  * Radiação térmica de superfícies cinzentas e balanço de energia experimental.
+  * Sistemas embarcados em tempo real e arquitetura cliente-servidor para IoT.
+
+- CAPÍTULO 3: DESENVOLVIMENTO DO HARDWARE E INSTRUMENTAÇÃO
+  * Arquitetura com microcontroladores ESP32 e sensores DS18B20 / DHT11.
+  * Topologia de barramento OneWire e mapeamento por endereçamento ROM.
+  * Metodologia de calibração em banho de gelo (0 °C) e persistência na Flash NVS.
+
+- CAPÍTULO 4: DESENVOLVIMENTO DO SOFTWARE E PLATAFORMA WEB
+  * Arquitetura do backend Flask e sincronização concorrente thread-safe.
+  * Módulos científicos de cálculo térmico e propriedades dos fluidos.
+  * Interface gráfica, dashboard em tempo real e integração via Chart.js e Plotly.
+
+- CAPÍTULO 5: RESULTADOS EXPERIMENTAIS E DISCUSSÃO
+  * Análise das curvas de aquecimento e estabilização térmica da placa.
+  * Comparação quantitativa entre h_analítico e h_experimental e análise de incertezas.
+  * Estudo de caso comparativo entre as geometrias de aletas e materiais.
+
+- CAPÍTULO 6: CONCLUSÕES E TRABALHOS FUTUROS
+  * Síntese das contribuições e validação da metodologia proposta.
+  * Sugestões de evolução do sistema.
+
+- APÊNDICES:
+  * Apêndice A: Código-fonte do Firmware ESP32 #01 (esp32_painel_status.ino).
+  * Apêndice B: Código-fonte do Firmware ESP32 #02 (esp32_monitor_ambiente.ino).
+  * Apêndice C: Código-fonte do Servidor e API Flask (app.py).
+  * Apêndice D: Módulo de Cálculo de Convecção (conveccao_calculadora.py).
+  * Apêndice E: Módulo de Modelagem de Aletas (modelo3.py).
+
+16. LIMITAÇÕES, RISCOS E MELHORIAS FUTURAS
+--------------------------------------------------------------------------------
+
+16.1. Limitações Identificadas no Código Atual:
+- Armazenamento Volátil: A ausência de banco de dados em disco (como SQLite ou PostgreSQL) faz com que o histórico de medições seja reiniciado caso o servidor Python seja encerrado.
+- Rede Local em Texto Claro: O tráfego HTTP entre os ESP32 e o Flask não utiliza criptografia TLS/HTTPS, sendo adequado para redes locais de laboratório, mas suscetível a interceptações em redes públicas.
+- Dependência de IP Estático: Os firmwares possuem o IP do servidor configurado estaticamente em SERVER_HOST ("10.247.140.204"). Caso o IP do computador mude pelo DHCP do roteador, o firmware exige recompilação ou ajuste de rede.
+
+16.2. Melhorias Futuras Recomendadas:
+- Implementação de persistência histórica em banco de dados relacional com registro de timestamps UTC.
+- Implementação de protocolo mDNS (Multicast DNS, ex: http://bancada-calor.local) nos ESP32 para descoberta automática do IP do servidor sem necessidade de alteração no código.
+- Implementação de protocolo MQTT com broker leve (Eclipse Mosquitto) para comunicação assíncrona por publicação/assinatura com menor consumo de banda.
+- Criação de rotina de exportação automática de ensaios completos em formato CSV ou Excel (.xlsx).
+- Adição de cálculo de propagação de incertezas experimentais (método de Kline e McClintock) na API.
+
+17. GLOSSÁRIO DE TERMOS TÉCNICOS
+--------------------------------------------------------------------------------
+
+- API (Application Programming Interface): Conjunto de rotinas e padrões de programação que permite a comunicação entre sistemas de software (aqui, entre os ESP32 e o Flask).
+- Endpoint: Endereço URI específico dentro de uma API onde uma função pode ser acessada (ex: /api/temperaturas).
+- Flask: Microframework web em linguagem Python utilizado para hospedar o backend e a API REST.
+- Backend: Camada do sistema que processa regras de negócio, cálculos matemáticos e persistência.
+- Frontend: Camada de interface visual acessada pelo usuário final através do navegador web.
+- HTTP (Hypertext Transfer Protocol): Protocolo de comunicação da camada de aplicação utilizado para transferência de dados entre cliente (ESP32/navegador) e servidor (Flask).
+- JSON (JavaScript Object Notation): Formato leve e padronizado de intercâmbio de dados estruturados em texto.
+- Wi-Fi: Tecnologia de rede local sem fio baseada nos padrões IEEE 802.11.
+- ESP32: Família de microcontroladores de baixo custo e alta performance com Wi-Fi e Bluetooth embutidos.
+- DS18B20: Sensor digital de temperatura de alta precisão com comunicação através do barramento OneWire.
+- DHT11: Sensor eletrônico integrado para medição de temperatura e umidade relativa do ar.
+- GPIO (General Purpose Input/Output): Pinos digitais de entrada e saída programáveis do microcontrolador.
+- 1-Wire (OneWire): Barramento serial que permite a comunicação bidirecional de múltiplos dispositivos utilizando uma única linha de dados e terra.
+- Dashboard: Painel gráfico de controle e monitoramento visual de indicadores e variáveis de processo.
+- Cache em Memória: Área de armazenamento temporário de acesso rápido mantida na memória RAM.
+- Número de Reynolds (Re): Razão adimensional entre as forças de inércia e as forças viscosas no escoamento.
+- Número de Grashof (Gr): Razão adimensional entre as forças de empuxo térmico e as forças viscosas.
+- Número de Prandtl (Pr): Razão adimensional entre a difusividade de momento (viscosidade cinemática) e a difusividade térmica do fluido.
+- Número de Rayleigh (Ra): Produto entre Grashof e Prandtl (Ra = Gr * Pr), parâmetro governante da convecção natural.
+- Número de Nusselt (Nu): Razão adimensional entre a transferência de calor por convecção e por condução pura no fluido.
+- Convecção: Modo de transferência de calor entre uma superfície sólida e um fluido em movimento.
+- Condução: Modo de transferência de calor através da matéria por difusão de energia em nível atômico/molecular.
+- Radiação Térmica: Energia emitida pela matéria na forma de ondas eletromagnéticas devido à sua temperatura.
+- Emissividade (epsilon): Propriedade da superfície que indica a eficiência de emissão de radiação térmica (0 <= epsilon <= 1).
+- Constante de Stefan-Boltzmann (sigma): Constante física universal de radiação (5,670374 x 10^-8 W/(m²·K⁴)).
+- Regime Permanente: Estado no qual as variáveis térmicas do sistema não variam com o tempo (dT/dt = 0).
+- h_anal: Coeficiente de transferência de calor por convecção obtido por correlações teóricas/empíricas da literatura.
+- h_exp: Coeficiente de transferência de calor por convecção determinado através do balanço de energia experimental.
+
+18. RESUMO FINAL E QUESTÕES PARA A BANCA EXAMINADORA
+--------------------------------------------------------------------------------
+
+18.1. Resumo Técnico Executivo (1 Parágrafo):
+O sistema desenvolvido constitui uma solução integrada de engenharia para aquisição, modelagem e análise térmica em tempo real. A plataforma combina a instrumentação física de uma bancada didática através de microcontroladores ESP32 e sensores digitais DS18B20/DHT11 calibrados por banho de gelo com uma arquitetura de software orientada a serviços em Python Flask. A aplicação processa as propriedades termofísicas dos fluidos via formulações clássicas, calcula os números adimensionais governantes (Re, Gr, Pr, Ra, Nu) e estabelece o balanço térmico experimental (condução, convecção e radiação), confrontando o coeficiente convectivo analítico (h_anal) com o experimental (h_exp). A interface web fornece dashboards em tempo real com Chart.js e módulos analíticos para oito geometrias de aletas e dez materiais de engenharia, constituindo uma ferramenta robusta para pesquisa aplicada e ensino de termociências.
+
+18.2. Os 10 Pontos Mais Importantes para Estudar antes da Apresentação:
+1. A diferença entre h_analítico (obtido pelas correlações de Nusselt de Churchill-Chu/Incropera) e h_experimental (obtido isolando Q_conv = Q_total - Q_cond - Q_rad na bancada).
+2. Como funciona o protocolo OneWire dos sensores DS18B20 e por que eles usam resistor pull-up de 4,7 kOhm.
+3. Como os sensores são identificados no código (endereço ROM de 64 bits no ESP32 #01 vs índice no ESP32 #02).
+4. O método de calibração em banho de gelo fundente (0 °C) e como o offset é gravado na Flash NVS via Preferences.
+5. A importância do threading.Lock() no app.py para evitar conflito na gravação simultânea dos dois ESP32.
+6. A definição da temperatura de filme T_filme = (T_superficie + T_ambiente)/2 e por que as propriedades do ar são calculadas nela.
+7. O significado físico dos números adimensionais: Reynolds (inércia/viscosidade), Grashof (empuxo/viscosidade), Prandtl (difusão momento/difusão térmica), Rayleigh (convecção natural) e Nusselt (convecção/condução).
+8. As 4 condições de contorno em aletas (convectiva, adiabática, temperatura prescrita, infinita) e a eficiência eta_f.
+9. A estrutura das rotas REST (/api/temperaturas e /api/monitoramento) e o payload JSON trafegado.
+10. O comportamento do regime permanente na bancada (critério de variação temporal inferior a 0,2 °C/min).
+
+18.3. Perguntas Prováveis da Banca Examinadora e Respostas Baseadas no Código:
+- Pergunta 1: Como o sistema garante que os dados dos dois ESP32 não se misturam ou sobrepõem?
+  Resposta: O ESP32 #01 envia apenas as chaves t1, t2, t3, t4 e o ESP32 #02 envia apenas t5 e t6. No backend Flask (app.py), a rota /api/temperaturas utiliza um semáforo threading.Lock() que atualiza de forma atômica apenas os campos presentes no JSON recebido, preservando os valores do outro microcontrolador no dicionário global.
+
+- Pergunta 2: Como é feito o cálculo das propriedades do ar no software?
+  Resposta: No arquivo conveccao_calculadora.py, a função interpolar_propriedades() calcula a densidade pela lei dos gases ideais (rho = 353 / T_K), o calor específico por polinômio quadrático, a condutividade térmica k por polinômio de Incropera & DeWitt e a viscosidade dinâmica mu pela equação de Sutherland, determinando nu, alpha e Pr.
+
+- Pergunta 3: O que acontece se um sensor DS18B20 queimar ou for desconectado durante o ensaio?
+  Resposta: O firmware detecta a leitura inválida (-127 °C ou 85 °C) através da função leituraValida(), incrementa um contador de erros e não envia a chave correspondente no payload JSON. Se acumular 5 erros consecutivos, o ESP32 entra em modo de retry e executa um re-scan do barramento OneWire a cada 10 segundos até restabelecer o sensor.
+
+- Pergunta 4: Por que foi utilizada a resolução de 10 bits nos sensores DS18B20?
+  Resposta: A resolução de 10 bits oferece um passo de quantização de 0,25 °C com um tempo de conversão de aproximadamente 187,5 ms (muito mais rápido que os 750 ms exigidos por 12 bits), garantindo folga temporal no loop de leitura de 1000 ms e maior estabilidade elétrica no barramento.
+
+- Pergunta 5: Onde os dados ficam salvos se a energia do computador cair?
+  Resposta: Conforme implementado atualmente no código, o cache de histórico de 50 pontos fica armazenado na memória RAM do servidor Flask. Caso o servidor seja desligado, o histórico anterior é reiniciado, mas as leituras atuais são restabelecidas em menos de 2 segundos assim que o Flask for reiniciado, pois os ESP32 continuam transmitindo.
+
+================================================================================
+MAPA RÁPIDO DO PROJETO
+================================================================================
+Sensores (5x DS18B20 + 1x DHT11)
+       │
+       ▼
+2x Microcontroladores ESP32 (OneWire GPIO 4 + DHT GPIO 27 + Calibração Flash NVS)
+       │
+       ▼
+Rede Wi-Fi (Protocolo HTTP POST com Payloads JSON a cada 2 segundos)
+       │
+       ▼
+API Backend Flask (app.py na porta 5000 com Lock de Threading)
+       │
+       ▼
+Validação e Armazenamento em Memória (monitoring_cache com histórico circular)
+       │
+       ▼
+Núcleo de Computação Científica:
+├─ conveccao_calculadora.py (Sutherland, Incropera, Nu, Ra, Gr, Re, h_anal)
+├─ modelo3.py (8 Aletas, 4 Condições de Contorno, Soluções Analíticas)
+├─ metricas_engenharia.py (10 Materiais, Massa, Custo, Eficiência)
+└─ mudanca_fase / arranjos_tubos / escoamento_interno
+       │
+       ▼
+Interfaces de Visualização e Dashboard:
+├─ templates/painel_status.html (KPIs ao vivo, Drag & Drop, Chart.js 4)
+├─ templates/calculadora_convectivo.html (Acesso direto em 1 clique com faixas de h)
+└─ visualizacao_plotly.py (Perfis de temperatura e eficiência de superfícies estendidas)
+       │
+       ▼
+Balanço Térmico e Validação Experimental:
+Q_total = Q_cond + Q_rad + Q_conv  ──►  h_exp  vs  h_anal  ──►  Cálculo de Erro Relativo
+================================================================================

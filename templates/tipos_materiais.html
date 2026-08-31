@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tipos de Materiais</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card {
+            padding: 28px 18px 22px 18px;
+            border-radius: 22px;
+            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.13);
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            background: #fff;
+        }
+        h1 {
+            font-size: 2.1em;
+            margin-bottom: 18px;
+            color: #1976d2;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .form-check {
+            background: #f4f8ff;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            padding: 7px 10px 7px 10px;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.06);
+            transition: background 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .form-check:hover {
+            background: #e3f0fc;
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+        }
+        .form-check-input {
+            width: 1.1em;
+            height: 1.1em;
+            margin-right: 12px;
+            accent-color: #1976d2;
+            flex-shrink: 0;
+        }
+        .form-check-label {
+            font-size: 1.08em;
+            color: #222;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+        }
+        .btn-custom {
+            margin-top: 18px;
+            width: 100%;
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            color: #fff;
+            font-size: 1.13rem;
+            padding: 0.7rem 2.2rem;
+            border: none;
+            border-radius: 2rem;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-custom:hover, .btn-custom:focus {
+            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
+            transform: scale(1.04);
+            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.22);
+            outline: none;
+        }
+        .btn-back {
+            margin-top: 12px;
+            width: 100%;
+            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
+            color: #222;
+            font-size: 1.05rem;
+            padding: 0.6rem 2rem;
+            border: none;
+            border-radius: 2rem;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-back:hover, .btn-back:focus {
+            background: linear-gradient(90deg, #78909c 0%, #90caf9 100%);
+            color: #111;
+            transform: scale(1.03);
+            outline: none;
+        }
+        @media (max-width: 600px) {
+            .card {
+                max-width: 98vw;
+                padding: 10px 2vw 10px 2vw;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+            .form-check-label {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="text-center">Escolha o Material</h1>
+        <form method="post">
+            <div>
+                {% for id, material in materiais.items() %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="material" value="{{ id }}" id="material{{ id }}" required>
+                        <label class="form-check-label" for="material{{ id }}">
+                            {{ material.nome }} <span style="color:#37474f;font-weight:400;">(k = {{ material.k }} W/m·K)</span>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-custom">Próximo</button>
+        </form>
+        <a href="/" class="btn btn-back">Voltar</a>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

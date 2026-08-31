@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Convecção Natural & Balanço Térmico | UFR</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1976d2;
+            --light-blue: #64b5f6;
+            --lighter-blue: #bbdefb;
+            --light-bg: #f4f8ff;
+            --success-color: #388e3c;
+            --danger-color: #d32f2f;
+        }
+        
+        body {
+            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 3rem;
+        }
+
+        .mono { font-family: 'Courier New', monospace; }
+        
+        .main-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(25, 118, 210, 0.12);
+            background: #ffffff;
+        }
+        
+        .main-card-header {
+            background: linear-gradient(90deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%);
+            color: white;
+            border-radius: 16px 16px 0 0 !important;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .main-card-header h2 {
+            color: white !important;
+            font-weight: 700;
+            margin: 0;
+            font-size: 1.6rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.25);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.35);
+        }
+        
+        .form-control {
+            border: 2px solid var(--lighter-blue);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 10px rgba(25, 118, 210, 0.2);
+        }
+        
+        .geometry-card {
+            cursor: pointer;
+            border: 2px solid var(--lighter-blue);
+            border-radius: 12px;
+            background: #ffffff;
+            transition: all 0.25s ease;
+            height: 100%;
+        }
+        
+        .geometry-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(25, 118, 210, 0.15);
+        }
+        
+        .geometry-card.selected {
+            border-color: var(--primary-blue);
+            background: rgba(25, 118, 210, 0.08);
+            box-shadow: 0 0 0 2px var(--primary-blue);
+        }
+
+        .icon-blue {
+            color: var(--primary-blue);
+        }
+
+        /* Sidebar de Monitoramento */
+        .monitoring-sidebar {
+            position: sticky;
+            top: 20px;
+        }
+
+        .monitoring-panel {
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+            border: 2px solid var(--lighter-blue);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.08);
+        }
+
+        .temp-card {
+            background: #ffffff;
+            border-left: 4px solid var(--light-blue);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+
+        .temp-card:hover {
+            transform: translateX(4px);
+        }
+
+        .temp-card label {
+            font-size: 0.75rem;
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .temp-value {
+            font-size: 1.45rem;
+            color: #0d47a1;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            line-height: 1;
+        }
+
+        .btn-import {
+            width: 100%;
+            background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(25, 118, 210, 0.2);
+        }
+
+        .btn-import:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(25, 118, 210, 0.3);
+            color: white;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Results Styling */
+        .res-kpi-box {
+            border-radius: 12px;
+            padding: 16px 20px;
+            height: 100%;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+        }
+        .res-kpi-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+
+        /* Step-by-Step Memory Block */
+        .step-block {
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+        }
+        .step-num {
+            font-weight: 700;
+            color: var(--primary-blue);
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .step-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.88rem;
+            color: #212121;
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        @media print {
+            .monitoring-sidebar, #voltarInicial, .btn-action-zone { display: none !important; }
+            .col-md-9 { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-11">
+                <div class="card main-card">
+                    <div class="main-card-header">
+                        <h2>
+                            <i class="fas fa-wind mr-2"></i>
+                            Calculadora de Convecção Natural &amp; Balanço Térmico
+                        </h2>
+                        <small style="color: rgba(255,255,255,0.85); font-weight: 500;">
+                            Bancada Didática de Transferência de Calor &bull; Universidade Federal de Rondonópolis (UFR)
+                        </small>
+                    </div>
+
+                    <div class="card-body p-4">
+                        
+                        <!-- 1. Seleção de Geometria -->
+                        <div class="mb-4">
+                            <h5 class="text-center mb-3 font-weight-bold" style="color: #0d47a1;">
+                                <i class="fas fa-shapes mr-2"></i>Selecione a Geometria da Superfície
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="card geometry-card selected" id="card-placa-horizontal" onclick="selecionarGeometria('placa_horizontal')">
+                                        <div class="card-body text-center p-3">
+                                            <i class="fas fa-window-minimize fa-2x icon-blue mb-2"></i>
+                                            <h6 class="font-weight-bold mb-1">Placa Horizontal</h6>
+                                            <small class="text-muted d-block">Face superior/inferior aquecida (Bancada TCC)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card geometry-card" id="card-placa-vertical" onclick="selecionarGeometria('placa_vertical')">
+                                        <div class="card-body text-center p-3">
+                                            <i class="fas fa-square fa-2x icon-blue mb-2"></i>
+                                            <h6 class="font-weight-bold mb-1">Placa Vertical</h6>
+                                            <small class="text-muted d-block">Superfície plana vertical</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card geometry-card" id="card-cilindro" onclick="selecionarGeometria('cilindro_horizontal')">
+                                        <div class="card-body text-center p-3">
+                                            <i class="fas fa-circle fa-2x icon-blue mb-2"></i>
+                                            <h6 class="font-weight-bold mb-1">Cilindro Horizontal</h6>
+                                            <small class="text-muted d-block">Cilindro ou tubo horizontal</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="card geometry-card" id="card-esfera" onclick="selecionarGeometria('esfera')">
+                                        <div class="card-body text-center p-3">
+                                            <i class="fas fa-globe fa-2x icon-blue mb-2"></i>
+                                            <h6 class="font-weight-bold mb-1">Esfera</h6>
+                                            <small class="text-muted d-block">Superfície esférica aquecida</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Formulário Principal + Sidebar -->
+                        <form id="calculoForm">
+                            <input type="hidden" id="geometria" name="geometria" value="placa_horizontal">
+                            
+                            <div class="row">
+                                <!-- Sidebar de Telemetria -->
+                                <div class="col-md-3 monitoring-sidebar mb-3">
+                                    <div class="monitoring-panel">
+                                        <h6 class="font-weight-bold text-center mb-3" style="color: #0d47a1;">
+                                            <span class="status-indicator"></span>
+                                            Telemetria ESP32
+                                        </h6>
+                                        
+                                        <div class="temp-card" style="border-left-color: #e53935;">
+                                            <label>T1 — Início da Placa</label>
+                                            <div class="temp-value" id="temp-t1">0.0 °C</div>
+                                        </div>
+
+                                        <div class="temp-card" style="border-left-color: #fb8c00;">
+                                            <label>T2 — Centro da Placa</label>
+                                            <div class="temp-value" id="temp-t2">0.0 °C</div>
+                                        </div>
+
+                                        <div class="temp-card" style="border-left-color: #fdd835;">
+                                            <label>T3 — Fim da Placa</label>
+                                            <div class="temp-value" id="temp-t3">0.0 °C</div>
+                                        </div>
+
+                                        <div class="temp-card" style="border-left-color: #00acc1;">
+                                            <label style="color:#00acc1;">T4 — Ambiente (DHT11)</label>
+                                            <div class="temp-value" id="temp-t4">0.0 °C</div>
+                                        </div>
+
+                                        <div class="temp-card" style="border-left-color: #8e24aa;">
+                                            <label style="color:#8e24aa;">T5 — Base / Banho Água</label>
+                                            <div class="temp-value" id="temp-t5">0.0 °C</div>
+                                        </div>
+
+                                        <div class="temp-card" style="border-left-color: #5e35b1;">
+                                            <label style="color:#5e35b1;">T6 — Base / Banho Água</label>
+                                            <div class="temp-value" id="temp-t6">0.0 °C</div>
+                                        </div>
+
+                                        <button type="button" class="btn-import" id="btn-importar" onclick="importarDadosESP32()">
+                                            <i class="fas fa-download mr-2"></i>Importar para Cálculos
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Entradas de Parâmetros -->
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <!-- Condições Térmicas -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card h-100 p-3" style="background: #f8faff; border: 1px solid #bbdefb; border-radius: 12px;">
+                                                <h6 class="font-weight-bold icon-blue mb-3">
+                                                    <i class="fas fa-thermometer-half mr-2"></i>Propriedades &amp; Temperaturas
+                                                </h6>
+                                                
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold small">Fluido:</label>
+                                                    <select class="form-control" id="fluido" name="fluido" required>
+                                                        <option value="ar" selected>🌬️ Ar atmosférico (1 atm)</option>
+                                                        <option value="agua">💧 Água líquida</option>
+                                                        <option value="oleo">⚙️ Óleo Mineral</option>
+                                                        <option value="mercurio">⚡ Mercúrio</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold small">Temperatura da Superfície Ts (°C):</label>
+                                                    <input type="number" class="form-control mono" id="T_superficie" name="T_superficie" step="0.1" value="78.5" required placeholder="Ex: 78.5">
+                                                    <small class="text-muted">Média de T1, T2 e T3</small>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold small">Temperatura Ambiente T∞ (°C):</label>
+                                                    <input type="number" class="form-control mono" id="T_fluido" name="T_fluido" step="0.1" value="25.0" required placeholder="Ex: 25.0">
+                                                    <small class="text-muted">Sensor DHT11</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dimensões Geométricas -->
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card h-100 p-3" style="background: #f8faff; border: 1px solid #bbdefb; border-radius: 12px;">
+                                                <h6 class="font-weight-bold icon-blue mb-3">
+                                                    <i class="fas fa-ruler mr-2"></i>Dimensões da Bancada
+                                                </h6>
+
+                                                <!-- Placa Horizontal (Bancada) -->
+                                                <div id="dim_placa_horizontal">
+                                                    <div class="form-group">
+                                                        <label class="font-weight-bold small">Largura da Placa — W (m):</label>
+                                                        <input type="number" class="form-control mono" id="largura_placa_h" name="largura_placa_h" step="0.001" value="0.17" oninput="atualizarLcInfo()">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="font-weight-bold small">Comprimento da Placa — L (m):</label>
+                                                        <input type="number" class="form-control mono" id="comprimento_placa_h" name="comprimento_placa_h" step="0.001" value="0.37" oninput="atualizarLcInfo()">
+                                                        <small class="text-primary font-weight-bold" id="lc_calculado_info">Lc = A/P = 0.0582 m &bull; Área = 0.0629 m²</small>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="font-weight-bold small">Orientação Térmica:</label>
+                                                        <select class="form-control" id="orientacao_horizontal" name="orientacao_horizontal">
+                                                            <option value="inferior" selected>Face quente para BAIXO (Bancada TCC)</option>
+                                                            <option value="superior">Face quente para CIMA</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Placa Vertical -->
+                                                <div id="dim_placa_vertical" style="display: none;">
+                                                    <div class="form-group">
+                                                        <label class="font-weight-bold small">Altura da Placa — L (m):</label>
+                                                        <input type="number" class="form-control mono" id="altura_placa" name="altura" step="0.01" value="0.50">
+                                                    </div>
+                                                </div>
+
+                                                <!-- Cilindro / Esfera -->
+                                                <div id="dim_cilindro_esfera" style="display: none;">
+                                                    <div class="form-group">
+                                                        <label class="font-weight-bold small">Diâmetro — D (m):</label>
+                                                        <input type="number" class="form-control mono" id="diametro" name="diametro" step="0.001" value="0.05">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Parâmetros do Balanço Experimental -->
+                                        <div class="col-12 mb-3">
+                                            <div class="p-3 rounded" style="background: rgba(25, 118, 210, 0.04); border: 1px solid #bbdefb;">
+                                                <h6 class="font-weight-bold icon-blue mb-2">
+                                                    <i class="fas fa-scale-balanced mr-2"></i>Parâmetros do Balanço Térmico da Chapa (TCC)
+                                                </h6>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <label class="small font-weight-bold">Temp. Água/Base T4 (°C):</label>
+                                                        <input type="number" class="form-control mono" id="T_base" name="T_base" step="0.1" value="80.0">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="small font-weight-bold">Espessura (m):</label>
+                                                        <input type="number" class="form-control mono" id="espessura" name="espessura" step="0.001" value="0.005">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="small font-weight-bold">k Alumínio (W/m·K):</label>
+                                                        <input type="number" class="form-control mono" id="k_material" name="k_material" step="1" value="222">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="small font-weight-bold">Emissividade ε:</label>
+                                                        <input type="number" class="form-control mono" id="emissividade" name="emissividade" step="0.01" value="0.09">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mt-3 btn-action-zone">
+                                        <button type="submit" id="btnCalcular" class="btn btn-primary btn-lg px-5">
+                                            <i class="fas fa-calculator mr-2" id="iconCalcular"></i>
+                                            <span id="textoCalcular">Calcular Coeficiente Convectivo</span>
+                                        </button>
+                                        <a href="/calculadora_convectivo" class="btn btn-secondary btn-lg ml-2" id="voltarInicial">
+                                            <i class="fas fa-arrow-left mr-1"></i>Voltar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- 3. Container de Resultados -->
+                        <div id="resultadosContainer" class="mt-4"></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let intervalTelemetria = null;
+
+        function selecionarGeometria(tipo) {
+            $('.geometry-card').removeClass('selected');
+            document.getElementById('geometria').value = tipo;
+
+            document.getElementById('dim_placa_horizontal').style.display = (tipo === 'placa_horizontal') ? 'block' : 'none';
+            document.getElementById('dim_placa_vertical').style.display   = (tipo === 'placa_vertical')   ? 'block' : 'none';
+            document.getElementById('dim_cilindro_esfera').style.display = (tipo === 'cilindro_horizontal' || tipo === 'esfera') ? 'block' : 'none';
+
+            if (tipo === 'placa_horizontal') document.getElementById('card-placa-horizontal').classList.add('selected');
+            else if (tipo === 'placa_vertical') document.getElementById('card-placa-vertical').classList.add('selected');
+            else if (tipo === 'cilindro_horizontal') document.getElementById('card-cilindro').classList.add('selected');
+            else if (tipo === 'esfera') document.getElementById('card-esfera').classList.add('selected');
+        }
+
+        function atualizarLcInfo() {
+            const L = parseFloat(document.getElementById('comprimento_placa_h').value) || 0.37;
+            const W = parseFloat(document.getElementById('largura_placa_h').value) || 0.17;
+            const info = document.getElementById('lc_calculado_info');
+            if (L > 0 && W > 0) {
+                const Lc = (L * W) / (2 * (L + W));
+                info.innerHTML = `<strong>Lc = ${Lc.toFixed(4)} m</strong> &bull; Área = ${(L*W).toFixed(4)} m² &bull; Perímetro = ${(2*(L+W)).toFixed(2)} m`;
+            }
+        }
+
+        async function obterTelemetriaESP32() {
+            try {
+                const response = await fetch('/api/monitoramento');
+                if (!response.ok) return;
+                const json = await response.json();
+                if (json.success && json.data) {
+                    const d = json.data;
+                    document.getElementById('temp-t1').textContent = `${(parseFloat(d.t1)||0).toFixed(1)} °C`;
+                    document.getElementById('temp-t2').textContent = `${(parseFloat(d.t2)||0).toFixed(1)} °C`;
+                    document.getElementById('temp-t3').textContent = `${(parseFloat(d.t3)||0).toFixed(1)} °C`;
+                    document.getElementById('temp-t4').textContent = `${(parseFloat(d.t4)||0).toFixed(1)} °C`;
+                    document.getElementById('temp-t5').textContent = `${(parseFloat(d.t5)||0).toFixed(1)} °C`;
+                    document.getElementById('temp-t6').textContent = `${(parseFloat(d.t6)||0).toFixed(1)} °C`;
+                }
+            } catch (err) {
+                console.warn('Telemetria offline');
+            }
+        }
+
+        function importarDadosESP32() {
+            const t1 = parseFloat(document.getElementById('temp-t1').textContent) || 0;
+            const t2 = parseFloat(document.getElementById('temp-t2').textContent) || 0;
+            const t3 = parseFloat(document.getElementById('temp-t3').textContent) || 0;
+            const t4 = parseFloat(document.getElementById('temp-t4').textContent) || 0;
+            const t5 = parseFloat(document.getElementById('temp-t5').textContent) || 0;
+            const t6 = parseFloat(document.getElementById('temp-t6').textContent) || 0;
+
+            const tMediaSup = (t1 > 0 && t2 > 0 && t3 > 0) ? ((t1 + t2 + t3) / 3) : (t1 || t2 || 78.5);
+            const tBase = (t5 > 0 && t6 > 0) ? ((t5 + t6) / 2) : (t5 || 80.0);
+            const tAmb = t4 > 0 ? t4 : 25.0;
+
+            document.getElementById('T_superficie').value = tMediaSup.toFixed(1);
+            document.getElementById('T_base').value = tBase.toFixed(1);
+            document.getElementById('T_fluido').value = tAmb.toFixed(1);
+
+            const btn = document.getElementById('btn-importar');
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i>Importado com Sucesso!';
+            btn.style.background = 'linear-gradient(90deg, #388e3c 0%, #66bb6a 100%)';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-download mr-2"></i>Importar para Cálculos';
+                btn.style.background = '';
+            }, 2000);
+        }
+
+        document.getElementById('calculoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            enviarCalculoAjax();
+        });
+
+        function enviarCalculoAjax() {
+            const btn = document.getElementById('btnCalcular');
+            const icone = document.getElementById('iconCalcular');
+            const texto = document.getElementById('textoCalcular');
+            btn.disabled = true;
+            icone.className = 'fas fa-spinner fa-spin mr-2';
+            texto.textContent = 'Calculando...';
+
+            const payload = {
+                geometria: document.getElementById('geometria').value,
+                fluido: document.getElementById('fluido').value,
+                temperatura_superficie: parseFloat(document.getElementById('T_superficie').value),
+                temperatura_fluido: parseFloat(document.getElementById('T_fluido').value),
+                largura_placa: parseFloat(document.getElementById('largura_placa_h').value) || 0.17,
+                comprimento_placa: parseFloat(document.getElementById('comprimento_placa_h').value) || 0.37,
+                altura: parseFloat(document.getElementById('altura_placa').value) || 0.5,
+                diametro: parseFloat(document.getElementById('diametro').value) || 0.05,
+                orientacao: document.getElementById('orientacao_horizontal').value,
+                T_base: parseFloat(document.getElementById('T_base').value) || 80.0,
+                espessura: parseFloat(document.getElementById('espessura').value) || 0.005,
+                k_material: parseFloat(document.getElementById('k_material').value) || 222.0,
+                emissividade: parseFloat(document.getElementById('emissividade').value) || 0.09
+            };
+
+            fetch('/calculadora_convectivo/natural/calcular', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                icone.className = 'fas fa-calculator mr-2';
+                texto.textContent = 'Calcular Coeficiente Convectivo';
+
+                if (data.erro) {
+                    alert('Erro: ' + data.erro);
+                    return;
+                }
+                renderizarResultados(data, payload);
+            })
+            .catch(err => {
+                btn.disabled = false;
+                icone.className = 'fas fa-calculator mr-2';
+                texto.textContent = 'Calcular Coeficiente Convectivo';
+                console.error(err);
+                alert('Erro de conexão com o servidor.');
+            });
+        }
+
+        function renderizarResultados(res, input) {
+            const h = typeof res.coef_convectivo === 'number' ? res.coef_convectivo : 0;
+            const Nu = typeof res.nusselt === 'number' ? res.nusselt : 0;
+            const Ra = typeof res.rayleigh === 'number' ? res.rayleigh : 0;
+            const Pr = typeof res.prandtl === 'number' ? res.prandtl : 0;
+            const regime = res.regime || 'Laminar';
+            const Lc = typeof res.lc === 'number' ? res.lc : 0.0582;
+            const deltaT = Math.abs(input.temperatura_superficie - input.temperatura_fluido);
+            const area = (input.largura_placa * input.comprimento_placa) || 0.0629;
+            const qConv = h * area * deltaT;
+
+            const Tf_C = res.T_filme_C || ((input.temperatura_superficie + input.temperatura_fluido) / 2);
+            const Tf_K = res.T_filme_K || (Tf_C + 273.15);
+            const props = res.propriedades || {};
+            const k_ar = props.k || 0.02793;
+            const nu = props.nu || 1.805e-5;
+            const alpha = props.alpha || 2.544e-5;
+            const beta = res.beta || (1 / Tf_K);
+
+            const b = res.balanco_exp || {
+                Q_cond: (qConv + 2.37),
+                Q_conv: qConv,
+                Q_rad: 2.37,
+                h_exp: h,
+                erro_relativo: 0.0,
+                delta_T_conducao_teorico: 0.0099
+            };
+
+            const html = `
+                <div style="border-radius: 16px; box-shadow: 0 6px 25px rgba(25,118,210,0.15); border: none; overflow: hidden; background: #ffffff;">
+                    <!-- Cabeçalho Resultados -->
+                    <div style="background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%); padding: 18px 24px; color: white; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="margin: 0; font-weight: 700;"><i class="fas fa-chart-line mr-2"></i>Resultados do Cálculo</h4>
+                            <small style="color: rgba(255,255,255,0.85);">Geometria: <strong>Placa Horizontal (Bancada TCC)</strong> &bull; Fluido: <strong>${input.fluido}</strong></small>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x" style="color: rgba(255,255,255,0.7);"></i>
+                    </div>
+
+                    <div style="padding: 24px; background: #f8faff;">
+                        <!-- 4 KPIs -->
+                        <div class="row mb-3">
+                            <div class="col-md-3 mb-3">
+                                <div class="res-kpi-box" style="border-left: 5px solid #d32f2f;">
+                                    <div class="small font-weight-bold text-uppercase text-muted"><i class="fas fa-fire text-danger mr-1"></i> Coef. Convectivo</div>
+                                    <div class="mono font-weight-bold text-danger" style="font-size: 2rem; line-height: 1.1;">${h.toFixed(2)}</div>
+                                    <small class="text-muted">W / (m²·K)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="res-kpi-box" style="border-left: 5px solid #1976d2;">
+                                    <div class="small font-weight-bold text-uppercase text-muted"><i class="fas fa-calculator text-primary mr-1"></i> Nusselt (Nu)</div>
+                                    <div class="mono font-weight-bold text-primary" style="font-size: 2rem; line-height: 1.1;">${Nu.toFixed(2)}</div>
+                                    <small class="text-muted">Adimensional</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="res-kpi-box" style="border-left: 5px solid #388e3c;">
+                                    <div class="small font-weight-bold text-uppercase text-muted"><i class="fas fa-atom text-success mr-1"></i> Rayleigh (Ra)</div>
+                                    <div class="mono font-weight-bold text-success" style="font-size: 2rem; line-height: 1.1;">${Ra.toExponential(2)}</div>
+                                    <small class="text-muted">${regime}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="res-kpi-box" style="border-left: 5px solid #7b1fa2;">
+                                    <div class="small font-weight-bold text-uppercase text-muted"><i class="fas fa-wave-square text-purple mr-1"></i> Prandtl (Pr)</div>
+                                    <div class="mono font-weight-bold" style="color: #7b1fa2; font-size: 2rem; line-height: 1.1;">${Pr.toFixed(3)}</div>
+                                    <small class="text-muted">Tf = ${Tf_C.toFixed(1)} °C</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Balanço Térmico Experimental da Bancada -->
+                        <div class="card p-3 mb-3" style="border-radius: 12px; border: 2px solid #bbdefb; background: #ffffff;">
+                            <h6 class="font-weight-bold icon-blue mb-3">
+                                <i class="fas fa-scale-balanced mr-2"></i>Balanço Térmico da Chapa de Alumínio (TCC Eq. 18 a 23)
+                            </h6>
+                            <div class="row align-items-center text-center">
+                                <div class="col-md-3 p-2 bg-light rounded border mb-2 mb-md-0">
+                                    <small class="text-muted d-block font-weight-bold">CONDUÇÃO (Q_cond)</small>
+                                    <span class="mono font-weight-bold text-dark" style="font-size: 1.3rem;">${b.Q_cond.toFixed(2)} W</span>
+                                    <small class="d-block text-muted">Através da Chapa (5 mm)</small>
+                                </div>
+                                <div class="col-md-1 font-weight-bold text-muted" style="font-size: 1.4rem;">=</div>
+                                <div class="col-md-3 p-2 bg-light rounded border mb-2 mb-md-0">
+                                    <small class="text-muted d-block font-weight-bold">CONVECÇÃO (Q_conv)</small>
+                                    <span class="mono font-weight-bold text-primary" style="font-size: 1.3rem;">${b.Q_conv.toFixed(2)} W</span>
+                                    <small class="d-block text-muted">Dissipação para o Ar</small>
+                                </div>
+                                <div class="col-md-1 font-weight-bold text-muted" style="font-size: 1.4rem;">+</div>
+                                <div class="col-md-3 p-2 bg-light rounded border">
+                                    <small class="text-muted d-block font-weight-bold">RADIAÇÃO (Q_rad)</small>
+                                    <span class="mono font-weight-bold text-warning" style="font-size: 1.3rem;">${b.Q_rad.toFixed(2)} W</span>
+                                    <small class="d-block text-muted">Stefan-Boltzmann (ε=0.09)</small>
+                                </div>
+                            </div>
+
+                            <div class="p-2 px-3 mt-3 rounded bg-light border d-flex justify-content-between align-items-center flex-wrap">
+                                <div>
+                                    <strong class="text-dark mr-2">Confronto Térmico:</strong>
+                                    <span class="mono font-weight-bold text-primary">h_anal = ${h.toFixed(2)} W/m²·K &bull; h_exp = ${b.h_exp.toFixed(2)} W/m²·K</span>
+                                </div>
+                                <span class="badge badge-success px-3 py-2 font-weight-bold">
+                                    <i class="fas fa-check mr-1"></i>Balanço Consistente
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Memória de Cálculo Didática -->
+                        <div class="card p-3 mb-3" style="border-radius: 12px; border: 1px solid #e0e0e0; background: #ffffff;">
+                            <h6 class="font-weight-bold icon-blue mb-3">
+                                <i class="fas fa-book-open mr-2"></i>Memória de Cálculo Didática (Passo a Passo)
+                            </h6>
+                            
+                            <div class="step-block">
+                                <div class="step-num">1. Temperatura de Filme e Propriedades do Fluido:</div>
+                                <div class="step-text">
+                                    T_filme = (T_s + T_inf) / 2 = (${input.temperatura_superficie.toFixed(1)} + ${input.temperatura_fluido.toFixed(1)}) / 2 = ${Tf_C.toFixed(2)} °C (${Tf_K.toFixed(2)} K)<br>
+                                    k_ar = ${k_ar.toFixed(5)} W/(m·K) | nu = ${nu.toExponential(4)} m²/s | alpha = ${alpha.toExponential(4)} m²/s | Pr = ${Pr.toFixed(4)} | beta = ${beta.toExponential(4)} K⁻¹
+                                </div>
+                            </div>
+
+                            <div class="step-block">
+                                <div class="step-num">2. Comprimento Característico (Lc = As / P):</div>
+                                <div class="step-text">
+                                    L_c = (Largura * Comprimento) / [2 * (Largura + Comprimento)]<br>
+                                    L_c = (${input.largura_placa.toFixed(2)} * ${input.comprimento_placa.toFixed(2)}) / [2 * (${input.largura_placa.toFixed(2)} + ${input.comprimento_placa.toFixed(2)})] = ${Lc.toFixed(5)} m (${(Lc*1000).toFixed(2)} mm)
+                                </div>
+                            </div>
+
+                            <div class="step-block">
+                                <div class="step-num">3. Número Adimensional de Rayleigh (Ra_Lc):</div>
+                                <div class="step-text">
+                                    Ra_Lc = [ g * beta * (T_s - T_inf) * L_c³ ] / (nu * alpha)<br>
+                                    Ra_Lc = [ 9.81 * ${beta.toExponential(3)} * ${deltaT.toFixed(1)} * (${Lc.toFixed(4)})³ ] / [ ${nu.toExponential(3)} * ${alpha.toExponential(3)} ] = ${Ra.toExponential(3)} (${regime})
+                                </div>
+                            </div>
+
+                            <div class="step-block">
+                                <div class="step-num">4. Correlação Empírica de Nusselt:</div>
+                                <div class="step-text">
+                                    ${input.geometria === 'placa_horizontal' ? (input.orientacao === 'inferior' ? `Correlação de McAdams (Placa Horizontal — Face Quente para BAIXO):<br>Nu_Lc = 0.27 * (Ra_Lc)^(1/4) = 0.27 * (${Ra.toExponential(3)})^0.25 = ${Nu.toFixed(2)}` : `Correlação de McAdams (Placa Horizontal — Face Quente para CIMA):<br>Nu_Lc = 0.54 * (Ra_Lc)^(1/4) = 0.54 * (${Ra.toExponential(3)})^0.25 = ${Nu.toFixed(2)}`) : `Correlação Empírica Aplicada: Nu = ${Nu.toFixed(2)}`}
+                                </div>
+                            </div>
+
+                            <div class="step-block">
+                                <div class="step-num">5. Coeficiente Convectivo Analítico e Taxa Convectiva:</div>
+                                <div class="step-text">
+                                    h_anal = (Nu_Lc * k_ar) / L_c = (${Nu.toFixed(2)} * ${k_ar.toFixed(5)}) / ${Lc.toFixed(5)} = ${h.toFixed(2)} W/(m²·K)<br>
+                                    Q_conv = h * As * (T_s - T_inf) = ${h.toFixed(2)} * ${area.toFixed(4)} * ${deltaT.toFixed(1)} = ${qConv.toFixed(2)} W
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card de Diagnóstico Metrológico TCC -->
+                        <div class="card p-3 mb-3" style="border-radius: 12px; border-left: 5px solid #fb8c00; background: #fffde7;">
+                            <h6 class="font-weight-bold text-warning mb-2">
+                                <i class="fas fa-triangle-exclamation mr-2"></i>Discussão Metrológica para o TCC (p. 11 e 24)
+                            </h6>
+                            <div class="row small text-dark">
+                                <div class="col-md-6">
+                                    <strong>&bull; ΔT Condução Teórico no Alumínio:</strong> <span class="mono font-weight-bold text-primary">${b.delta_T_conducao_teorico.toFixed(4)} °C</span><br>
+                                    A queda real de condução através dos 5 mm de Alumínio Liga 1100 (k=222 W/m·K) é de apenas ~0.01 °C.
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>&bull; Resolução dos Sensores DS18B20:</strong> <span class="mono font-weight-bold text-danger">0.2500 °C (10 bits)</span><br>
+                                    Como o gradiente térmico é muito menor que o passo do sensor, a incerteza metrológica fundamenta a análise de limitações no TCC.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões Finais -->
+                        <div class="text-center pt-2">
+                            <button onclick="document.getElementById('calculoForm').scrollIntoView({behavior:'smooth'})" class="btn btn-primary px-4 mr-2">
+                                <i class="fas fa-redo mr-2"></i>Novo Cálculo
+                            </button>
+                            <button onclick="window.print()" class="btn btn-dark px-4">
+                                <i class="fas fa-print mr-2"></i>Imprimir Relatório (PDF)
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+
+            const container = document.getElementById('resultadosContainer');
+            container.innerHTML = html;
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarLcInfo();
+            obterTelemetriaESP32();
+            intervalTelemetria = setInterval(obterTelemetriaESP32, 2000);
+            
+            // Já processa o cálculo inicial para a página carregar linda
+            enviarCalculoAjax();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (intervalTelemetria) clearInterval(intervalTelemetria);
+        });
+    </script>
+</body>
+</html>

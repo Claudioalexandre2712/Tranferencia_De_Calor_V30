@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .container {
+            margin-top: 40px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .card {
+            padding: 36px 32px 32px 32px;
+            border-radius: 22px;
+            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.13);
+            width: 100%;
+            max-width: 900px;
+            background: #fff;
+        }
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 22px;
+            color: #1976d2;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 1.25em;
+            color: #1976d2;
+            margin-top: 2.2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        .table {
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f4f8ff;
+        }
+        .table th, .table td {
+            vertical-align: middle !important;
+            font-size: 1.07em;
+        }
+        .table th {
+            background: #e3f0fc;
+            color: #1976d2;
+            font-weight: 600;
+            border-bottom: 2px solid #bbdefb;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background: #f8fbff;
+        }
+        .table-striped tbody tr:nth-of-type(even) {
+            background: #f4f8ff;
+        }
+        .img-fluid {
+            display: block;
+            margin: 0 auto 1.5rem auto;
+            max-width: 100%;
+            width: 1200px;
+            min-width: 320px;
+            border-radius: 14px;
+            box-shadow: 0 4px 18px #1976d220;
+            background: #f4f8ff;
+            padding: 8px;
+        }
+        .btn-custom {
+            margin: 0.5rem 0.5rem 0 0.5rem;
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            color: #fff;
+            font-size: 1.13rem;
+            padding: 0.7rem 2.2rem;
+            border: none;
+            border-radius: 2rem;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        .btn-custom:hover, .btn-custom:focus {
+            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
+            transform: scale(1.04);
+            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.22);
+            outline: none;
+            color: #fff;
+        }
+        .btn-link.btn-custom {
+            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
+            color: #1976d2;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .btn-link.btn-custom:hover, .btn-link.btn-custom:focus {
+            background: linear-gradient(90deg, #78909c 0%, #90caf9 100%);
+            color: #111;
+        }
+        .result-table-container {
+            overflow-x: auto;
+        }
+        @media (max-width: 900px) {
+            .card { max-width: 99vw; padding: 10px 2vw 10px 2vw; }
+            h1 { font-size: 1.3rem; }
+            .table th, .table td { font-size: 0.98em; }
+        }
+        @media (max-width: 600px) {
+            .card { padding: 6px 1vw 6px 1vw; }
+            .img-fluid { padding: 2px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Resultados</h1>
+
+            <h2>📊 Métricas de Desempenho</h2>
+            <div class="result-table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tipo de Aleta</th>
+                            <th>Efetividade (εₐ)</th>
+                            <th>Parâmetro m (m⁻¹)</th>
+                            <th>Perímetro P (m)</th>
+                            <th>Área Transversal Aₜᵣ (m²)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resultado in resultados %}
+                        <tr>
+                            <td>{{ resultado[0] }}</td>
+                            <td {% if resultado[4] >= 2 %}style="background-color: #e8f5e8;"{% elif resultado[4] > 1 %}style="background-color: #fff8e1;"{% else %}style="background-color: #ffebee;"{% endif %}>
+                                {{ resultado[4] | round(3) }}
+                                {% if resultado[4] >= 2 %}
+                                    <span style="color: #4caf50; font-weight: bold;">✅</span>
+                                {% elif resultado[4] > 1 %}
+                                    <span style="color: #ff9800; font-weight: bold;">⚠️</span>
+                                {% else %}
+                                    <span style="color: #f44336; font-weight: bold;">❌</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ resultado[5] | round(6) }}</td>
+                            <td>{{ resultado[6] | round(6) }}</td>
+                            <td>{{ resultado[7] | round(9) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="background: #f4f8ff; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #1976d2;">
+                <h3 style="color: #1976d2; margin-bottom: 15px;">🌡️ Condição de Contorno Aplicada</h3>
+                <div style="margin-bottom: 15px; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #e3f0fc;">
+                    {% if condicao_ponta == 'adiabatica' %}
+                        <strong style="color: #2196f3;">🔹 Ponta Adiabática:</strong> Não há transferência de calor na extremidade da aleta
+                        <br><small style="color: #666; font-style: italic;">Condição: dT/dx|ₓ₌ₗ = 0</small>
+                    {% elif condicao_ponta == 'conveccao' %}
+                        <strong style="color: #ff9800;">🔸 Convecção na Ponta:</strong> Transferência de calor por convecção na extremidade
+                        <br><small style="color: #666; font-style: italic;">Condição: -k(dT/dx)|ₓ₌ₗ = h(T_L - T_∞)</small>
+                    {% elif condicao_ponta == 'infinita' %}
+                        <strong style="color: #4caf50;">🔸 Aleta Infinitamente Longa:</strong> Temperatura na ponta tende ao ambiente
+                        <br><small style="color: #666; font-style: italic;">Condição: T(x→∞) = T_∞</small>
+                    {% elif condicao_ponta == 'temp_especificada' %}
+                        <strong style="color: #e91e63;">🔸 Temperatura Especificada:</strong> T_L = {{ T_L if T_L else '---' }}°C na ponta
+                        <br><small style="color: #666; font-style: italic;">Condição: T(x=L) = T_L</small>
+                    {% else %}
+                        <strong style="color: #2196f3;">🔹 Ponta Adiabática:</strong> Não há transferência de calor na extremidade da aleta
+                        <br><small style="color: #666; font-style: italic;">Condição: dT/dx|ₓ₌ₗ = 0 (padrão)</small>
+                    {% endif %}
+                </div>
+                
+                <h3 style="color: #1976d2; margin-bottom: 15px;">📚 Fundamentos Teóricos</h3>
+                <div style="margin-bottom: 15px;">
+                    <strong>Efetividade (εₐ):</strong> 
+                    <span style="font-family: 'Times New Roman', serif; font-size: 1.1em;">εₐ = qₐ/(hAₜᵣ,ᵦθᵦ)</span>
+                    <br><small style="color: #666;">
+                        <strong>Interpretação:</strong><br>
+                        • εₐ ≥ 2: ✅ <span style="color: #4caf50;">Excelente desempenho</span> - transfere mais que o dobro<br>
+                        • 1 < εₐ < 2: ⚠️ <span style="color: #ff9800;">Aceitável</span> - ainda melhora a transferência<br>
+                        • εₐ ≤ 1: ❌ <span style="color: #f44336;">Não recomendado</span> - pior que sem aleta
+                    </small>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>Eficiência (ηₐ):</strong> 
+                    <span style="font-family: 'Times New Roman', serif; font-size: 1.1em;">ηₐ = Q_aleta/Q_max</span>
+                    <small style="color: #666;"> (varia conforme condição de contorno)</small>
+                </div>
+                <div>
+                    <strong>Otimização:</strong> Preferência por alto <em>k</em>, alto <em>P/Aₜᵣ</em>, baixo <em>h</em>
+                </div>
+            </div>
+
+            <!-- Métricas de Engenharia -->
+            {% if metricas_lista %}
+            <h2>🔧 Métricas de Engenharia</h2>
+            {% for metricas, interpretacoes in zip(metricas_lista, interpretacoes_lista) %}
+            <div style="background: #f8fbff; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #2196f3;">
+                <h4 style="color: #1976d2; margin-bottom: 15px;">📐 Análise da Aleta {{ loop.index }}</h4>
+                
+                <!-- Propriedades Físicas -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <h5 style="color: #1976d2; margin-bottom: 10px;">📏 Propriedades Físicas</h5>
+                        <p><strong>Volume:</strong> {{ "%.2e"|format(metricas.volume) }} m³</p>
+                        <p><strong>Massa:</strong> {{ "%.3f"|format(metricas.massa) }} kg</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <h5 style="color: #1976d2; margin-bottom: 10px;">💰 Análise Econômica</h5>
+                        <p><strong>Custo Total:</strong> ${{ "%.2f"|format(metricas.custo_total) }}</p>
+                        <p><strong>Custo-Benefício:</strong> {{ "%.2f"|format(metricas.razao_custo_beneficio) }} W/$</p>
+                    </div>
+                </div>
+                
+                <!-- Análise Econômica -->
+                <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
+
+                    
+
+                </div>
+                
+
+                
+                <!-- Interpretações e Recomendações -->
+                {% if interpretacoes.pontos_fortes %}
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <h6 style="color: #4caf50; margin-bottom: 10px;">✅ Pontos Fortes</h6>
+                    {% for ponto in interpretacoes.pontos_fortes %}
+                    <p style="margin-bottom: 5px;">• {{ ponto }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if interpretacoes.alertas %}
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <h6 style="color: #ff9800; margin-bottom: 10px;">⚠️ Alertas</h6>
+                    {% for alerta in interpretacoes.alertas %}
+                    <p style="margin-bottom: 5px;">• {{ alerta }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if interpretacoes.recomendacoes %}
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <h6 style="color: #1976d2; margin-bottom: 10px;">💡 Recomendações</h6>
+                    {% for recomendacao in interpretacoes.recomendacoes %}
+                    <p style="margin-bottom: 5px;">• {{ recomendacao }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <h2>📈 Gráficos Interativos</h2>
+            
+            <!-- Gráfico de Distribuição de Temperatura -->
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #1976d2; margin-bottom: 15px;">🌡️ Distribuição de Temperatura</h3>
+                <div style="background: white; border-radius: 12px; box-shadow: 0 4px 18px #1976d220; padding: 10px;">
+                    {{ grafico_html|safe }}
+                </div>
+            </div>
+
+            <!-- Seção Didática: Resolução Passo a Passo -->
+            {% if dados_didaticos_lista %}
+            <h2>📚 Resolução Passo a Passo - Seção Variável</h2>
+            {% for dados_didaticos in dados_didaticos_lista %}
+            {% if dados_didaticos and dados_didaticos.passos_resolucao %}
+            <div style="background: #f8fbff; padding: 25px; border-radius: 15px; margin: 25px 0; border-left: 5px solid #1976d2;">
+                <h3 style="color: #1976d2; margin-bottom: 20px;">
+                    🔬 Análise Detalhada: {{ dados_didaticos.tipo_aleta_original }}
+                </h3>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <p><strong>🎯 Método Utilizado:</strong> {{ dados_didaticos.metodo }}</p>
+                    <p><strong>📐 Tipo Mapeado:</strong> {{ dados_didaticos.tipo_aleta_mapeado }}</p>
+                    <p><strong>🌡️ Condição de Contorno:</strong> {{ dados_didaticos.condicao_ponta }}</p>
+                </div>
+
+                {% for passo in dados_didaticos.passos_resolucao %}
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e3f2fd;">
+                    <h4 style="color: #1976d2; margin-bottom: 15px;">{{ passo.titulo }}</h4>
+                    
+                    {% if passo.equacao %}
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; font-family: 'Times New Roman', serif; font-size: 1.1em; text-align: center;">
+                        {{ passo.equacao }}
+                    </div>
+                    {% endif %}
+                    
+                    <p style="margin: 10px 0; line-height: 1.6;"><strong>Explicação:</strong> {{ passo.explicacao }}</p>
+                    
+                    {% if passo.valores %}
+                    <div style="background: #fff3e0; padding: 12px; border-radius: 6px; margin: 10px 0;">
+                        <strong>📊 Valores:</strong> {{ passo.valores }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- Resumo dos Resultados -->
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4 style="color: #4caf50; margin-bottom: 15px;">✅ Resultados Finais</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong>Taxa de Calor:</strong><br>
+                            <span style="font-size: 1.2em; color: #1976d2;">{{ "%.3f"|format(dados_didaticos.q_base) }} W</span>
+                        </div>
+                        <div>
+                            <strong>Eficiência:</strong><br>
+                            <span style="font-size: 1.2em; color: #1976d2;">{{ "%.3f"|format(dados_didaticos.eficiencia) }}</span>
+                        </div>
+                        <div>
+                            <strong>Efetividade:</strong><br>
+                            <span style="font-size: 1.2em; color: #1976d2;">{{ "%.3f"|format(dados_didaticos.efetividade) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+
+            <h2>Relatório</h2>
+            <div class="text-center">
+                <a href="{{ url_for('static', filename=relatorio_path.split('static/')[1]) }}" class="btn btn-custom" download>Baixar Relatório</a>
+                <a href="/" class="btn btn-link btn-custom">Voltar</a>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- MathJax para renderizar equações -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+</body>
+</html>

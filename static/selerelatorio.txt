@@ -1,0 +1,29 @@
+Resultados das Aletas
+Seleção de Aletas: 6)aletas de perfil triangular
+Tipo de Aleta: 6)aletas de perfil triangular
+Material: Alumínio
+k: 240.0
+Eficiência da Aleta: 0.494863
+Taxa de Transferência de Calor: 2.292855 W
+Área da Aleta: 0.000789 m²
+Efetividade (epsilon_a): 19.462359
+Parâmetro m: 5.773503 m^-1
+Perímetro P: 0.031416 m
+Área Transversal A_tr: 0.000078540 m^2
+Comprimento (m) x Temperatura (°C):
+0.000000 m: 100.000000 °C
+0.003571 m: 99.914817 °C
+0.007143 m: 99.835973 °C
+0.010714 m: 99.763461 °C
+0.014286 m: 99.697274 °C
+0.017857 m: 99.637408 °C
+0.021429 m: 99.583858 °C
+0.025000 m: 99.536618 °C
+0.028571 m: 99.495685 °C
+0.032143 m: 99.461055 °C
+0.035714 m: 99.432725 °C
+0.039286 m: 99.410693 °C
+0.042857 m: 99.394958 °C
+0.046429 m: 99.385517 °C
+0.050000 m: 99.382370 °C
+

@@ -1,0 +1,14 @@
+/* Botões reutilizáveis de popover */
+.btn-pop{padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:.8rem;border:2px solid transparent;transition:background .25s,transform .25s,box-shadow .25s;color:#263238;background:#eceff1;letter-spacing:.3px;}
+.btn-pop:focus{outline:2px solid #90caf9;outline-offset:2px;}
+.btn-pop-save{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border-color:#2e7d32;box-shadow:0 3px 10px rgba(46,125,50,.3);}
+.btn-pop-save:hover{background:linear-gradient(135deg,#1b5e20,#2e7d32);transform:translateY(-2px);box-shadow:0 6px 18px rgba(46,125,50,.35);}
+.btn-pop-cancel{background:#f5f5f5;color:#555;border-color:#cfd8dc;}
+.btn-pop-cancel:hover{background:#eeeeee;transform:translateY(-2px);}
+.btn-pop-secondary{background:linear-gradient(135deg,#455a64,#607d8b);color:#fff;border-color:#455a64;}
+.btn-pop-secondary:hover{background:linear-gradient(135deg,#37474f,#455a64);transform:translateY(-2px);} 
+.btn-pop-danger{background:linear-gradient(135deg,#c62828,#e53935);color:#fff;border-color:#c62828;}
+.btn-pop-danger:hover{background:linear-gradient(135deg,#8e0000,#b71c1c);}
+.prop-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;}
+/* Ajuste para container que já tinha margin inline */
+.prop-actions.compact{margin-top:8px;}

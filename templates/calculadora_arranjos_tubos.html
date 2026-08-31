@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Arranjos de Tubos</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --primary-blue: #1976d2;
+            --light-blue: #64b5f6;
+            --lighter-blue: #bbdefb;
+            --light-bg: #f4f8ff;
+        }
+        
+        body {
+            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.1);
+            background: #f4f8ff;
+
+        }
+        
+
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+        }
+        
+
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #6c757d 0%, #adb5bd 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 25px;
+            color: white;
+        }
+        
+
+        
+        .card-header {
+            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .icon-blue {
+            color: var(--primary-blue);
+        }
+        
+        .formula-box { 
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+            border-left: 4px solid #1976d2; 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(25, 118, 210, 0.1);
+        }
+        
+        .result-highlight { 
+            background: var(--light-bg);
+            border: 1px solid var(--lighter-blue); 
+            padding: 20px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.1);
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-blue);
+        }
+        
+        .diagram-container { 
+            text-align: center; 
+            margin: 30px 0; 
+            background: var(--light-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0" style="color: white;">
+                            <i class="fas fa-industry mr-3" style="color: white;"></i>
+                            Calculadora - Arranjos de Tubos
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                
+                        <!-- Tipos de Arranjos -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-project-diagram mr-2"></i>Tipos de Arranjos</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-primary mb-3">Linha</h6>
+                                        <div class="text-center p-3" style="background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                            <div style="display: inline-block; font-size: 24px; line-height: 1.2;">
+                                                <span style="color: #1976d2;">● ● ●</span><br>
+                                                <span style="color: #1976d2;">● ● ●</span><br>
+                                                <span style="color: #1976d2;">● ● ●</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">Tubos alinhados<br>S<sub>T</sub> e S<sub>L</sub> = espaçamentos</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-success mb-3">Alternado</h6>
+                                        <div class="text-center p-3" style="background: white; border: 1px solid #ddd; border-radius: 8px;">
+                                            <div style="display: inline-block; font-size: 24px; line-height: 1.2;">
+                                                <span style="color: #28a745;">● ● ●</span><br>
+                                                <span style="color: #28a745;">&nbsp;&nbsp;● ● ●</span><br>
+                                                <span style="color: #28a745;">● ● ●</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">Tubos alternados<br>✅ Melhor transferência ⚠️ Maior perda</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4"></div>
+
+                        <form method="POST" action="/calculadora_arranjos_tubos">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-ruler icon-blue mr-2"></i>Parâmetros Geométricos</h5>
+                                </div>
+                                <div class="card-body">
+                                
+                                <div class="form-group">
+                                    <label for="D">Diâmetro dos Tubos (D) [m]:</label>
+                                    <input type="number" class="form-control" id="D" name="D" step="0.001" 
+                                           placeholder="Ex: 0.020" lang="en" required>
+                                    <small class="form-text text-muted">Diâmetro externo dos tubos</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="S_T">Espaçamento Transversal (S_T) [m]:</label>
+                                    <input type="number" class="form-control" id="S_T" name="S_T" step="any" 
+                                           placeholder="Ex: 0.040" value="" min="0.001" lang="en" required>
+                                    <small class="form-text text-muted">Distância entre centros de tubos adjacentes na direção transversal</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="S_L">Espaçamento Longitudinal (S_L) [m]:</label>
+                                    <input type="number" class="form-control" id="S_L" name="S_L" step="any" 
+                                           placeholder="Ex: 0.040" value="" min="0.001" lang="en" required>
+                                    <small class="form-text text-muted">Distância entre centros de tubos na direção do escoamento</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="N_fileiras">Número de Fileiras:</label>
+                                    <input type="number" class="form-control" id="N_fileiras" name="N_fileiras" min="1" max="50" 
+                                           placeholder="Ex: 10" required>
+                                    <small class="form-text text-muted">Número de fileiras de tubos na direção do escoamento</small>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-thermometer-half icon-blue mr-2"></i>Condições de Operação</h5>
+                                </div>
+                                <div class="card-body">
+                                
+                                <div class="form-group">
+                                    <label for="arranjo">Tipo de Arranjo:</label>
+                                    <select class="form-control" id="arranjo" name="arranjo" required>
+                                        <option value="inline">Em Linha</option>
+                                        <option value="staggered" selected>Alternado</option>
+                                    </select>
+                                    <small class="form-text text-muted">Configuração geométrica do banco de tubos</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="v">Velocidade de Entrada (v) [m/s]:</label>
+                                    <input type="number" class="form-control" id="v" name="v" step="0.1" min="0.1" 
+                                           placeholder="Ex: 5.0" required>
+                                    <small class="form-text text-muted">Velocidade do fluido antes do banco de tubos</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="T_s">Temperatura da Superfície (T_s) [°C]:</label>
+                                    <input type="number" class="form-control" id="T_s" name="T_s" step="0.1" 
+                                           placeholder="Ex: 60.0" required>
+                                    <small class="form-text text-muted">Temperatura da parede dos tubos</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="T_inf">Temperatura do Fluido (T_∞) [°C]:</label>
+                                    <input type="number" class="form-control" id="T_inf" name="T_inf" step="0.1" 
+                                           placeholder="Ex: 20.0" required>
+                                    <small class="form-text text-muted">Temperatura do fluido longe da superfície</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="fluido">Fluido:</label>
+                                    <select class="form-control" id="fluido" name="fluido" required>
+                                        <option value="ar" selected>Ar</option>
+                                        <option value="agua">Água</option>
+                                        <option value="oleo_motor">Óleo de Motor</option>
+                                        <option value="etilenoglicol">Etilenoglicol</option>
+                                    </select>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3" style="font-size: 1.2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,123,255,0.3);">
+                            🧮 Calcular Transferência de Calor
+                        </button>
+
+                    </div>
+                </form>
+
+                <!-- Correlações Teóricas -->
+                <div class="mt-5">
+                    <h4 class="text-center mb-4" style="color: #495057; font-weight: bold;">
+                        📚 Correlações de Zukauskas (Tabela 7-2)
+                        <hr style="width: 100px; border-top: 3px solid #007bff; margin: 10px auto;">
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="formula-box">
+                                <h6><strong>Correlação de Zukauskas (Tabela 7-2):</strong></h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Arranjo em Linha:</strong>
+                                        <ul style="font-size: 0.9em; margin-top: 10px;">
+                                            <li>$0 \leq Re_D \leq 100$: $Nu_D = 0.9 \, Re_D^{0.4} Pr^{0.36}$</li>
+                                            <li>$100 \leq Re_D \leq 1000$: $Nu_D = 0.52 \, Re_D^{0.5} Pr^{0.36}$</li>
+                                            <li>$1000 \leq Re_D \leq 2×10^5$: $Nu_D = 0.27 \, Re_D^{0.63} Pr^{0.36}$</li>
+                                            <li>$2×10^5 \leq Re_D \leq 2×10^6$: $Nu_D = 0.033 \, Re_D^{0.8} Pr^{0.4}$</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Arranjo Alternado:</strong>
+                                        <ul style="font-size: 0.9em; margin-top: 10px;">
+                                            <li>$0 \leq Re_D \leq 500$: $Nu_D = 1.04 \, Re_D^{0.4} Pr^{0.36}$</li>
+                                            <li>$500 \leq Re_D \leq 1000$: $Nu_D = 0.71 \, Re_D^{0.5} Pr^{0.36}$</li>
+                                            <li>$1000 \leq Re_D \leq 2×10^5$: $Nu_D = 0.35 (S_T/S_L)^{0.2} Re_D^{0.6} Pr^{0.36}$</li>
+                                            <li>$2×10^5 \leq Re_D \leq 2×10^6$: $Nu_D = 0.031 (S_T/S_L)^{0.2} Re_D^{0.8} Pr^{0.4}$</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <p><small>
+                                    Todas as correlações multiplicadas por $(Pr/Pr_s)^{0.25} \times F_N$<br>
+                                    $F_N$ é o fator de correção para número de fileiras (Tabela 7-3)<br>
+                                    $Re_D$ baseado na velocidade máxima e válido para $N > 16$ e $0.7 < Pr < 500$
+                                </small></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-box" style="background: white; border-left: 4px solid #ffc107;">
+                        <h6><strong><i class="fas fa-tachometer-alt text-warning"></i> Velocidade Máxima no Banco de Tubos:</strong></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="p-3" style="background: rgba(255,255,255,0.7); border-radius: 8px; margin: 5px 0;">
+                                    <strong class="text-primary">Arranjo em Linha:</strong>
+                                    $$v_{max} = v \frac{S_T}{S_T - D}$$
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3" style="background: rgba(255,255,255,0.7); border-radius: 8px; margin: 5px 0;">
+                                    <strong class="text-success">Arranjo Alternado:</strong>
+                                    $$v_{max} = v \frac{S_T}{\min(S_D - D, S_T - D)}$$
+                                    <small>onde $S_D = \sqrt{S_L^2 + (S_T/2)^2}$</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultados -->
+                {% if resultado %}
+                <div class="mt-4">
+                    <h4 class="text-center text-success">📊 Resultados do Cálculo</h4>
+                    
+                    {% if resultado.erro %}
+                        <div class="alert alert-danger">
+                            <h6>❌ Erros encontrados:</h6>
+                            <ul class="mb-0">
+                                {% for erro in resultado.erro %}
+                                    <li>{{ erro }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="result-highlight">
+                                    <h5>🎯 Resultados Principais</h5>
+                                    <p><strong>Coeficiente de Convecção:</strong> {{ "%.1f"|format(resultado.h) }} W/m²·K</p>
+                                    <p><strong>Número de Nusselt:</strong> {{ "%.1f"|format(resultado.Nu) }}</p>
+                                    <p><strong>Reynolds Máximo:</strong> {{ "%.0f"|format(resultado.Re_max) }}</p>
+                                    <p><strong>Regime de Escoamento:</strong> {{ resultado.regime }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="result-highlight">
+                                    <h5>🔍 Parâmetros de Análise</h5>
+                                    <p><strong>Velocidade Máxima:</strong> {{ "%.1f"|format(resultado.velocidade_max) }} m/s</p>
+                                    <p><strong>Velocidade de Entrada:</strong> {{ "%.1f"|format(resultado.velocidade_entrada) }} m/s</p>
+                                    <p><strong>S_T/D:</strong> {{ "%.2f"|format(resultado.ST_D) }}</p>
+                                    <p><strong>S_L/D:</strong> {{ "%.2f"|format(resultado.SL_D) }}</p>
+                                    <p><strong>Arranjo:</strong> {{ "Em Linha" if resultado.arranjo == "inline" else "Alternado" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if resultado.C is defined %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="result-highlight">
+                                    <h5>⚙️ Parâmetros da Correlação ({{ resultado.correlacao }})</h5>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <p><strong>Constante C:</strong> {{ "%.3f"|format(resultado.C) }}</p>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <p><strong>Expoente n:</strong> {{ "%.3f"|format(resultado.n) }}</p>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <p><strong>S_T/S_L:</strong> {{ "%.2f"|format(resultado.ST_SL) }}</p>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <p><strong>Fator Fileiras:</strong> {{ "%.3f"|format(resultado.fator_fileiras) }}</p>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <p><strong>T Filme:</strong> {{ "%.1f"|format(resultado.T_filme) }} °C</p>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <p><strong>Regime:</strong> {{ resultado.regime }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Propriedades do Fluido -->
+                        {% if resultado.propriedades %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="result-highlight">
+                                    <h5>🌡️ Propriedades do Fluido (T = {{ "%.1f"|format(resultado.T_filme) }} °C)</h5>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <p><strong>Densidade:</strong> {{ "%.2f"|format(resultado.propriedades.rho) }} kg/m³</p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p><strong>Viscosidade:</strong> {{ "%.2e"|format(resultado.propriedades.mu) }} Pa·s</p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p><strong>Condutividade:</strong> {{ "%.4f"|format(resultado.propriedades.k) }} W/m·K</p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p><strong>Prandtl:</strong> {{ "%.3f"|format(resultado.propriedades.Pr) }}</p>
+                                        </div>
+                                    </div>                        
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                        <div class="text-center mt-4">
+                            <a href="/calculadora_convectivo" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left mr-2"></i>Voltar para Calculadoras
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Atualizar exemplo quando o arranjo muda
+        document.getElementById('arranjo').addEventListener('change', function() {
+            const arranjo = this.value;
+            // Só preencher S_T e S_L se os campos estiverem vazios (não preencher velocidade)
+            if (arranjo === 'staggered') {
+                if (!document.getElementById('S_T').value) document.getElementById('S_T').value = '0.050';
+                if (!document.getElementById('S_L').value) document.getElementById('S_L').value = '0.043';
+                // Velocidade não é preenchida automaticamente
+            } else {
+                if (!document.getElementById('S_T').value) document.getElementById('S_T').value = '0.050';
+                if (!document.getElementById('S_L').value) document.getElementById('S_L').value = '0.050';
+                // Velocidade não é preenchida automaticamente
+            }
+        });
+        
+        // Validação de razões geométricas
+        function validarGeometria() {
+            const D = parseFloat(document.getElementById('D').value);
+            const ST = parseFloat(document.getElementById('S_T').value);
+            const SL = parseFloat(document.getElementById('S_L').value);
+            
+            if (ST <= D) {
+                alert('Espaçamento transversal deve ser maior que o diâmetro!');
+                return false;
+            }
+            
+            if (SL <= D) {
+                alert('Espaçamento longitudinal deve ser maior que o diâmetro!');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        document.querySelector('form').addEventListener('submit', function(e) {
+            // Validar geometria
+            if (!validarGeometria()) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Validação final dos valores antes do envio
+            const D = parseFloat(document.getElementById('D').value);
+            const ST = parseFloat(document.getElementById('S_T').value);
+            const SL = parseFloat(document.getElementById('S_L').value);
+            
+            // Verificar se os valores estão em faixas razoáveis
+            if (ST < 0.01 || SL < 0.01) {
+                alert('ATENÇÃO: Valores de espaçamento muito pequenos detectados!\n' +
+                      'S_T = ' + ST + ' m, S_L = ' + SL + ' m\n' +
+                      'Para o Exemplo 7-7, use S_T = 0.05 e S_L = 0.05');
+                e.preventDefault();
+                return;
+            }
+            
+            if (ST > 1 || SL > 1) {
+                alert('ATENÇÃO: Valores de espaçamento muito grandes detectados!\n' +
+                      'S_T = ' + ST + ' m, S_L = ' + SL + ' m\n' +
+                      'Para o Exemplo 7-7, use S_T = 0.05 e S_L = 0.05');
+                e.preventDefault();
+                return;
+            }
+            
+            console.log('Valores finais antes do envio:', {D, ST, SL});
+        });
+        
+        // Forçar formato americano (ponto decimal) e evitar conversões automáticas
+        function formatarNumero(input) {
+            let valor = input.value;
+            if (valor) {
+                // Substituir vírgula por ponto
+                valor = valor.replace(',', '.');
+                
+                // Verificar conversões problemáticas específicas
+                let numeroValor = parseFloat(valor);
+                
+                // Para S_T e S_L: detectar e corrigir múltiplos padrões problemáticos
+                if (input.id === 'S_T' || input.id === 'S_L') {
+                    // Caso 1: Valor muito pequeno (0.00005) -> corrigir para 0.05
+                    if (numeroValor < 0.001 && numeroValor > 0.00001) {
+                        valor = (numeroValor * 1000).toFixed(3);
+                        console.log('Corrigido valor muito pequeno de', input.value, 'para', valor);
+                        input.style.backgroundColor = '#e8f5e8'; // Destaque verde temporário
+                        setTimeout(() => input.style.backgroundColor = '', 1000);
+                    }
+                    // Caso 2: Valor muito grande (50.0) -> corrigir para 0.05 
+                    else if (numeroValor > 1) {
+                        valor = (numeroValor / 1000).toFixed(3);
+                        console.log('Corrigido valor muito grande de', input.value, 'para', valor);
+                        input.style.backgroundColor = '#ffe8e8'; // Destaque vermelho temporário
+                        setTimeout(() => input.style.backgroundColor = '', 1000);
+                    }
+                    // Caso 3: Valores intermediários mas suspeitos (0.5, 5.0) -> presumir que é 0.05
+                    else if (numeroValor > 0.1 && numeroValor < 1) {
+                        valor = (numeroValor / 10).toFixed(3);
+                        console.log('Corrigido valor intermediário de', input.value, 'para', valor);
+                        input.style.backgroundColor = '#fff3cd'; // Destaque amarelo temporário
+                        setTimeout(() => input.style.backgroundColor = '', 1000);
+                    }
+                }
+                
+                input.value = valor;
+            }
+        }
+        
+        // Aplicar formatação em todos os campos numéricos
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputsNumericos = document.querySelectorAll('input[type="number"]');
+            
+            // Observer para detectar mudanças automáticas do navegador
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                        const target = mutation.target;
+                        if ((target.id === 'S_T' || target.id === 'S_L') && target.value) {
+                            setTimeout(() => formatarNumero(target), 50);
+                        }
+                    }
+                });
+            });
+            
+            inputsNumericos.forEach(function(input) {
+                // Observar mudanças de atributos
+                if (input.id === 'S_T' || input.id === 'S_L') {
+                    observer.observe(input, { attributes: true, attributeFilter: ['value'] });
+                }
+                // Ao perder o foco, formatar o número
+                input.addEventListener('blur', function() {
+                    formatarNumero(this);
+                });
+                
+                // Ao digitar, permitir vírgula mas converter para ponto e validar
+                input.addEventListener('input', function() {
+                    let valor = this.value;
+                    
+                    // Substituir vírgula por ponto
+                    if (valor.includes(',')) {
+                        valor = valor.replace(',', '.');
+                        this.value = valor;
+                    }
+                    
+                    // Validação em tempo real para S_T e S_L
+                    if ((this.id === 'S_T' || this.id === 'S_L') && valor && !isNaN(valor)) {
+                        let num = parseFloat(valor);
+                        
+                        // Múltiplas correções automáticas
+                        if (num < 0.001 && num > 0.00001) {
+                            // Muito pequeno (0.00005) -> 0.05
+                            this.value = (num * 1000).toFixed(3);
+                            console.log('Auto-correção: muito pequeno ->', this.value);
+                        } else if (num > 1) {
+                            // Muito grande (50.0) -> 0.05
+                            this.value = (num / 1000).toFixed(3);
+                            console.log('Auto-correção: muito grande ->', this.value);
+                        } else if (num > 0.1 && num < 1) {
+                            // Intermediário suspeito (0.5) -> 0.05
+                            this.value = (num / 10).toFixed(3);
+                            console.log('Auto-correção: intermediário ->', this.value);
+                        }
+                    }
+                });
+                
+                // Validação especial para S_T e S_L
+                if (input.id === 'S_T' || input.id === 'S_L') {
+                    let timeoutId;
+                    
+                    // Correção imediata para valores problemáticos
+                    input.addEventListener('input', function() {
+                        clearTimeout(timeoutId);
+                        
+                        // Correção imediata para casos óbvios
+                        let valor = this.value.replace(',', '.');
+                        let num = parseFloat(valor);
+                        
+                        if (!isNaN(num)) {
+                            if (num >= 50 || num >= 10) {
+                                // Corrigir imediatamente valores >=50 ou >=10
+                                this.value = (num / 1000).toFixed(3);
+                                this.style.backgroundColor = '#ffe8e8';
+                                setTimeout(() => this.style.backgroundColor = '', 1000);
+                                console.log('Correção imediata: grande ->', this.value);
+                            } else if (num < 0.001 && num > 0.00001) {
+                                // Corrigir imediatamente valores muito pequenos
+                                this.value = (num * 1000).toFixed(3);
+                                this.style.backgroundColor = '#e8f5e8';
+                                setTimeout(() => this.style.backgroundColor = '', 1000);
+                                console.log('Correção imediata: pequeno ->', this.value);
+                            }
+                        }
+                        
+                        // Timeout para outras correções
+                        timeoutId = setTimeout(() => {
+                            formatarNumero(this);
+                        }, 200); // Reduzido para 0.2s
+                    });
+                    
+                    input.addEventListener('change', function() {
+                        formatarNumero(this);
+                        
+                        let valor = parseFloat(this.value);
+                        if (valor > 1) {
+                            this.style.border = '2px solid #ff6b6b';
+                            setTimeout(() => this.style.border = '', 2000);
+                        } else if (valor >= 0.01 && valor <= 0.1) {
+                            this.style.border = '2px solid #51cf66';
+                            setTimeout(() => this.style.border = '', 2000);
+                        }
+                    });
+                    
+                    // Correção ao perder o foco
+                    input.addEventListener('blur', function() {
+                        clearTimeout(timeoutId);
+                        formatarNumero(this);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

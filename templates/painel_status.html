@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Status — Monitoramento Térmico em Tempo Real</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --surface-card: #ffffff;
+            --surface-glass: rgba(255, 255, 255, 0.85);
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            
+            --brand-primary: #2563eb;
+            --brand-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            
+            --color-t1: #f43f5e;
+            --color-t2: #f59e0b;
+            --color-t3: #ea580c;
+            --color-t4: #0ea5e9;
+            --color-t5: #6366f1;
+            --color-t6: #8b5cf6;
+            
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+            --card-hover-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            padding-bottom: 3rem;
+            margin: 0;
+        }
+
+        /* ── Top Header / Navbar ── */
+        .top-navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            background: rgba(37, 99, 235, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-title {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* ── Status Pulse Pill ── */
+        .live-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            color: #34d399;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* ── Action Buttons in Navbar ── */
+        .btn-nav-action {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-nav-action:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* ── Container Layout ── */
+        .container-custom {
+            max-width: 1400px;
+            padding: 0 1.25rem;
+            margin: 0 auto;
+        }
+
+        /* ── KPI Summary Cards ── */
+        .kpi-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.15rem 1.35rem;
+            box-shadow: var(--card-shadow);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-hover-shadow);
+        }
+        .kpi-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+        .kpi-val {
+            font-size: 1.45rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .kpi-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 0.35rem;
+            margin-top: 0.35rem;
+            display: inline-block;
+        }
+        .kpi-icon-box {
+            width: 46px;
+            height: 46px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Section Cards ── */
+        .dashboard-section {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            box-shadow: var(--card-shadow);
+            padding: 1.75rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .section-title i {
+            color: var(--brand-primary);
+        }
+
+        /* ── 6 Sensor Cards Grid ── */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1.15rem;
+        }
+        @media (max-width: 1200px) {
+            .sensor-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sensor-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .sensor-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Sensor Card Style ── */
+        .temp-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.25rem 1.1rem;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 175px;
+        }
+
+        .temp-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-primary);
+            transition: height 0.2s ease;
+        }
+
+        .temp-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-hover-shadow);
+            border-color: #cbd5e1;
+        }
+        .temp-card:hover::before {
+            height: 6px;
+        }
+
+        /* Sensor Custom Color Accents */
+        .card-t1::before { background: var(--color-t1); }
+        .card-t2::before { background: var(--color-t2); }
+        .card-t3::before { background: var(--color-t3); }
+        .card-t4::before { background: var(--color-t4); }
+        .card-t5::before { background: var(--color-t5); }
+        .card-t6::before { background: var(--color-t6); }
+
+        .temp-card-cinza::before { background: var(--color-t4); }
+        .temp-card-roxo::before { background: var(--color-t5); }
+
+        .card-header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .drag-handle:active { cursor: grabbing; }
+
+        .drag-grip {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .temp-card:hover .drag-grip { opacity: 1; color: var(--brand-primary); }
+
+        .temp-card.dragging {
+            opacity: 0.35;
+            transform: scale(0.96);
+            border: 2px dashed var(--brand-primary);
+        }
+        .temp-card.drag-over {
+            border: 2px dashed var(--brand-primary);
+            background: #eff6ff;
+            transform: scale(1.02);
+        }
+
+        .temp-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            margin: 0.35rem 0;
+            display: flex;
+            align-items: baseline;
+            gap: 0.2rem;
+            transition: opacity 0.2s ease;
+        }
+        .temp-unit {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .temp-description {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .drag-hint-box {
+            background: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.25rem;
+        }
+
+        /* ── Chart Container ── */
+        .chart-wrapper {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+
+        /* ── Controls Toolbar ── */
+        .toolbar-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn-action-primary {
+            background: var(--brand-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 1.25rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 0.6rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-action-primary:hover {
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-action-secondary {
+            background: #ffffff;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.15rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 0.6rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-action-secondary:hover {
+            background: #f8fafc;
+            color: var(--text-primary);
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        /* ── Informational Box ── */
+        .info-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.25rem;
+        }
+        .guide-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 0.85rem;
+            padding: 1.25rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .guide-icon {
+            font-size: 1.35rem;
+            color: var(--brand-primary);
+            background: rgba(37, 99, 235, 0.1);
+            width: 42px;
+            height: 42px;
+            border-radius: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .guide-content h6 {
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: var(--text-primary);
+        }
+        .guide-content p {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header Superior Glassmorphism ── -->
+    <nav class="top-navbar">
+        <div class="container-custom">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <div class="brand-badge mb-1">
+                        <i class="fas fa-microchip"></i>
+                        Sistema de Aquisição Térmica
+                    </div>
+                    <h1 class="header-title">
+                        <i class="fas fa-chart-line text-primary"></i>
+                        Painel de Monitoramento em Tempo Real
+                    </h1>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <a href="{{ url_for('index') }}" class="btn-nav-action">
+                        <i class="fas fa-home"></i>
+                        <span>Menu Principal</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-custom">
+
+        <!-- ── Live KPI Summary Metrics Row ── -->
+        <div class="row g-3 mb-4">
+            <!-- KPI 1: Temperatura Média da Superfície -->
+            <div class="col-md-3 col-sm-6">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-title">Média da Superfície (T1, T2, T3)</div>
+                        <div class="kpi-val" id="kpi-t-media">0.0000 <span class="temp-unit">°C</span></div>
+                        <span class="kpi-badge bg-primary-subtle text-primary" id="kpi-media-badge">Ts Médio (3 Sensores)</span>
+                    </div>
+                    <div class="kpi-icon-box bg-primary-subtle text-primary">
+                        <i class="fas fa-fire-flame-curved"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 2: Gradiente Térmico na Placa -->
+            <div class="col-md-3 col-sm-6">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-title">Gradiente da Placa |T1 - T3|</div>
+                        <div class="kpi-val" id="kpi-delta-t">0.0000 <span class="temp-unit">°C</span></div>
+                        <span class="kpi-badge bg-success-subtle text-success" id="kpi-unif-badge">Homogêneo</span>
+                    </div>
+                    <div class="kpi-icon-box bg-success-subtle text-success">
+                        <i class="fas fa-arrows-split-up-and-left"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 3: Temperatura Ambiente (DHT11) -->
+            <div class="col-md-3 col-sm-6">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-title">Ambiente (T4)</div>
+                        <div class="kpi-val" id="kpi-t-amb">0.00 <span class="temp-unit">°C</span></div>
+                        <span class="kpi-badge bg-info-subtle text-info">DHT11 #01</span>
+                    </div>
+                    <div class="kpi-icon-box bg-info-subtle text-info">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 4: Média Inferior (T5-T6) -->
+            <div class="col-md-3 col-sm-6">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-title">Base Inferior (T5-T6)</div>
+                        <div class="kpi-val" id="kpi-t-inf">0.00 <span class="temp-unit">°C</span></div>
+                        <span class="kpi-badge" style="background: rgba(139, 92, 246, 0.15); color: #7c3aed;">ESP32 #02</span>
+                    </div>
+                    <div class="kpi-icon-box" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Seção 1: Canais de Sensores em Tempo Real ── -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">
+                        <i class="fas fa-microchip"></i>
+                        Canais de Temperatura
+                    </h2>
+                    <span class="text-muted small">Leituras sincronizadas dos microcontroladores ESP32</span>
+                </div>
+
+                <div class="toolbar-group">
+                    <button type="button" class="btn-action-primary" onclick="atualizarAgora()">
+                        <i class="fas fa-sync-alt"></i>
+                        Atualizar Agora
+                    </button>
+                    <a href="/calculadora_convectivo/natural" class="btn-action-secondary">
+                        Calculadora Convectiva
+                    </a>
+                </div>
+            </div>
+
+            <!-- 6 Cards Grid -->
+            <div class="sensor-grid" id="cards-row">
+                <!-- T1 -->
+                <div data-slot="0">
+                    <div class="temp-card card-t1" data-sensor-key="t1" data-card-class="card-t1">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-fire mr-1 card-icon text-danger"></i>
+                                <span class="card-label">T1 — Início Chama</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-primary"></i>
+                            Sensor #01 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T2 -->
+                <div data-slot="1">
+                    <div class="temp-card card-t2" data-sensor-key="t2" data-card-class="card-t2">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-square mr-1 card-icon text-warning"></i>
+                                <span class="card-label">T2 — Meio Chapa</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-primary"></i>
+                            Sensor #02 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T3 -->
+                <div data-slot="2">
+                    <div class="temp-card card-t3" data-sensor-key="t3" data-card-class="card-t3">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-fire-burner mr-1 card-icon text-danger"></i>
+                                <span class="card-label">T3 — Fim Chama</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-primary"></i>
+                            Sensor #03 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T4 -->
+                <div data-slot="3">
+                    <div class="temp-card card-t4 temp-card-cinza" data-sensor-key="t4" data-card-class="temp-card-cinza card-t4">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-wind mr-1 card-icon text-info"></i>
+                                <span class="card-label">T4 — Ambiente</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-info"></i>
+                            DHT11 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T5 -->
+                <div data-slot="4">
+                    <div class="temp-card card-t5 temp-card-roxo" data-sensor-key="t5" data-card-class="temp-card-roxo card-t5">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-layer-group mr-1 card-icon" style="color: var(--color-t5);"></i>
+                                <span class="card-label">T5 — Base Inferior</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes" style="color: var(--color-t5);"></i>
+                            Sensor #04 — ESP32 #02
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T6 -->
+                <div data-slot="5">
+                    <div class="temp-card card-t6 temp-card-roxo" data-sensor-key="t6" data-card-class="temp-card-roxo card-t6">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-layer-group mr-1 card-icon" style="color: var(--color-t6);"></i>
+                                <span class="card-label">T6 — Base Inferior</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes" style="color: var(--color-t6);"></i>
+                            Sensor #05 — ESP32 #02
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                <div class="drag-hint-box">
+                    <i class="fas fa-grip-vertical text-muted"></i>
+                    <span><strong>Organização Interativa:</strong> Arraste os cards pelas alças para personalizar a ordem dos sensores na bancada.</span>
+                </div>
+                <div class="d-inline-flex align-items-center gap-2 bg-light px-3 py-1 rounded border shadow-sm">
+                    <span class="small font-weight-bold text-muted"><i class="fas fa-stopwatch text-primary mr-1"></i> Tempo de Ensaio:</span>
+                    <span id="cronometro-display" class="fw-bold font-monospace text-primary" style="font-size: 1rem; min-width: 68px;">00:00:00</span>
+                    <button type="button" class="btn btn-sm btn-outline-success font-weight-bold py-0 px-2" id="btn-cronometro-toggle" onclick="toggleCronometro()" style="font-size: 0.75rem; border-radius: 6px; height: 26px;">
+                        <i class="fas fa-play mr-1" id="cronometro-icon"></i><span id="cronometro-btn-text">Iniciar Tempo</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary font-weight-bold py-0 px-2" id="btn-cronometro-reset" onclick="resetarCronometro()" style="font-size: 0.75rem; border-radius: 6px; height: 26px;" title="Zerar cronômetro">
+                        <i class="fas fa-rotate-left"></i> Zerar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Seção 2: Gráfico em Tempo Real ── -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">
+                        <i class="fas fa-wave-square"></i>
+                        Histórico Temporal das Temperaturas
+                    </h2>
+                    <span class="text-muted small">Monitoramento contínuo da estabilidade térmica da bancada</span>
+                </div>
+
+                <div class="toolbar-group">
+                    <button type="button" class="btn-action-primary btn-sm" onclick="exportarGraficoPNG()" title="Baixar imagem PNG em alta resolução do gráfico">
+                        <i class="fas fa-file-image"></i>
+                        Exportar Gráfico (PNG)
+                    </button>
+                    <button type="button" class="btn-action-secondary btn-sm" onclick="exportarHistoricoCSV()" title="Baixar planilha CSV com todos os dados do ensaio">
+                        <i class="fas fa-file-csv text-success"></i>
+                        Exportar CSV
+                    </button>
+                    <button type="button" class="btn-action-secondary btn-sm" onclick="limparHistoricoGrafico()">
+                        <i class="fas fa-trash-can text-danger"></i>
+                        Limpar
+                    </button>
+                    <button type="button" class="btn-action-secondary btn-sm" id="btn-pause-toggle" onclick="togglePauseMonitoramento()">
+                        <i class="fas fa-pause"></i>
+                        Pausar
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="temperaturaChart"></canvas>
+            </div>
+
+            <!-- Barra Inferior de Métricas da Coleta -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-3 pt-3 border-top">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded border">
+                        <i class="fas fa-stopwatch text-primary"></i>
+                        <span class="small font-weight-bold text-muted">Tempo Total de Coleta:</span>
+                        <span id="chart-tempo-decorrido" class="font-monospace fw-bold text-primary">00:00:00</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded border">
+                        <i class="fas fa-chart-line text-success"></i>
+                        <span class="small font-weight-bold text-muted">Pontos Coletados:</span>
+                        <span id="chart-total-pontos" class="font-monospace fw-bold text-success">0</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded border">
+                        <i class="fas fa-bolt text-warning"></i>
+                        <span class="small font-weight-bold text-muted">Taxa de Amostragem:</span>
+                        <span class="font-monospace fw-bold text-dark">2.0 s</span>
+                    </div>
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-clock mr-1 text-info"></i>
+                    Horário da Última Amostra: <span id="chart-ultima-amostra" class="fw-semibold text-dark font-monospace">--:--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Seção 3: Informações Técnicas e Análise do Sistema ── -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">
+                        <i class="fas fa-circle-info"></i>
+                        Diretrizes de Operação e Análise Térmica
+                    </h2>
+                    <span class="text-muted small">Critérios de regime permanente e validação experimental</span>
+                </div>
+            </div>
+
+            <div class="info-card-grid">
+                <div class="guide-box">
+                    <div class="guide-icon">
+                        <i class="fas fa-temperature-arrow-up"></i>
+                    </div>
+                    <div class="guide-content">
+                        <h6>Critério de Regime Permanente</h6>
+                        <p>O ensaio atinge o regime permanente quando a variação temporal de todas as temperaturas for inferior a <strong>0,2 °C/min</strong> em um intervalo de 5 minutos.</p>
+                    </div>
+                </div>
+
+                <div class="guide-box">
+                    <div class="guide-icon">
+                        <i class="fas fa-arrows-left-right-to-line"></i>
+                    </div>
+                    <div class="guide-content">
+                        <h6>Verificação de Uniformidade</h6>
+                        <p>Se &Delta;T = |T2 - T3| for próximo de zero, a chapa opera sob condição de <strong>temperatura superficial constante (T_s &approx; const)</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="guide-box">
+                    <div class="guide-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div class="guide-content">
+                        <h6>Sincronização com a API</h6>
+                        <p>As leituras são transferidas via JSON diretamente para os módulos de <strong>Convecção Forçada</strong> e <strong>Escoamento Externo</strong> para cálculo automático do coeficiente h.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Scripts e Lógica Reativa ── -->
+    <script>
+        // ── Cronômetro de Avaliação do Tempo de Ensaio / Simulação ─────────────
+        let cronometroInterval = null;
+        let cronometroSegundos = 0;
+        let cronometroRodando = false;
+
+        function formatarTempo(segundos) {
+            const h = Math.floor(segundos / 3600).toString().padStart(2, '0');
+            const m = Math.floor((segundos % 3600) / 60).toString().padStart(2, '0');
+            const s = (segundos % 60).toString().padStart(2, '0');
+            return h + ':' + m + ':' + s;
+        }
+
+        function toggleCronometro() {
+            const btnText = document.getElementById('cronometro-btn-text');
+            const btnIcon = document.getElementById('cronometro-icon');
+            const btn = document.getElementById('btn-cronometro-toggle');
+            
+            if (!cronometroRodando) {
+                cronometroRodando = true;
+                if (btnText) btnText.textContent = 'Pausar';
+                if (btnIcon) btnIcon.className = 'fas fa-pause mr-1';
+                if (btn) btn.className = 'btn btn-sm btn-outline-warning font-weight-bold py-0 px-2';
+                
+                cronometroInterval = setInterval(() => {
+                    cronometroSegundos++;
+                    const display = document.getElementById('cronometro-display');
+                    if (display) display.textContent = formatarTempo(cronometroSegundos);
+                }, 1000);
+            } else {
+                cronometroRodando = false;
+                clearInterval(cronometroInterval);
+                if (btnText) btnText.textContent = 'Continuar';
+                if (btnIcon) btnIcon.className = 'fas fa-play mr-1';
+                if (btn) btn.className = 'btn btn-sm btn-outline-success font-weight-bold py-0 px-2';
+            }
+        }
+
+        function resetarCronometro() {
+            cronometroRodando = false;
+            clearInterval(cronometroInterval);
+            cronometroSegundos = 0;
+            const display = document.getElementById('cronometro-display');
+            if (display) display.textContent = '00:00:00';
+            const btnText = document.getElementById('cronometro-btn-text');
+            const btnIcon = document.getElementById('cronometro-icon');
+            const btn = document.getElementById('btn-cronometro-toggle');
+            if (btnText) btnText.textContent = 'Iniciar Tempo';
+            if (btnIcon) btnIcon.className = 'fas fa-play mr-1';
+            if (btn) btn.className = 'btn btn-sm btn-outline-success font-weight-bold py-0 px-2';
+        }
+
+        let monitoringInterval = null;
+        let isPaused = false;
+        let temperaturaChart = null;
+        const MAX_POINTS = 25;
+
+        const temperatureHistory = {
+            labels: [],
+            t1: [],
+            t2: [],
+            t3: [],
+            t4: [],
+            t5: [],
+            t6: []
+        };
+
+        function inicializarGrafico() {
+            const ctx = document.getElementById('temperaturaChart').getContext('2d');
+            
+            const gradientT1 = ctx.createLinearGradient(0, 0, 0, 350);
+            gradientT1.addColorStop(0, 'rgba(244, 63, 94, 0.2)');
+            gradientT1.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+
+            temperaturaChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: temperatureHistory.labels,
+                    datasets: [
+                        {
+                            label: 'T1: Início Placa',
+                            data: temperatureHistory.t1,
+                            borderColor: '#f43f5e',
+                            backgroundColor: gradientT1,
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#f43f5e'
+                        },
+                        {
+                            label: 'T2: Centro Placa',
+                            data: temperatureHistory.t2,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#f59e0b'
+                        },
+                        {
+                            label: 'T3: Fim Placa',
+                            data: temperatureHistory.t3,
+                            borderColor: '#ea580c',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#ea580c'
+                        },
+                        {
+                            label: 'T4: Ambiente',
+                            data: temperatureHistory.t4,
+                            borderColor: '#0ea5e9',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#0ea5e9'
+                        },
+                        {
+                            label: 'T5: Base / Água',
+                            data: temperatureHistory.t5,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#6366f1'
+                        },
+                        {
+                            label: 'T6: Base / Água',
+                            data: temperatureHistory.t6,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#8b5cf6'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                padding: 18,
+                                font: {
+                                    family: 'Inter',
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                color: '#475569'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Inter', size: 13, weight: '700' },
+                            bodyFont: { family: 'JetBrains Mono', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            boxPadding: 6,
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' °C';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Temperatura (°C)',
+                                font: { family: 'Inter', size: 12, weight: '600' },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                font: { family: 'JetBrains Mono', size: 11 },
+                                color: '#64748b',
+                                callback: function(value) {
+                                    return value.toFixed(1) + '°C';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Horário de Coleta',
+                                font: { family: 'Inter', size: 12, weight: '600' },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { family: 'JetBrains Mono', size: 10 },
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        let totalPontosColetados = 0;
+        let inicioColetaTimestamp = null;
+
+        function adicionarPontoGrafico(t1, t2, t3, t4, t5, t6) {
+            if (isPaused) return;
+
+            const agora = new Date();
+            const timeLabel = 
+                agora.getHours().toString().padStart(2, '0') + ':' + 
+                agora.getMinutes().toString().padStart(2, '0') + ':' + 
+                agora.getSeconds().toString().padStart(2, '0');
+
+            if (!inicioColetaTimestamp) {
+                inicioColetaTimestamp = agora.getTime();
+            }
+
+            totalPontosColetados++;
+
+            if (temperatureHistory.labels.length >= MAX_POINTS) {
+                temperatureHistory.labels.shift();
+                temperatureHistory.t1.shift();
+                temperatureHistory.t2.shift();
+                temperatureHistory.t3.shift();
+                temperatureHistory.t4.shift();
+                temperatureHistory.t5.shift();
+                temperatureHistory.t6.shift();
+            }
+
+            temperatureHistory.labels.push(timeLabel);
+            temperatureHistory.t1.push(t1);
+            temperatureHistory.t2.push(t2);
+            temperatureHistory.t3.push(t3);
+            temperatureHistory.t4.push(t4);
+            temperatureHistory.t5.push(t5);
+            temperatureHistory.t6.push(t6);
+
+            const segDecorridos = Math.floor((agora.getTime() - inicioColetaTimestamp) / 1000);
+            const elTempo = document.getElementById('chart-tempo-decorrido');
+            if (elTempo) elTempo.textContent = formatarTempo(segDecorridos);
+            
+            const elPontos = document.getElementById('chart-total-pontos');
+            if (elPontos) elPontos.textContent = totalPontosColetados;
+            
+            const elAmostra = document.getElementById('chart-ultima-amostra');
+            if (elAmostra) elAmostra.textContent = timeLabel;
+
+            if (temperaturaChart) {
+                temperaturaChart.update('none');
+            }
+        }
+
+        function exportarGraficoPNG() {
+            if (!temperaturaChart) return;
+
+            const origCanvas = document.getElementById('temperaturaChart');
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = origCanvas.width + 60;
+            exportCanvas.height = origCanvas.height + 130;
+            const ctx = exportCanvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 16px Inter, sans-serif';
+            ctx.fillText('Histórico Temporal de Temperaturas — Bancada Térmica UFR', 30, 35);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px Inter, sans-serif';
+            const agoraStr = new Date().toLocaleString('pt-BR');
+            const duracaoStr = document.getElementById('chart-tempo-decorrido') ? document.getElementById('chart-tempo-decorrido').textContent : '00:00:00';
+            ctx.fillText('Exportado em: ' + agoraStr + ' | Duração: ' + duracaoStr + ' | Pontos: ' + temperatureHistory.labels.length + ' | Taxa: 2.0s', 30, 58);
+
+            ctx.drawImage(origCanvas, 30, 75);
+
+            const link = document.createElement('a');
+            link.download = 'grafico_ensaio_termico_' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '_') + '.png';
+            link.href = exportCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        function exportarHistoricoCSV() {
+            if (temperatureHistory.labels.length === 0) {
+                alert('Nenhum dado registrado no gráfico para exportar.');
+                return;
+            }
+            let csv = 'Horário,Tempo (s),T1 - Inicio (°C),T2 - Meio (°C),T3 - Fim (°C),T4 - Ambiente (°C),T5 - Base (°C),T6 - Base (°C)\r\n';
+            for (let i = 0; i < temperatureHistory.labels.length; i++) {
+                const tempoSeg = i * 2;
+                csv += temperatureHistory.labels[i] + ',' + tempoSeg + ',' + temperatureHistory.t1[i] + ',' + temperatureHistory.t2[i] + ',' + temperatureHistory.t3[i] + ',' + temperatureHistory.t4[i] + ',' + temperatureHistory.t5[i] + ',' + temperatureHistory.t6[i] + '\r\n';
+            }
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'ensaio_termico_dados_' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '_') + '.csv';
+            link.click();
+        }
+
+        function limparHistoricoGrafico() {
+            temperatureHistory.labels.length = 0;
+            temperatureHistory.t1.length = 0;
+            temperatureHistory.t2.length = 0;
+            temperatureHistory.t3.length = 0;
+            temperatureHistory.t4.length = 0;
+            temperatureHistory.t5.length = 0;
+            temperatureHistory.t6.length = 0;
+            totalPontosColetados = 0;
+            inicioColetaTimestamp = null;
+
+            if (document.getElementById('chart-tempo-decorrido')) document.getElementById('chart-tempo-decorrido').textContent = '00:00:00';
+            if (document.getElementById('chart-total-pontos')) document.getElementById('chart-total-pontos').textContent = '0';
+            if (document.getElementById('chart-ultima-amostra')) document.getElementById('chart-ultima-amostra').textContent = '--:--:--';
+
+            if (temperaturaChart) temperaturaChart.update();
+        }
+
+        function togglePauseMonitoramento() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('btn-pause-toggle');
+            if (isPaused) {
+                btn.innerHTML = '<i class="fas fa-play"></i> Continuar';
+                btn.classList.replace('btn-action-secondary', 'btn-action-primary');
+            } else {
+                btn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+                btn.classList.replace('btn-action-primary', 'btn-action-secondary');
+            }
+        }
+
+        // ── Atualização dos Indicadores de KPI ao Vivo ─────────────────────────
+        function atualizarKPIs(t1, t2, t3, t4, t5, t6) {
+            const tMedia = ((t1 + t2 + t3) / 3).toFixed(4);
+            document.getElementById('kpi-t-media').innerHTML = `${tMedia} <span class="temp-unit">°C</span>`;
+
+            const deltaT = Math.abs(t1 - t3).toFixed(4);
+            document.getElementById('kpi-delta-t').innerHTML = `${deltaT} <span class="temp-unit">°C</span>`;
+            
+            const badgeDelta = document.getElementById('kpi-unif-badge');
+            if (parseFloat(deltaT) <= 2.5) {
+                badgeDelta.className = 'kpi-badge bg-success-subtle text-success';
+                badgeDelta.textContent = 'Homogêneo (Ts ≈ const)';
+            } else {
+                badgeDelta.className = 'kpi-badge bg-warning-subtle text-warning';
+                badgeDelta.textContent = 'Gradiente Ativo';
+            }
+
+            document.getElementById('kpi-t-amb').innerHTML = `${t4.toFixed(4)} <span class="temp-unit">°C</span>`;
+
+            const tInf = ((t5 + t6) / 2).toFixed(4);
+            document.getElementById('kpi-t-inf').innerHTML = `${tInf} <span class="temp-unit">°C</span>`;
+        }
+
+        async function buscarDadosMonitoramento() {
+            try {
+                const response = await fetch('/api/monitoramento', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    console.error('Erro na resposta:', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success && data.data) {
+                    atualizarCardsTemperatura(data.data);
+                }
+            } catch (error) {
+                console.error('Falha de rede:', error);
+            }
+        }
+
+        // ── Posições Fixas na Bancada Térmica ─────────────────────────────────
+        const POSICOES_BANCADA = [
+            { id: 't1', label: 'T1 — Início da Placa', icon: 'fa-fire',        iconColor: 'text-danger',  cardClass: 'card-t1' },
+            { id: 't2', label: 'T2 — Centro da Placa', icon: 'fa-square',      iconColor: 'text-warning', cardClass: 'card-t2' },
+            { id: 't3', label: 'T3 — Fim da Placa',    icon: 'fa-fire-burner', iconColor: 'text-danger',  cardClass: 'card-t3' },
+            { id: 't4', label: 'T4 — Ambiente',        icon: 'fa-wind',        iconColor: 'text-info',    cardClass: 'card-t4 temp-card-cinza' },
+            { id: 't5', label: 'T5 — Base / Água',     icon: 'fa-layer-group', iconColor: 'text-primary', cardClass: 'card-t5 temp-card-roxo' },
+            { id: 't6', label: 'T6 — Base / Água',     icon: 'fa-layer-group', iconColor: 'text-primary', cardClass: 'card-t6 temp-card-roxo' }
+        ];
+
+        const INFO_SENSORES_FISICOS = {
+            't1': { nome: 'Sensor #01 (ESP32 #01)', badge: 'Sensor 1' },
+            't2': { nome: 'Sensor #02 (ESP32 #01)', badge: 'Sensor 2' },
+            't3': { nome: 'Sensor #03 (ESP32 #01)', badge: 'Sensor 3' },
+            't4': { nome: 'Sensor #04 (DHT11 #01)', badge: 'Sensor 4' },
+            't5': { nome: 'Sensor #05 (ESP32 #02)', badge: 'Sensor 5' },
+            't6': { nome: 'Sensor #06 (ESP32 #02)', badge: 'Sensor 6' }
+        };
+
+        const PADRAO_MAPEAMENTO = ['t1', 't2', 't3', 't4', 't5', 't6'];
+        let sensorMapping = PADRAO_MAPEAMENTO.slice();
+
+        try {
+            const salvo = localStorage.getItem('sensorMapping');
+            if (salvo) {
+                const parsed = JSON.parse(salvo);
+                if (Array.isArray(parsed) && parsed.length === PADRAO_MAPEAMENTO.length) {
+                    sensorMapping = parsed;
+                }
+            }
+        } catch(e) {}
+
+        function salvarMapeamento() {
+            localStorage.setItem('sensorMapping', JSON.stringify(sensorMapping));
+        }
+
+        let ultimosDadosRecebidos = null;
+
+        function aplicarMapeamentoNaTela() {
+            const slots = document.querySelectorAll('#cards-row [data-slot]');
+            slots.forEach((col, i) => {
+                const pos = POSICOES_BANCADA[i];
+                const canalConectado = sensorMapping[i];
+                const infoSensor = INFO_SENSORES_FISICOS[canalConectado] || { nome: `Sensor ${canalConectado}`, badge: canalConectado };
+                
+                const card = col.querySelector('.temp-card');
+                card.className = 'temp-card ' + pos.cardClass;
+                card.setAttribute('data-posicao', pos.id);
+                card.setAttribute('data-sensor-canal', canalConectado);
+                
+                col.querySelector('.card-label').textContent = pos.label;
+                
+                const iconEl = col.querySelector('.card-icon');
+                iconEl.className = `fas ${pos.icon} mr-1 card-icon ${pos.iconColor}`;
+                
+                col.querySelector('.sensor-desc').innerHTML = `<i class="fas fa-microchip text-primary mr-1"></i>Conectado ao: <strong>${infoSensor.nome}</strong>`;
+            });
+        }
+
+        function atualizarCardsTemperatura(dados) {
+            ultimosDadosRecebidos = dados;
+            const slots = document.querySelectorAll('#cards-row [data-slot]');
+            slots.forEach(col => { col.querySelector('.sensor-value').style.opacity = '0.4'; });
+
+            setTimeout(() => {
+                const leiturasMapeadas = {};
+
+                slots.forEach((col, i) => {
+                    const pos = POSICOES_BANCADA[i];
+                    const canalConectado = sensorMapping[i];
+                    const val = parseFloat(dados[canalConectado]) || 0;
+                    
+                    leiturasMapeadas[pos.id] = val;
+
+                    col.querySelector('.sensor-value').innerHTML =
+                        `${val.toFixed(4)}<span class="temp-unit">°C</span>`;
+                    col.querySelector('.sensor-value').style.opacity = '1';
+                });
+
+                const t1 = leiturasMapeadas['t1'] || 0;
+                const t2 = leiturasMapeadas['t2'] || 0;
+                const t3 = leiturasMapeadas['t3'] || 0;
+                const t4 = leiturasMapeadas['t4'] || 0;
+                const t5 = leiturasMapeadas['t5'] || 0;
+                const t6 = leiturasMapeadas['t6'] || 0;
+
+                adicionarPontoGrafico(t1, t2, t3, t4, t5, t6);
+                atualizarKPIs(t1, t2, t3, t4, t5, t6);
+            }, 150);
+        }
+
+        // ── Drag & Drop de Mapeamento de Sensores ──────────────────────────────
+        let dragSrcSlot = null;
+
+        function initDragDrop() {
+            const handles = document.querySelectorAll('.drag-handle');
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', () => {
+                    handle.closest('.temp-card').setAttribute('draggable', 'true');
+                });
+                handle.addEventListener('mouseup', () => {
+                    handle.closest('.temp-card').setAttribute('draggable', 'false');
+                });
+            });
+
+            const cards = document.querySelectorAll('#cards-row .temp-card');
+            cards.forEach(card => {
+                card.addEventListener('dragstart', e => {
+                    dragSrcSlot = parseInt(card.closest('[data-slot]').getAttribute('data-slot'));
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                card.addEventListener('dragend', () => {
+                    card.setAttribute('draggable', 'false');
+                    card.classList.remove('dragging');
+                    document.querySelectorAll('.temp-card').forEach(c => c.classList.remove('drag-over'));
+                });
+                card.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    document.querySelectorAll('.temp-card').forEach(c => c.classList.remove('drag-over'));
+                    card.classList.add('drag-over');
+                });
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drag-over');
+                });
+                card.addEventListener('drop', e => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    const destSlot = parseInt(card.closest('[data-slot]').getAttribute('data-slot'));
+                    if (dragSrcSlot === null || dragSrcSlot === destSlot) return;
+                    
+                    const canalOrigem = sensorMapping[dragSrcSlot];
+                    sensorMapping[dragSrcSlot] = sensorMapping[destSlot];
+                    sensorMapping[destSlot] = canalOrigem;
+                    
+                    salvarMapeamento();
+                    aplicarMapeamentoNaTela();
+                    
+                    if (ultimosDadosRecebidos) {
+                        atualizarCardsTemperatura(ultimosDadosRecebidos);
+                    }
+                    dragSrcSlot = null;
+                });
+            });
+        }
+
+        function atualizarAgora() {
+            buscarDadosMonitoramento();
+        }
+
+        function iniciarMonitoramento() {
+            inicializarGrafico();
+            buscarDadosMonitoramento();
+            monitoringInterval = setInterval(buscarDadosMonitoramento, 2000);
+        }
+
+        function pararMonitoramento() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            aplicarMapeamentoNaTela();
+            iniciarMonitoramento();
+            initDragDrop();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            pararMonitoramento();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+Tipos de Aletas: ['1)aletas retangulares retas', '2)aletas triangulares retas', '3)aletas parabolicas retas']
+h: 25.0, k: 240.0, l: 0.05, t: 0.002, w: 0.1, D: None, r1: None, r2: None, T_b: 100.0, T_inf: 25.0
+('1)aletas retangulares retas', np.float64(0.9199527239717616), np.float64(17.59409584595994), 0.010000000000000002, np.float64(46.917588922559844), np.float64(10.307764064044152), 0.20400000000000001, 0.0002)
+('2)aletas triangulares retas', np.float64(0.48439414718407736), np.float64(17.282146278417738), np.float64(0.010001999800039992), np.float64(46.08572340911397), np.float64(10.208247483284616), np.float64(0.20007996802557443), 0.0002)
+('3)aletas parabolicas retas', np.float64(2.5607761710043606), np.float64(17.59409584595994), np.float64(0.010002666027032116), np.float64(46.917588922559844), np.float64(10.307764064044152), 0.20400000000000001, 0.0002)
