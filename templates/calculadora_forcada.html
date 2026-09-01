@@ -649,6 +649,10 @@
 
         function exibirResultados(resultado) {
             const h = resultado.coef_convectivo || resultado.h || 0;
+            if (h && !isNaN(parseFloat(h)) && parseFloat(h) > 0) {
+                localStorage.setItem('coeficiente_convectivo', h);
+                localStorage.setItem('ultimo_h_calculado', h);
+            }
             const Nu = resultado.nusselt || resultado.Nu || 0;
             const Re = resultado.reynolds || resultado.Re || 0;
             const Pr = resultado.prandtl || resultado.Pr || 0;
@@ -821,6 +825,7 @@
             }
             
             localStorage.setItem('coeficiente_convectivo', hValue);
+            localStorage.setItem('ultimo_h_calculado', hValue);
             
             window.location.href = "/";
         }

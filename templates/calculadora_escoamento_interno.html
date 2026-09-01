@@ -561,6 +561,12 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="mt-4 text-center">
+                            <button type="button" onclick="usarCoeficienteCalculado({{ resultado.h }})" class="btn btn-success btn-lg px-4">
+                                <i class="fas fa-check-circle mr-2"></i>Usar na Simulação de Aletas
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -569,6 +575,21 @@
     </div>
 
     <script>
+        {% if resultado %}
+        try {
+            localStorage.setItem('coeficiente_convectivo', '{{ resultado.h }}');
+            localStorage.setItem('ultimo_h_calculado', '{{ resultado.h }}');
+        } catch(e) {}
+        {% endif %}
+
+        function usarCoeficienteCalculado(hValue) {
+            try {
+                localStorage.setItem('coeficiente_convectivo', hValue);
+                localStorage.setItem('ultimo_h_calculado', hValue);
+            } catch(e) {}
+            window.location.href = "/";
+        }
+
         function validarCamposEscoamento() {
             const inputV = document.getElementById('v');
             const inputMDot = document.getElementById('m_dot');

@@ -751,13 +751,13 @@ def conveccao_natural_placa_horizontal(Lc, T_s, T_inf, orientacao='superior', fl
             Nu = 0.15 * Ra**(1/3)
             regime = "Turbulento (Ra > 1×10¹¹ — extrapolado)"
     else:
-        # Face quente para baixo — correlação McAdams
-        if Ra <= 1e11:
+        # Face quente para baixo — correlação McAdams (3×10⁵ ≤ Ra ≤ 3×10¹⁰, Incropera/Çengel)
+        if Ra <= 3e10:
             Nu = 0.27 * Ra**(1/4)
-            regime = "Laminar — face inferior (Ra ≤ 1×10¹¹)"
+            regime = "Laminar — face inferior (3×10⁵ ≤ Ra ≤ 3×10¹⁰)"
         else:
             Nu = 0.27 * Ra**(1/4)
-            regime = "Regime estendido — face inferior"
+            regime = "Regime estendido — face inferior (Ra > 3×10¹⁰)"
 
     h = Nu * props['k'] / Lc
 

@@ -83,6 +83,20 @@
             margin-bottom: 20px;
             font-size: 1.08em;
         }
+        .pulse-success {
+            animation: pulseGreen 1.8s infinite;
+        }
+        @keyframes pulseGreen {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+        .input-group-append .btn {
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
         @media (max-width: 600px) {
             .card {
                 max-width: 98vw;
@@ -93,6 +107,22 @@
             }
             .form-control {
                 font-size: 1em;
+            }
+            .input-group {
+                flex-wrap: wrap;
+            }
+            .input-group-append {
+                width: 100%;
+                margin-top: 6px;
+                margin-left: 0 !important;
+                display: flex;
+                gap: 5px;
+            }
+            .input-group-append .btn {
+                flex: 1;
+                font-size: 0.82rem;
+                padding: 8px 6px;
+                border-radius: 6px !important;
             }
         }
     </style>
@@ -108,21 +138,34 @@
         
         <form method="post">
             <div class="form-group">
-                <label for="h">Coeficiente de transferência de calor (h):</label>
+                <label for="h" style="font-weight: 600;">Coeficiente de transferência de calor (h):</label>
                 <div class="input-group">
                     <input type="text" class="form-control" id="h" name="h" required placeholder="Ex: 25 W/m²·K">
                     <div class="input-group-append">
-                        <button type="button" class="btn btn-info" onclick="abrirCalculadoraConvectivo()">
-                            <i class="fas fa-calculator"></i> Calcular h
+                        <button type="button" class="btn btn-success" id="btn-usar-h" onclick="usarHCalculado()" title="Usar valor de h calculado anteriormente">
+                            <i class="fas fa-magic mr-1"></i> Usar h Calculado
+                        </button>
+                        <button type="button" class="btn btn-info" onclick="abrirCalculadoraConvectivo()" title="Abrir calculadora de convecção">
+                            <i class="fas fa-calculator mr-1"></i> Calcular h
                         </button>
                     </div>
                 </div>
-                <small class="form-text text-muted">
-                    <span id="origem-h" style="display: none;">
-                        <i class="fas fa-check-circle text-success"></i>
-                        Valor obtido da calculadora de convecção
+                <div class="mt-1 d-flex justify-content-between align-items-center flex-wrap">
+                    <small class="form-text text-muted m-0">
+                        <span id="origem-h" style="display: none;" class="text-success font-weight-bold">
+                            <i class="fas fa-check-circle"></i> <span id="origem-h-texto">Valor obtido da calculadora de convecção</span>
+                        </span>
+                        <span id="dica-h-vazio" class="text-muted" style="display: inline;">
+                            Insira manualmente ou use a calculadora de convecção.
+                        </span>
+                    </small>
+                    <span id="badge-h-disponivel" class="badge badge-success p-1" style="display: none; cursor: pointer;" onclick="usarHCalculado()" title="Clique para preencher o campo com este valor">
+                        <i class="fas fa-history"></i> <span id="badge-h-texto">h disponível</span>
                     </span>
-                </small>
+                </div>
+                <div id="alerta-h" class="alert alert-warning py-1 px-2 mt-2" style="display: none; font-size: 0.9rem;">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> <span id="alerta-h-texto"></span>
+                </div>
             </div>
             <div class="form-group">
                 <label for="T_b">Temperatura da base da aleta (T_b):</label>
@@ -230,29 +273,106 @@
         $('[data-toggle="tooltip"]').tooltip();
     });
     
+    function abrirCalculadoraConvectivo() {
+        window.open('/calculadora_convectivo', '_blank');
+    }
+    
+    function obterHCalculado() {
+        return localStorage.getItem('coeficiente_convectivo') || 
+               localStorage.getItem('ultimo_h_calculado') || 
+               localStorage.getItem('h_calculado') || null;
+    }
+
+    function usarHCalculado() {
+        const h = obterHCalculado();
+        const alerta = document.getElementById('alerta-h');
+        const alertaTexto = document.getElementById('alerta-h-texto');
+        
+        if (h !== null && !isNaN(parseFloat(h)) && parseFloat(h) > 0) {
+            const valNum = parseFloat(h);
+            const val = valNum.toFixed(2);
+            const campoH = document.getElementById('h');
+            campoH.value = val;
+            
+            // Efeito visual no campo
+            campoH.style.transition = 'all 0.3s ease';
+            campoH.style.backgroundColor = '#e8f5e8';
+            campoH.style.border = '2px solid #28a745';
+            campoH.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.35)';
+            
+            // Indicador de origem
+            const origemEl = document.getElementById('origem-h');
+            const origemTexto = document.getElementById('origem-h-texto');
+            const dicaVazio = document.getElementById('dica-h-vazio');
+            if (origemEl && origemTexto) {
+                origemTexto.textContent = `Valor obtido da calculadora de convecção: ${val} W/m²·K`;
+                origemEl.style.display = 'inline';
+            }
+            if (dicaVazio) dicaVazio.style.display = 'none';
+            if (alerta) alerta.style.display = 'none';
+            
+            // Manter no histórico como último calculado
+            localStorage.setItem('ultimo_h_calculado', val);
+            atualizarStatusHDisponivel();
+        } else {
+            if (alerta && alertaTexto) {
+                alertaTexto.textContent = 'Nenhum valor de h calculado recentemente foi encontrado no navegador. Clique em "Calcular h" para calculá-lo.';
+                alerta.style.display = 'block';
+                setTimeout(() => { alerta.style.display = 'none'; }, 6000);
+            } else {
+                alert('Nenhum coeficiente de convecção calculado recentemente foi encontrado. Use o botão "Calcular h" para calculá-lo.');
+            }
+        }
+    }
+    
+    function atualizarStatusHDisponivel() {
+        const h = obterHCalculado();
+        const badge = document.getElementById('badge-h-disponivel');
+        const badgeTexto = document.getElementById('badge-h-texto');
+        const btnUsar = document.getElementById('btn-usar-h');
+        
+        if (h !== null && !isNaN(parseFloat(h)) && parseFloat(h) > 0) {
+            const val = parseFloat(h).toFixed(2);
+            if (badge && badgeTexto) {
+                badgeTexto.textContent = `h disponível: ${val} W/m²·K`;
+                badge.style.display = 'inline-block';
+            }
+            if (btnUsar) {
+                btnUsar.title = `Aplicar h calculado: ${val} W/m²·K`;
+                btnUsar.classList.add('pulse-success');
+            }
+        } else {
+            if (badge) badge.style.display = 'none';
+            if (btnUsar) {
+                btnUsar.title = 'Usar valor de h calculado anteriormente';
+                btnUsar.classList.remove('pulse-success');
+            }
+        }
+    }
+
+    function verificarCoeficienteCalculado() {
+        const hRecente = localStorage.getItem('coeficiente_convectivo');
+        if (hRecente && !isNaN(parseFloat(hRecente)) && parseFloat(hRecente) > 0) {
+            usarHCalculado();
+            localStorage.removeItem('coeficiente_convectivo');
+        }
+        atualizarStatusHDisponivel();
+    }
+    
     window.addEventListener('load', function() {
         toggleTempCampo();
         verificarCoeficienteCalculado();
     });
     
-    function abrirCalculadoraConvectivo() {
-        window.open('{{ url_for("calculadora_convectivo") }}', '_blank');
-    }
+    window.addEventListener('focus', function() {
+        verificarCoeficienteCalculado();
+    });
     
-    function verificarCoeficienteCalculado() {
-        const hCalculado = localStorage.getItem('coeficiente_convectivo');
-        if (hCalculado) {
-            document.getElementById('h').value = parseFloat(hCalculado).toFixed(2);
-            
-            document.getElementById('origem-h').style.display = 'block';
-            
-            const campoH = document.getElementById('h');
-            campoH.style.backgroundColor = '#e8f5e8';
-            campoH.style.border = '2px solid #28a745';
-            
-            localStorage.removeItem('coeficiente_convectivo');
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'coeficiente_convectivo' || e.key === 'ultimo_h_calculado') {
+            verificarCoeficienteCalculado();
         }
-    }
+    });
     </script>
 </body>
 </html>

@@ -755,7 +755,9 @@ def processar_conveccao_natural_json():
         T_base_raw = data.get('T_base')
         if T_base_raw is not None:
             try:
-                T_base = float(T_base_raw)
+                T_agua = float(T_base_raw)
+                X_correcao = float(data.get('X_correcao', 0.0))
+                T_face_inferior = T_agua - X_correcao
                 espessura = float(data.get('espessura', 0.005))
                 k_mat = float(data.get('k_material', 222.0))
                 emissividade = float(data.get('emissividade', 0.09))
@@ -779,26 +781,31 @@ def processar_conveccao_natural_json():
                 Tinf_K = max(0.0, T_fluido + 273.15)
                 Q_rad = emissividade * sigma * area_s * (Ts_K**4 - Tinf_K**4) if Ts_K > Tinf_K else 0.0
                 
-                # 3. Balanço de Energia Experimental da Bancada (Efeito Tridimensional & Bordas):
-                # Na bancada real, além da face plana As, há dissipação convectiva nas 4 bordas laterais (área Abordas = 2*(L+W)*espessura)
-                perimetro = 2.0 * (float(data.get('comprimento_placa', 0.37)) + float(data.get('largura_placa', 0.17)))
-                area_bordas = perimetro * espessura if espessura > 0 else 0.0054
-                h_borda = h_anal * 1.35  # convecção em placa vertical nas bordas
-                Q_conv_bordas = h_borda * area_bordas * delta_T if delta_T > 0 else 0.0
+                # 3. Condução Real pela Lei de Fourier através da chapa (utilizando T_face_inferior corrigida):
+                # Q_cond = k_Al * A_s * |T_face_inferior - T_superficie| / espessura
+                delta_T_cond = abs(T_face_inferior - T_superficie)
+                Q_cond_exp = (k_mat * area_s * delta_T_cond) / espessura if espessura > 0 else 0.0
                 
-                # Taxas térmicas experimentais da bancada
-                Q_conv_exp = Q_conv_anal + Q_conv_bordas
-                Q_cond_exp = Q_conv_exp + Q_rad
-                h_exp = (Q_conv_exp / (area_s * delta_T)) if (abs(delta_T) > 1e-4 and area_s > 0) else h_anal
+                # 4. Convecção Experimental obtida pelo Balanço de Energia Real:
+                # Q_conv_exp = Q_cond - Q_rad
+                Q_conv_exp = max(0.0, Q_cond_exp - Q_rad)
                 
-                # 4. Erro relativo percentual experimental vs modelo ideal McAdams
+                # 5. Coeficiente Convectivo Experimental real:
+                # h_exp = Q_conv_exp / (A_s * (T_s - T_inf))
+                h_exp = (Q_conv_exp / (area_s * delta_T)) if (abs(delta_T) > 1e-4 and area_s > 0) else 0.0
+                
+                # 6. Divergência Relativa percentual experimental vs teórico
                 erro_rel = (abs(h_anal - h_exp) / h_anal * 100.0) if h_anal > 0 else 0.0
                 
-                # 5. Delta T real de condução através dos 5 mm de alumínio Liga 1100
-                delta_T_conducao_teorico = (Q_cond_exp * espessura) / (k_mat * area_s) if (k_mat * area_s > 0) else 0.00588
+                # 7. Delta T teórico que existiria se a condução fosse estritamente igual à dissipação teórica (McAdams + Radiação)
+                delta_T_conducao_teorico = ((Q_conv_anal + Q_rad) * espessura) / (k_mat * area_s) if (k_mat * area_s > 0) else 0.00254
                 
                 balanco_exp = {
-                    'T_base': T_base,
+                    'T_base': round(T_agua, 4),
+                    'T_agua': round(T_agua, 4),
+                    'X_correcao': round(X_correcao, 4),
+                    'T_face_inferior': round(T_face_inferior, 4),
+                    'delta_T_cond': round(delta_T_cond, 4),
                     'espessura': espessura,
                     'k_material': k_mat,
                     'emissividade': emissividade,
