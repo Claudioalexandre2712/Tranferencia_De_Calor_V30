@@ -69,6 +69,11 @@ const float TEMPERATURA_REFERENCIA_GELO = 0.0;
 const uint8_t NUM_AMOSTRAS_CALIBRACAO = 30;
 const uint8_t MIN_AMOSTRAS_CALIBRACAO = 24;
 
+// Filtro Digital Passa-Baixas (EMA) para estabilização de leitura
+float leiturasBrutasFiltradas[NUM_SENSORES] = {0.0, 0.0};
+bool filtroIniciado[NUM_SENSORES] = {false, false};
+const float FATOR_FILTRO_EMA = 0.25;
+
 // Temporização Não-Bloqueante
 const unsigned long INTERVALO_LEITURA = 1000;
 const unsigned long INTERVALO_ENVIO = 2000;
@@ -215,8 +220,15 @@ void processarLeiturasAssincronas() {
       if (!sensoresDisponiveis[i]) continue;
 
       float leituraBruta = sensors.getTempC(sensorAddresses[i]);
-      if (leituraValida(leituraBruta, temperaturas[i], leiturasValidas[i])) {
-        temperaturas[i] = leituraBruta + OFFSETS_DS18B20[i];
+      if (leituraValida(leituraBruta, leiturasBrutasFiltradas[i], filtroIniciado[i])) {
+        if (!filtroIniciado[i]) {
+          leiturasBrutasFiltradas[i] = leituraBruta;
+          filtroIniciado[i] = true;
+        } else {
+          leiturasBrutasFiltradas[i] = (FATOR_FILTRO_EMA * leituraBruta) + ((1.0 - FATOR_FILTRO_EMA) * leiturasBrutasFiltradas[i]);
+        }
+
+        temperaturas[i] = leiturasBrutasFiltradas[i] + OFFSETS_DS18B20[i];
         leiturasValidas[i] = true;
         errosConsecutivos[i] = 0;
       } else {
@@ -224,6 +236,7 @@ void processarLeiturasAssincronas() {
         errosConsecutivos[i]++;
         if (errosConsecutivos[i] >= 5) {
           sensoresDisponiveis[i] = false;
+          filtroIniciado[i] = false;
         }
       }
     }
@@ -376,8 +389,9 @@ void enviarDadosParaServidor() {
   StaticJsonDocument<200> doc;
 
   // Importante: envia apenas t5 e t6 para não sobrescrever t1-t4 do ESP32 #01
-  if (leiturasValidas[0]) doc["t5"] = round(temperaturas[0] * 10000) / 10000.0;
-  if (leiturasValidas[1]) doc["t6"] = round(temperaturas[1] * 10000) / 10000.0;
+  if (leiturasValidas[0] || temperaturas[0] > 0.0) doc["t5"] = round(temperaturas[0] * 10000) / 10000.0;
+  if (leiturasValidas[1] || temperaturas[1] > 0.0) doc["t6"] = round(temperaturas[1] * 10000) / 10000.0;
+  doc["device"] = "esp32_02";
   doc["timestamp"] = millis();
 
   String payload;

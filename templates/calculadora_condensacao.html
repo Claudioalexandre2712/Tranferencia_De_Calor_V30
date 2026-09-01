@@ -182,6 +182,11 @@
                                     <strong>Fluxo:</strong> {{ "%.0f"|format(resultado.q_fluxo) }} W/m²
                                 </div>
                             </div>
+                            <div class="text-center mt-3">
+                                <button type="button" onclick="usarCoeficienteCalculado({{ resultado.h }})" class="btn btn-success font-weight-bold">
+                                    <i class="fas fa-check-circle mr-2"></i>Usar na Simulação de Aletas
+                                </button>
+                            </div>
                         </div>
                         {% endif %}
                         
@@ -267,6 +272,21 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script>
+        {% if resultado %}
+        try {
+            localStorage.setItem('coeficiente_convectivo', '{{ resultado.h }}');
+            localStorage.setItem('ultimo_h_calculado', '{{ resultado.h }}');
+        } catch(e) {}
+        {% endif %}
+
+        function usarCoeficienteCalculado(hValue) {
+            try {
+                localStorage.setItem('coeficiente_convectivo', hValue);
+                localStorage.setItem('ultimo_h_calculado', hValue);
+            } catch(e) {}
+            window.location.href = "/";
+        }
+
         $('#geometria').change(function() {
             var geometria = $(this).val();
             $('#campos_placa, #campos_tubo').hide();

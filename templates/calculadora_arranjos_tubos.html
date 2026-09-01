@@ -417,6 +417,13 @@
                             </div>
                         </div>
                         {% endif %}
+
+                        <input type="hidden" id="h_arranjos_val" value="{{ resultado.h }}">
+                        <div class="mt-4 text-center">
+                            <button type="button" id="btnUsarAletas" class="btn btn-success btn-lg px-4 font-weight-bold">
+                                <i class="fas fa-check-circle mr-2"></i>Usar na Simulação de Aletas
+                            </button>
+                        </div>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -436,6 +443,26 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputH = document.getElementById('h_arranjos_val');
+            if (inputH && inputH.value) {
+                try {
+                    localStorage.setItem('coeficiente_convectivo', inputH.value);
+                    localStorage.setItem('ultimo_h_calculado', inputH.value);
+                } catch (e) {}
+            }
+
+            const btnUsar = document.getElementById('btnUsarAletas');
+            if (btnUsar && inputH) {
+                btnUsar.addEventListener('click', function() {
+                    try {
+                        localStorage.setItem('coeficiente_convectivo', inputH.value);
+                        localStorage.setItem('ultimo_h_calculado', inputH.value);
+                    } catch (e) {}
+                    window.location.href = "/";
+                });
+            }
+        });
         // Atualizar exemplo quando o arranjo muda
         document.getElementById('arranjo').addEventListener('change', function() {
             const arranjo = this.value;

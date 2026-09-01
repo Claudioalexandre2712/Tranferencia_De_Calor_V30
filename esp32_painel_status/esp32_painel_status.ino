@@ -77,22 +77,32 @@ bool temperaturaAmbienteValida = false;
 bool preferencesDisponiveis = false;
 bool wifiConectado = false;
 
-// Offsets de Calibração
-float OFFSETS_DS18B20[NUM_SENSORES] = {0.0, 0.0, 0.0};
+// Offsets de Calibração Padrão (Alinhar Sensor #02 e #03 com o Sensor #01)
+// - Sensor #01 (índice 0): Offset = 0.0000 °C (Referência)
+// - Sensor #02 (índice 1): Offset = +2.7500 °C (55.1250 °C -> 57.8750 °C)
+// - Sensor #03 (índice 2): Offset = +3.5042 °C (54.3708 °C -> 57.8750 °C)
+float OFFSETS_DS18B20[NUM_SENSORES] = {0.0000, 2.7500, 3.5042};
 const float OFFSET_DHT11 = 0.0;
 const float TEMPERATURA_REFERENCIA_GELO = 0.0;
 const uint8_t NUM_AMOSTRAS_CALIBRACAO = 30;
 const uint8_t MIN_AMOSTRAS_CALIBRACAO = 24;
 
+// Filtro Digital Passa-Baixas (EMA) para estabilização de leitura e eliminação de ruído/flutuação
+float leiturasBrutasFiltradas[NUM_SENSORES] = {0.0, 0.0, 0.0};
+bool filtroIniciado[NUM_SENSORES] = {false, false, false};
+const float FATOR_FILTRO_EMA = 0.25; // 25% peso nova amostra + 75% amortecimento de ruído
+
 // Temporização Não-Bloqueante
 const unsigned long INTERVALO_LEITURA = 1000;
 const unsigned long INTERVALO_ENVIO = 2000;
-const unsigned long INTERVALO_RESCAN = 10000;
+const unsigned long INTERVALO_RESCAN = 6000;
+const unsigned long INTERVALO_DHT11 = 2500;  // ms (DHT11 requer mínimo 2.0s entre leituras)
 const unsigned long TEMPO_CONVERSAO_12BITS = 750; // ms para 12 bits
 
 unsigned long ultimaRequisicaoConversao = 0;
 bool conversaoEmAndamento = false;
 unsigned long ultimaLeitura = 0;
+unsigned long ultimaLeituraDHT = 0;
 unsigned long ultimoEnvio = 0;
 unsigned long ultimoRescan = 0;
 unsigned long ledApagarTimestamp = 0;
@@ -162,77 +172,48 @@ void conectarWiFi() {
 // ── FUNÇÃO: DESCOBRIR SENSORES DS18B20 ───────────────────────────────────────
 void descobrirSensores() {
   sensors.begin();
-  delay(50);
+  delay(100);
   int quantidade = sensors.getDeviceCount();
 
-  Serial.println("\n--- [BUSCA DE SENSORES ONE-WIRE (12 BITS)] ---");
-  Serial.print("DS18B20 encontrados no barramento: ");
-  Serial.println(quantidade);
+  Serial.println("\n╔════════════════════════════════════════════════════════════╗");
+  Serial.println("║            BUSCA DE SENSORES DS18B20 (GPIO 4)              ║");
+  Serial.println("╚════════════════════════════════════════════════════════════╝");
+  Serial.printf("  Sensores físicos encontrados no barramento: %d\n", quantidade);
 
   for (int i = 0; i < NUM_SENSORES; i++) {
     sensoresDisponiveis[i] = false;
     leiturasValidas[i] = false;
     errosConsecutivos[i] = 0;
 
-    for (int encontrado = 0; encontrado < quantidade; encontrado++) {
-      DeviceAddress enderecoEncontrado;
-      if (sensors.getAddress(enderecoEncontrado, encontrado)) {
-        bool corresponde = true;
-        for (uint8_t byte = 0; byte < 8; byte++) {
-          if (enderecoEncontrado[byte] != ENDERECOS_SENSOR[i][byte]) {
-            corresponde = false;
-            break;
-          }
-        }
-        if (corresponde) {
-          memcpy(enderecosReais[i], enderecoEncontrado, sizeof(DeviceAddress));
-          sensoresDisponiveis[i] = true;
-          Serial.print("  ✓ ");
-          Serial.print(SENSOR_NAMES[i]);
-          Serial.print(" -> ROM: ");
-          imprimirEndereco(enderecosReais[i]);
-          Serial.println();
-          break;
-        }
-      }
-    }
-
-    // Fallback inteligente: se não encontrou pela ROM fixa, vincula pelo índice disponível
-    if (!sensoresDisponiveis[i] && i < quantidade) {
-      if (sensors.getAddress(enderecosReais[i], i)) {
-        sensoresDisponiveis[i] = true;
-        Serial.print("  ⚠ [FALLBACK] ");
-        Serial.print(SENSOR_NAMES[i]);
-        Serial.print(" -> Vinculado ao indice ");
-        Serial.print(i);
-        Serial.print(" (ROM: ");
-        imprimirEndereco(enderecosReais[i]);
-        Serial.println(")");
-      }
+    if (i < quantidade && sensors.getAddress(enderecosReais[i], i)) {
+      sensoresDisponiveis[i] = true;
+      Serial.printf("  ✓ %s (Índice %d) -> ROM: ", SENSOR_NAMES[i], i);
+      imprimirEndereco(enderecosReais[i]);
+      Serial.println();
+    } else {
+      Serial.printf("  ✗ %s (Índice %d) -> NÃO DETECTADO no barramento!\n", SENSOR_NAMES[i], i);
     }
   }
 
-  // Configura resolução máxima de 12 bits (0.0625°C) e modo não-bloqueante
   sensors.setResolution(12);
   sensors.setWaitForConversion(false);
-  Serial.println("✓ Resolução configurada para 12 bits (0.0625 °C) em modo assíncrono.");
-  Serial.println("----------------------------------------------\n");
+  Serial.println("------------------------------------------------------------\n");
 }
 
 // ── FUNÇÃO: VALIDAÇÃO METROLÓGICA E ANTI-SPIKE ──────────────────────────────
 bool leituraValida(float leituraBruta, float leituraAnterior, bool temAnteriorValida) {
-  if (leituraBruta == DEVICE_DISCONNECTED_C || leituraBruta == 85.0 || leituraBruta < -40.0 || leituraBruta > 130.0) {
+  if (isnan(leituraBruta) || leituraBruta == DEVICE_DISCONNECTED_C || leituraBruta == 85.0 || leituraBruta < -40.0 || leituraBruta > 130.0) {
     return false;
   }
-  // Filtro Anti-Spike: se já existia leitura estável, descarta salto absurdo (> 15°C em 1s)
-  if (temAnteriorValida && abs(leituraBruta - leituraAnterior) > 15.0) {
-    Serial.println("  [FILTRO] Ruído térmico/elétrico descartado (salto > 15°C)");
+  // Filtro Anti-Spike: se já existia leitura estável, descarta salto absurdo (> 10°C em 1s)
+  if (temAnteriorValida && abs(leituraBruta - leituraAnterior) > 10.0) {
+    Serial.println("  [FILTRO] Ruído elétrico/térmico 1-Wire descartado (salto > 10°C)");
     return false;
   }
   return true;
 }
 
-// ── FUNÇÃO: DISPARAR E LER TEMPERATURAS (ASSÍNCRONO) ────────────────────────
+// ── FUNÇÃO: DISPARAR E LER TEMPERATURAS (ASSÍNCRONO + FILTRO EMA) ───────────
 void processarLeiturasAssincronas() {
   unsigned long agora = millis();
 
@@ -248,25 +229,46 @@ void processarLeiturasAssincronas() {
     conversaoEmAndamento = false;
     ultimaLeitura = agora;
 
-    // Coleta dos 3 DS18B20
+    // Coleta e filtragem dos 3 DS18B20
     for (int i = 0; i < NUM_SENSORES; i++) {
       if (!sensoresDisponiveis[i]) continue;
 
       float leituraBruta = sensors.getTempC(enderecosReais[i]);
-      if (leituraValida(leituraBruta, temperaturas[i], leiturasValidas[i])) {
-        temperaturas[i] = leituraBruta + OFFSETS_DS18B20[i];
+      // Se leitura falhar por ROM, tenta leitura direta por índice
+      if (isnan(leituraBruta) || leituraBruta == DEVICE_DISCONNECTED_C || leituraBruta == 85.0) {
+        leituraBruta = sensors.getTempCByIndex(i);
+      }
+
+      if (leituraValida(leituraBruta, leiturasBrutasFiltradas[i], filtroIniciado[i])) {
+        if (!filtroIniciado[i]) {
+          leiturasBrutasFiltradas[i] = leituraBruta;
+          filtroIniciado[i] = true;
+        } else {
+          // Filtro Digital Passa-Baixas (EMA) para amortecer oscilações e ruídos
+          leiturasBrutasFiltradas[i] = (FATOR_FILTRO_EMA * leituraBruta) + ((1.0 - FATOR_FILTRO_EMA) * leiturasBrutasFiltradas[i]);
+        }
+
+        temperaturas[i] = leiturasBrutasFiltradas[i] + OFFSETS_DS18B20[i];
         leiturasValidas[i] = true;
         errosConsecutivos[i] = 0;
       } else {
-        leiturasValidas[i] = false;
         errosConsecutivos[i]++;
-        if (errosConsecutivos[i] >= 5) {
-          sensoresDisponiveis[i] = false; // Força nova busca
+        if (errosConsecutivos[i] >= 15) {
+          sensoresDisponiveis[i] = false; // Força nova busca se falhar repetidamente
+          leiturasValidas[i] = false;
+          filtroIniciado[i] = false;
         }
       }
     }
+  }
+}
 
-    // Leitura do DHT11 com filtro
+// ── FUNÇÃO: LEITURA NÃO-BLOQUEANTE DO SENSOR DHT11 (AMBIENTE) ───────────────
+void processarLeituraDHT11() {
+  unsigned long agora = millis();
+  if (agora - ultimaLeituraDHT >= INTERVALO_DHT11) {
+    ultimaLeituraDHT = agora;
+
     float tDht = dht.readTemperature();
     float uDht = dht.readHumidity();
 
@@ -274,7 +276,13 @@ void processarLeiturasAssincronas() {
       temperaturaAmbiente = tDht + OFFSET_DHT11;
       temperaturaAmbienteValida = true;
     } else {
-      temperaturaAmbienteValida = false;
+      // Pequena retentativa se der leitura transitória nula
+      delay(30);
+      tDht = dht.readTemperature();
+      if (!isnan(tDht) && tDht > -20.0 && tDht < 70.0) {
+        temperaturaAmbiente = tDht + OFFSET_DHT11;
+        temperaturaAmbienteValida = true;
+      }
     }
 
     if (!isnan(uDht) && uDht >= 0.0 && uDht <= 100.0) {
@@ -287,13 +295,18 @@ void processarLeiturasAssincronas() {
 void carregarOffsetsCalibracao() {
   preferencesDisponiveis = preferences.begin("calibracao", false);
   if (!preferencesDisponiveis) {
-    Serial.println("[PREF] Falha ao acessar memoria flash; offsets zerados.");
+    Serial.println("[PREF] Falha ao acessar memoria flash; usando offsets padrao de bancada.");
     return;
   }
-  OFFSETS_DS18B20[0] = preferences.getFloat("t1", 0.0);
-  OFFSETS_DS18B20[1] = preferences.getFloat("t2", 0.0);
-  OFFSETS_DS18B20[2] = preferences.getFloat("t3", 0.0);
-  Serial.println("[PREF] Offsets de calibração T1/T2/T3 carregados com sucesso.");
+  // Se não houver calibração anterior salva na Flash, assume a calibração de bancada
+  OFFSETS_DS18B20[0] = preferences.getFloat("t1", 0.0000); // Sensor #01 (Referência) = 0.0000 °C
+  OFFSETS_DS18B20[1] = preferences.getFloat("t2", 2.7500); // Sensor #02 = +2.7500 °C
+  OFFSETS_DS18B20[2] = preferences.getFloat("t3", 3.5042); // Sensor #03 = +3.5042 °C
+  
+  Serial.println("[PREF] Offsets de calibração T1/T2/T3 carregados com sucesso:");
+  Serial.printf("       Sensor #01 (Ref): %+.4f °C\n", OFFSETS_DS18B20[0]);
+  Serial.printf("       Sensor #02:       %+.4f °C\n", OFFSETS_DS18B20[1]);
+  Serial.printf("       Sensor #03:       %+.4f °C\n", OFFSETS_DS18B20[2]);
 }
 
 // ── FUNÇÃO: CALIBRAÇÃO EM BANHO DE GELO (0 °C) ──────────────────────────────
@@ -383,6 +396,47 @@ void zerarOffsetsCalibracao() {
   }
 }
 
+// ── FUNÇÃO: CALIBRAR SENSOR 2 E 3 COM BASE NO SENSOR 1 (AO VIVO) ────────────
+void calibrarSensoresComSensor1() {
+  if (!sensoresDisponiveis[0] || !leiturasValidas[0]) {
+    Serial.println("\n[ERRO] Sensor 1 não está disponível para servir de referência.");
+    return;
+  }
+
+  float refT1 = leiturasBrutasFiltradas[0]; // Temperatura pura do Sensor 1
+
+  OFFSETS_DS18B20[0] = 0.0000;
+  if (sensoresDisponiveis[1] && leiturasValidas[1]) {
+    OFFSETS_DS18B20[1] = refT1 - leiturasBrutasFiltradas[1];
+  }
+  if (sensoresDisponiveis[2] && leiturasValidas[2]) {
+    OFFSETS_DS18B20[2] = refT1 - leiturasBrutasFiltradas[2];
+  }
+
+  // Atualiza as temperaturas imediatas
+  for (int i = 0; i < NUM_SENSORES; i++) {
+    temperaturas[i] = leiturasBrutasFiltradas[i] + OFFSETS_DS18B20[i];
+  }
+
+  if (preferencesDisponiveis) {
+    preferences.putFloat("t1", OFFSETS_DS18B20[0]);
+    preferences.putFloat("t2", OFFSETS_DS18B20[1]);
+    preferences.putFloat("t3", OFFSETS_DS18B20[2]);
+  }
+
+  Serial.println("\n╔════════════════════════════════════════════════════════════╗");
+  Serial.println("║    CALIBRAÇÃO AUTOMÁTICA REALIZADA (REFERÊNCIA: SENSOR 1)   ║");
+  Serial.println("╚════════════════════════════════════════════════════════════╝");
+  Serial.printf("  Sensor 1 (Ref): Bruto = %.4f °C | Offset = %+.4f °C -> Final = %.4f °C\n",
+                leiturasBrutasFiltradas[0], OFFSETS_DS18B20[0], temperaturas[0]);
+  Serial.printf("  Sensor 2:       Bruto = %.4f °C | Offset = %+.4f °C -> Final = %.4f °C\n",
+                leiturasBrutasFiltradas[1], OFFSETS_DS18B20[1], temperaturas[1]);
+  Serial.printf("  Sensor 3:       Bruto = %.4f °C | Offset = %+.4f °C -> Final = %.4f °C\n",
+                leiturasBrutasFiltradas[2], OFFSETS_DS18B20[2], temperaturas[2]);
+  Serial.println("✓ Offsets gravados com sucesso na memória Flash!\n");
+  piscarLed(3, 100);
+}
+
 // ── FUNÇÃO: EXIBIR STATUS COMPLETO NO MONITOR SERIAL ────────────────────────
 void exibirStatusCompleto() {
   Serial.println("\n╔════════════════════════════════════════════════════════════╗");
@@ -400,17 +454,15 @@ void exibirStatusCompleto() {
   Serial.print(":");
   Serial.print(SERVER_PORT);
   Serial.println(SERVER_PATH);
-  Serial.println("\n--- LEITURAS ATUAIS (12 BITS) ---");
+  Serial.println("\n--- LEITURAS DOS SENSORES (BRUTO vs CALIBRADO) ---");
 
   for (int i = 0; i < NUM_SENSORES; i++) {
     Serial.print("  ");
     Serial.print(SENSOR_NAMES[i]);
     Serial.print(": ");
     if (leiturasValidas[i]) {
-      Serial.print(temperaturas[i], 4);
-      Serial.print(" °C (Offset: ");
-      Serial.print(OFFSETS_DS18B20[i], 4);
-      Serial.println(" °C)");
+      Serial.printf("FINAL = %.4f °C  [Bruto = %.4f °C | Offset = %+.4f °C]\n",
+                    temperaturas[i], leiturasBrutasFiltradas[i], OFFSETS_DS18B20[i]);
     } else {
       Serial.println("ERRO / Desconectado");
     }
@@ -442,11 +494,12 @@ void enviarDadosParaServidor() {
   String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + SERVER_PATH;
   StaticJsonDocument<280> doc;
 
-  if (leiturasValidas[0]) doc["t1"] = round(temperaturas[0] * 10000) / 10000.0;
-  if (leiturasValidas[1]) doc["t2"] = round(temperaturas[1] * 10000) / 10000.0;
-  if (leiturasValidas[2]) doc["t3"] = round(temperaturas[2] * 10000) / 10000.0;
-  if (temperaturaAmbienteValida) doc["t4"] = round(temperaturaAmbiente * 10000) / 10000.0;
+  if (leiturasValidas[0] || temperaturas[0] > 0.0) doc["t1"] = round(temperaturas[0] * 10000) / 10000.0;
+  if (leiturasValidas[1] || temperaturas[1] > 0.0) doc["t2"] = round(temperaturas[1] * 10000) / 10000.0;
+  if (leiturasValidas[2] || temperaturas[2] > 0.0) doc["t3"] = round(temperaturas[2] * 10000) / 10000.0;
+  if (temperaturaAmbienteValida || temperaturaAmbiente > 0.0) doc["t4"] = round(temperaturaAmbiente * 10000) / 10000.0;
   if (umidadeAmbiente > 0.0) doc["umidade"] = round(umidadeAmbiente * 10) / 10.0;
+  doc["device"] = "esp32_01";
   doc["timestamp"] = millis();
 
   String payload;
@@ -499,15 +552,17 @@ void setup() {
   Serial.println("║   Firmware Otimizado: 12 bits Assíncrono + Anti-Spike      ║");
   Serial.println("╚════════════════════════════════════════════════════════════╝");
 
+  pinMode(DHT_PIN, INPUT_PULLUP);
   dht.begin();
   carregarOffsetsCalibracao();
   conectarWiFi();
   descobrirSensores();
 
   Serial.println("Comandos disponíveis via Serial Monitor:");
+  Serial.println("  'C' -> Calibrar Sensores 2 e 3 para ficarem IGUAIS ao Sensor 1");
   Serial.println("  'G' -> Iniciar Calibração em Banho de Gelo (0 °C)");
-  Serial.println("  'R' -> Resetar Offsets de Calibração");
-  Serial.println("  'S' -> Exibir Diagnóstico Completo\n");
+  Serial.println("  'R' -> Resetar Offsets de Calibração para 0.00 °C");
+  Serial.println("  'S' -> Exibir Diagnóstico Completo (Bruto vs Final)\n");
 }
 
 // ── LOOP PRINCIPAL ───────────────────────────────────────────────────────────
@@ -518,7 +573,8 @@ void loop() {
   // Leitura de Comandos do Serial Monitor
   if (Serial.available()) {
     char cmd = Serial.read();
-    if (cmd == 'G' || cmd == 'g') calibrarSensoresGelo();
+    if (cmd == 'C' || cmd == 'c') calibrarSensoresComSensor1();
+    else if (cmd == 'G' || cmd == 'g') calibrarSensoresGelo();
     else if (cmd == 'R' || cmd == 'r') zerarOffsetsCalibracao();
     else if (cmd == 'S' || cmd == 's') exibirStatusCompleto();
   }
@@ -528,8 +584,8 @@ void loop() {
     wifiConectado = false;
   }
 
-  // Re-escaneamento automático se nenhum sensor responder
-  if (!sensoresDisponiveis[0] && !sensoresDisponiveis[1] && !sensoresDisponiveis[2] &&
+  // Re-escaneamento automático se algum sensor estiver faltando
+  if ((!sensoresDisponiveis[0] || !sensoresDisponiveis[1] || !sensoresDisponiveis[2]) &&
       agora - ultimoRescan >= INTERVALO_RESCAN) {
     ultimoRescan = agora;
     descobrirSensores();
@@ -537,8 +593,9 @@ void loop() {
 
   // Processamento contínuo não-bloqueante de leitura
   processarLeiturasAssincronas();
+  processarLeituraDHT11();
 
-  // Envio de telemetria no intervalo configurado (2.0s)
+  // Envio Periódico não-bloqueante
   if (agora - ultimoEnvio >= INTERVALO_ENVIO) {
     ultimoEnvio = agora;
     enviarDadosParaServidor();

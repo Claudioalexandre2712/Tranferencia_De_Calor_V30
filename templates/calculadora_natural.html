@@ -413,8 +413,8 @@
                                                     <div class="form-group">
                                                         <label class="font-weight-bold small">Orientação Térmica:</label>
                                                         <select class="form-control" id="orientacao_horizontal" name="orientacao_horizontal">
-                                                            <option value="inferior" selected>Face quente para BAIXO (Bancada TCC)</option>
-                                                            <option value="superior">Face quente para CIMA</option>
+                                                            <option value="superior" selected>Face quente para CIMA</option>
+                                                            <option value="inferior">Face quente para BAIXO</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -444,19 +444,30 @@
                                                     <i class="fas fa-scale-balanced mr-2"></i>Parâmetros do Balanço Térmico da Chapa (TCC)
                                                 </h6>
                                                 <div class="row">
-                                                    <div class="col-md-3">
-                                                        <label class="small font-weight-bold">Temp. Água/Base T4 (°C):</label>
+                                                    <div class="col-md-4 mb-2">
+                                                        <label class="small font-weight-bold">Temp. Água do Banho T_água (°C):</label>
                                                         <input type="number" class="form-control mono" id="T_base" name="T_base" step="0.0001" value="80.0000">
+                                                        <small class="text-muted d-block">Média dos sensores T5 e T6</small>
                                                     </div>
-                                                    <div class="col-md-3">
+                                                    <div class="col-md-4 mb-2">
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <label class="small font-weight-bold mb-0">Correção água → chapa — X (°C):</label>
+                                                            <span role="button" onclick="estimarXBalanco()" class="badge badge-light border text-secondary" style="cursor: pointer; font-size: 0.70rem; font-weight: 500; padding: 2px 6px;" title="Calcular estimativa teórica de X">
+                                                                <i class="fas fa-calculator mr-1" style="font-size: 0.62rem;"></i>sugerir
+                                                            </span>
+                                                        </div>
+                                                        <input type="number" class="form-control mono" id="X_correcao" name="X_correcao" step="0.0001" value="0.0000">
+                                                        <small class="text-muted d-block" id="x_info_text">T_face_inferior = T_água − X</small>
+                                                    </div>
+                                                    <div class="col-md-4 mb-2">
                                                         <label class="small font-weight-bold">Espessura (m):</label>
                                                         <input type="number" class="form-control mono" id="espessura" name="espessura" step="0.001" value="0.005">
                                                     </div>
-                                                    <div class="col-md-3">
+                                                    <div class="col-md-6">
                                                         <label class="small font-weight-bold">k Alumínio (W/m·K):</label>
                                                         <input type="number" class="form-control mono" id="k_material" name="k_material" step="1" value="222">
                                                     </div>
-                                                    <div class="col-md-3">
+                                                    <div class="col-md-6">
                                                         <label class="small font-weight-bold">Emissividade ε:</label>
                                                         <input type="number" class="form-control mono" id="emissividade" name="emissividade" step="0.01" value="0.09">
                                                     </div>
@@ -625,6 +636,61 @@
             }, 2500);
         }
 
+        function estimarXBalanco() {
+            const Ts = parseFloat(document.getElementById('T_superficie').value) || 0;
+            const Tinf = parseFloat(document.getElementById('T_fluido').value) || 0;
+            const Tagua = parseFloat(document.getElementById('T_base').value) || 0;
+            const W = parseFloat(document.getElementById('largura_placa_h').value) || 0.17;
+            const L = parseFloat(document.getElementById('comprimento_placa_h').value) || 0.37;
+            const esp = parseFloat(document.getElementById('espessura').value) || 0.005;
+            const kAl = parseFloat(document.getElementById('k_material').value) || 222.0;
+            const eps = parseFloat(document.getElementById('emissividade').value) || 0.09;
+            const orient = document.getElementById('orientacao_horizontal').value;
+
+            if (Tagua <= Ts || Ts <= Tinf) {
+                alert('Aviso: para sugerir X, a temperatura da água deve ser maior que a da superfície, e a superfície maior que o ambiente.');
+                return;
+            }
+
+            const As = W * L;
+            const P = 2 * (W + L);
+            const Lc = As / P;
+            const deltaT_conv = Ts - Tinf;
+            const Tf_K = ((Ts + Tinf) / 2) + 273.15;
+            const beta = 1.0 / Tf_K;
+
+            // Propriedades termofísicas médias do ar
+            const nu = 1.74e-5;
+            const alpha = 2.45e-5;
+            const k_ar = 0.0274;
+            const g = 9.81;
+
+            const Ra = (g * beta * deltaT_conv * Math.pow(Lc, 3)) / (nu * alpha);
+            const Nu = (orient === 'superior') ? (0.54 * Math.pow(Ra, 0.25)) : (0.27 * Math.pow(Ra, 0.25));
+            const h_teor = (Nu * k_ar) / Lc;
+            const Q_conv_teor = h_teor * As * deltaT_conv;
+
+            const sigma = 5.670374419e-8;
+            const Ts_K = Ts + 273.15;
+            const Tinf_K = Tinf + 273.15;
+            const Q_rad = eps * sigma * As * (Math.pow(Ts_K, 4) - Math.pow(Tinf_K, 4));
+
+            const Q_total = Q_conv_teor + Q_rad;
+            const deltaT_chapa_teor = (Q_total * esp) / (kAl * As);
+            const X_sugerido = (Tagua - Ts) - deltaT_chapa_teor;
+
+            if (X_sugerido > 0) {
+                document.getElementById('X_correcao').value = X_sugerido.toFixed(4);
+                const info = document.getElementById('x_info_text');
+                if (info) {
+                    info.innerHTML = `<span class="text-success font-weight-bold"><i class="fas fa-check mr-1"></i>Sugerido X = ${X_sugerido.toFixed(4)} °C</span>`;
+                    setTimeout(() => {
+                        info.innerHTML = 'T_face_inferior = T_água − X';
+                    }, 5000);
+                }
+            }
+        }
+
         document.getElementById('calculoForm').addEventListener('submit', function(e) {
             e.preventDefault();
             enviarCalculoAjax();
@@ -649,6 +715,7 @@
                 diametro: parseFloat(document.getElementById('diametro').value) || 0.05,
                 orientacao: document.getElementById('orientacao_horizontal').value,
                 T_base: parseFloat(document.getElementById('T_base').value) || 80.0,
+                X_correcao: parseFloat(document.getElementById('X_correcao').value) || 0.0,
                 espessura: parseFloat(document.getElementById('espessura').value) || 0.005,
                 k_material: parseFloat(document.getElementById('k_material').value) || 222.0,
                 emissividade: parseFloat(document.getElementById('emissividade').value) || 0.09
@@ -682,6 +749,10 @@
 
         function renderizarResultados(res, input) {
             const h_teorico = typeof res.coef_convectivo === 'number' ? res.coef_convectivo : 0;
+            if (h_teorico > 0) {
+                localStorage.setItem('coeficiente_convectivo', h_teorico);
+                localStorage.setItem('ultimo_h_calculado', h_teorico);
+            }
             const Nu = typeof res.nusselt === 'number' ? res.nusselt : 0;
             const Ra = typeof res.rayleigh === 'number' ? res.rayleigh : 0;
             const Pr = typeof res.prandtl === 'number' ? res.prandtl : 0;
@@ -797,14 +868,20 @@
 
                         <!-- Balanço Térmico da Chapa de Alumínio -->
                         <div class="card p-3 mb-3" style="border-radius: 12px; border: 2px solid #bbdefb; background: #ffffff;">
-                            <h6 class="font-weight-bold icon-blue mb-3">
+                            <h6 class="font-weight-bold icon-blue mb-2">
                                 <i class="fas fa-scale-balanced mr-2"></i>Conservação de Energia na Chapa de Alumínio: Q̇_condução = Q̇_convecção + Q̇_radiação
                             </h6>
+                            <div class="small text-muted mb-3 py-1 px-2 rounded" style="background: #f1f8fe; border-left: 3px solid #1976d2;">
+                                <strong>&bull; Temp. Água (Banho):</strong> <span class="mono font-weight-bold text-dark">${(b.T_agua !== undefined ? b.T_agua : (b.T_base || 0)).toFixed(4)} °C</span> &nbsp;|&nbsp;
+                                <strong>Correção Água &rarr; Chapa (X):</strong> <span class="mono font-weight-bold text-info">${(b.X_correcao !== undefined ? b.X_correcao : 0).toFixed(4)} °C</span> &nbsp;|&nbsp;
+                                <strong>Temp. Corrigida Face Inferior:</strong> <span class="mono font-weight-bold text-primary">${(b.T_face_inferior !== undefined ? b.T_face_inferior : (b.T_base || 0)).toFixed(4)} °C</span> &nbsp;|&nbsp;
+                                <strong>&Delta;T Condução:</strong> <span class="mono font-weight-bold text-danger">${(b.delta_T_cond !== undefined ? b.delta_T_cond : Math.abs((b.T_face_inferior || b.T_base || 0) - input.temperatura_superficie)).toFixed(4)} °C</span>
+                            </div>
                             <div class="row align-items-center text-center">
                                 <div class="col-md-3 p-2 bg-light rounded border mb-2 mb-md-0">
                                     <small class="text-muted d-block font-weight-bold">CONDUÇÃO (Q̇_cond)</small>
                                     <span class="mono font-weight-bold text-dark" style="font-size: 1.3rem;">${b.Q_cond.toFixed(2)} W</span>
-                                    <small class="d-block text-muted">Através dos 5 mm</small>
+                                    <small class="d-block text-muted">Através dos ${(input.espessura*1000).toFixed(1)} mm</small>
                                 </div>
                                 <div class="col-md-1 font-weight-bold text-muted" style="font-size: 1.4rem;">=</div>
                                 <div class="col-md-3 p-2 bg-light rounded border mb-2 mb-md-0">
@@ -816,7 +893,7 @@
                                 <div class="col-md-3 p-2 bg-light rounded border">
                                     <small class="text-muted d-block font-weight-bold">RADIAÇÃO (Q̇_rad)</small>
                                     <span class="mono font-weight-bold text-warning" style="font-size: 1.3rem;">${b.Q_rad.toFixed(2)} W</span>
-                                    <small class="d-block text-muted">Stefan-Boltzmann (ε=0.09)</small>
+                                    <small class="d-block text-muted">Stefan-Boltzmann (ε=${input.emissividade})</small>
                                 </div>
                             </div>
                         </div>
@@ -875,7 +952,7 @@
                             <div class="row small text-dark">
                                 <div class="col-md-6">
                                     <strong>&bull; ΔT Condução Teórico no Alumínio:</strong> <span class="mono font-weight-bold text-primary">${b.delta_T_conducao_teorico.toFixed(5)} °C</span><br>
-                                    A queda real de condução através dos 5 mm de Alumínio Liga 1100 (k=222 W/m·K) é de apenas ~0.006 °C.
+                                    A queda teórica de condução pura através dos 5 mm de Alumínio Liga 1100 (k=222 W/m·K) para a taxa dissipada no ar é de apenas ~${b.delta_T_conducao_teorico.toFixed(5)} °C.
                                 </div>
                                 <div class="col-md-6">
                                     <strong>&bull; Resolução dos Sensores DS18B20:</strong> <span class="mono font-weight-bold text-success">0.0625 °C (12 bits)</span><br>
@@ -886,10 +963,13 @@
 
                         <!-- Botões Finais -->
                         <div class="text-center pt-2">
-                            <button onclick="document.getElementById('calculoForm').scrollIntoView({behavior:'smooth'})" class="btn btn-primary px-4 mr-2">
+                            <button onclick="usarCoeficienteCalculado(${h_teorico})" class="btn btn-success px-4 mr-2 mb-2 font-weight-bold">
+                                <i class="fas fa-check-circle mr-2"></i>Usar na Simulação de Aletas
+                            </button>
+                            <button onclick="document.getElementById('calculoForm').scrollIntoView({behavior:'smooth'})" class="btn btn-primary px-4 mr-2 mb-2">
                                 <i class="fas fa-redo mr-2"></i>Novo Cálculo
                             </button>
-                            <button onclick="window.print()" class="btn btn-dark px-4">
+                            <button onclick="window.print()" class="btn btn-dark px-4 mb-2">
                                 <i class="fas fa-print mr-2"></i>Imprimir Relatório (PDF)
                             </button>
                         </div>
@@ -901,6 +981,14 @@
             const container = document.getElementById('resultadosContainer');
             container.innerHTML = html;
             container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function usarCoeficienteCalculado(hValue) {
+            if (hValue && !isNaN(parseFloat(hValue))) {
+                localStorage.setItem('coeficiente_convectivo', hValue);
+                localStorage.setItem('ultimo_h_calculado', hValue);
+            }
+            window.location.href = "/";
         }
 
         document.addEventListener('DOMContentLoaded', function() {
