@@ -334,6 +334,29 @@
         .geometry-card:hover .geometry-icon i { transform: scale(1.12) rotate(-4deg); }
         .geometry-card.active .geometry-icon { box-shadow:0 0 0 3px rgba(21,101,192,.65),0 10px 26px -4px rgba(13,71,161,.55); background:#0d47a1; }
         .geometry-card.active .geometry-icon i { transform:scale(1.08); }
+
+        .geometry-card[data-geometry="cylindrical"] .geometry-icon {
+            background: radial-gradient(circle at center, rgba(255,255,255,0.18) 0%, rgba(13,71,161,0.15) 22%, #0b5bbd 23%, #0d47a1 74%, #0a3d86 100%);
+            border-radius: 50%;
+            border-width: 3px;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2), 0 10px 24px -8px rgba(13,71,161,0.7);
+        }
+        .geometry-card[data-geometry="cylindrical"] .geometry-icon::before,
+        .geometry-card[data-geometry="cylindrical"] .geometry-icon::after {
+            content: "";
+            position: absolute;
+            inset: 16px;
+            border: 2px solid rgba(255,255,255,0.9);
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+        .geometry-card[data-geometry="cylindrical"] .geometry-icon::after {
+            inset: 30px;
+            opacity: 0.6;
+        }
+        .geometry-card[data-geometry="cylindrical"].active .geometry-icon {
+            box-shadow: 0 0 0 4px rgba(144, 202, 249, 0.55), 0 0 0 1px rgba(255,255,255,0.8), 0 12px 28px -8px rgba(13,71,161,0.85);
+        }
         
         .construction-section {
             display: grid;
@@ -445,18 +468,21 @@
         .properties-section { display:none !important; }
         
         .layers-panel {
-            background: #f8fbff;
-            border-radius: 12px;
-            padding: 18px;
+            background: linear-gradient(180deg, rgba(246,251,255,0.96) 0%, rgba(237,245,255,0.97) 100%);
+            border-radius: 18px;
+            padding: 18px 18px 14px;
             min-height: 320px;
-            max-width: 300px;
+            max-width: 360px;
+            box-shadow: 0 18px 32px -20px rgba(21, 101, 192, 0.5), inset 0 1px 0 rgba(255,255,255,0.8);
+            position: sticky;
+            top: 18px;
         }
         
         .panel-title {
             font-size: 1.4rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #1976d2;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -466,64 +492,282 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
         
         .layer-btn {
-            background: linear-gradient(135deg, #fff 0%, #f5f9ff 100%);
-            border: 2px solid #e3f2fd;
-            border-radius: 10px;
-            padding: 16px 22px;
-            font-weight: 500;
-            color: #1976d2;
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ffffff 0%, #f4f9ff 100%);
+            border: 1px solid #dfeeff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-weight: 600;
+            color: #1b4d8f;
+            transition: all 0.25s ease;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 12px;
             text-align: left;
+            box-shadow: 0 6px 16px -12px rgba(37, 99, 235, 0.5);
         }
         
         .layer-btn:hover {
             background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
             color: white;
             border-color: #1976d2;
-            transform: translateX(5px);
-            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px -10px rgba(25, 118, 210, 0.38);
         }
         
         .layer-btn i {
-            font-size: 1.3rem;
-            width: 20px;
+            font-size: 1.2rem;
+            width: 18px;
             text-align: center;
         }
         
         .layers-list {
             min-height: 200px;
-        }
-        
-        .layer-item {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 12px;
-            border: 1px solid #e0e7ff;
-            cursor: pointer;
-            transition: all 0.3s ease;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            padding-bottom: 4px;
+        }
+        
+        .flow-node {
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            gap: 8px;
         }
         
-        .layer-item:hover {
-            background: #f0f7ff;
-            border-color: #1976d2;
-            transform: translateX(5px);
+        .layer-flow-connector {
+            position: relative;
+            font-size: 0.9rem;
+            color: #78909c;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 20px;
+            opacity: 0.95;
+            letter-spacing: 0.08em;
+        }
+        .layer-flow-connector::before {
+            content: "";
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(180deg, rgba(120, 144, 156, 0.3), rgba(120, 144, 156, 0.8), rgba(120, 144, 156, 0.3));
+            border-radius: 999px;
+            display: block;
+            transform: translateY(2px);
+        }
+        .layer-flow-connector::after {
+            content: "";
+            position: absolute;
+            bottom: -3px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 7px solid rgba(120, 144, 156, 0.9);
         }
         
-        .layer-item.selected {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        .layer-card {
+            width: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,250,255,0.96));
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-left: 4px solid #cbd5e1;
+            border-radius: 16px;
+            padding: 12px 12px 10px;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+            box-shadow: 0 14px 20px -18px rgba(15, 23, 42, 0.4), inset 0 1px 0 rgba(255,255,255,0.7);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .layer-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 3px;
+            background: transparent;
+        }
+        
+        .layer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 32px -20px rgba(15, 23, 42, 0.5), inset 0 1px 0 rgba(255,255,255,0.75);
+            border-color: rgba(96, 165, 250, 0.7);
+        }
+
+        .layer-card[draggable="true"] { cursor: grab; }
+        .layer-card[draggable="true"]:active { cursor: grabbing; }
+        .layer-card.dragging-main {
+            opacity: .48;
+            transform: scale(.985);
+            box-shadow: 0 8px 18px -12px rgba(15,23,42,.45);
+        }
+        .layer-card.drag-over-main {
             border-color: #1976d2;
+            box-shadow: 0 -4px 0 #1976d2, 0 18px 32px -20px rgba(25,118,210,.55);
+        }
+        
+        .layer-card.selected {
+            background: linear-gradient(180deg, rgba(232, 245, 255, 0.98), rgba(219, 234, 254, 0.95));
+            border-color: rgba(25, 118, 210, 0.72);
+            border-left-color: #1976d2;
+            box-shadow: 0 18px 36px -20px rgba(25, 118, 210, 0.7), 0 0 0 2px rgba(25,118,210,0.1);
+        }
+        .layer-card.selected::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(25,118,210,0.06), transparent 55%, rgba(59,130,246,0.04));
+            pointer-events: none;
+        }
+        
+        .layer-card--solid { border-left-color: #64748b; }
+        .layer-card--fluid { border-left-color: #2563eb; }
+        .layer-card--parallel { border-left-color: #7c3aed; }
+        .layer-card--finned { border-left-color: #0f766e; }
+        
+        .layer-card--solid::before { background: #64748b; }
+        .layer-card--fluid::before { background: #2563eb; }
+        .layer-card--parallel::before { background: #7c3aed; }
+        .layer-card--finned::before { background: #0f766e; }
+        
+        .layer-card.selected .layer-pill {
+            box-shadow: inset 0 0 0 1px rgba(25,118,210,0.24);
+        }
+        
+        .layer-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding-right: 44px;
+        }
+        
+        .layer-card-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+        }
+        
+        .layer-card-main .layer-icon {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.65);
+            border: 1px solid rgba(148,163,184,0.22);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+        
+        .layer-card-title {
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #5b748c;
+            font-weight: 700;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+        
+        .layer-card-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #102a43;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .layer-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: rgba(148, 163, 184, 0.12);
+            color: #334155;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+        }
+
+        .layer-card-body {
+            font-size: 0.76rem;
+            color: #1f2f3d;
+            line-height: 1.45;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 40px;
+            min-height: 42px;
+        }
+
+        .layer-card-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 7px;
+            color: #527084;
+            font-size: .67rem;
+            font-weight: 600;
+        }
+        .layer-card-status::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,.12);
+        }
+        .layer-card-status.invalid { color: #b42318; }
+        .layer-card-status.invalid::before {
+            background: #d92d20;
+            box-shadow: 0 0 0 3px rgba(217,45,32,.12);
+        }
+        
+        .layer-card-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(255,255,255,0.72);
+            color: #475569;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        
+        .layer-card-action:hover {
+            background: rgba(239,246,255,1);
+            transform: scale(1.04);
+        }
+        
+        .layer-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #b91c1c;
+            border-color: rgba(239,68,68,0.2);
+        }
+        
+        .layer-delete:hover {
+            background: rgba(239, 68, 68, 0.15);
         }
         
         .clickable-layer {
@@ -532,7 +776,7 @@
         }
         
         .clickable-layer:active {
-            transform: scale(0.98);
+            transform: scale(0.985);
         }
         
         .layer-info {
@@ -547,29 +791,16 @@
             text-align: center;
         }
         
-        .layer-delete {
-            background: #ff5252;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .layer-delete:hover {
-            background: #d32f2f;
-            transform: scale(1.1);
-        }
-        
         .no-layers {
             text-align: center;
-            color: #64b5f6;
+            color: #1e88e5;
             font-style: italic;
             padding: 40px 20px;
             background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 100%);
-            border-radius: 10px;
-            border: 2px dashed #bbdefb;
+            border-radius: 16px;
+            border: 2px dashed rgba(30,136,229,0.35);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4), 0 18px 30px -24px rgba(30,136,229,0.45);
+            font-weight: 600;
         }
         
         .circuit-panel {
@@ -1371,14 +1602,14 @@
                     Selecione a Geometria
                 </h2>
                 <div class="geometry-grid">
-                    <div class="geometry-card active" onclick="selectGeometry('planar')">
+                    <div class="geometry-card active" data-geometry="planar" onclick="selectGeometry('planar')">
                         <div class="geometry-icon">
                             <i class="fas fa-square"></i>
                         </div>
                         <h3 class="geometry-title">Geometria Planar</h3>
                         <p class="geometry-desc">Transferência de calor em placas planas</p>
                     </div>
-                    <div class="geometry-card" onclick="selectGeometry('cylindrical')">
+                    <div class="geometry-card" data-geometry="cylindrical" onclick="selectGeometry('cylindrical')">
                         <div class="geometry-icon">
                             <i class="fas fa-circle"></i>
                         </div>
@@ -1428,7 +1659,7 @@
                         <!-- Bloco de q conhecido / T_ref (layout padronizado) -->
                         <div id="aux-qref" class="boundary-temps-box" style="margin-top:4px;">
                             <h4 style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-                                <span style="font-size:1.05rem;">⚡</span> Entradas de Referência
+                                <span style="font-size:1.05rem;"><i class="fa-solid fa-bolt"></i></span> Entradas de Referência
                             </h4>
                             <div class="boundary-temps-grid" style="margin-bottom:4px;">
                                 <div class="field" style="flex-direction:column; align-items:flex-start;">
@@ -1698,7 +1929,7 @@
     let lastVBHeight = null;      
     let cylParams = { L: 1.0, r0: 0.05 }; 
     let planarParams = { A: 1.0 };
-    const FIN_ICON = '🟦'; // ícone unificado para superfícies aletadas
+    const FIN_ICON = '<i class="fa-solid fa-layer-group" style="color:#1565c0"></i>'; // ícone unificado para superfícies aletadas
 
     window.addParallelBlock = null;
     window.addFinnedSurface = null;
@@ -2089,7 +2320,7 @@
                 const isFluid = layer.type && layer.type.includes('Fluido');
                 const isFinned = layer.type && layer.type.includes('SuperficieAletada');
                 const isCyl = layer.type && layer.type.includes('Cilindrica');
-                const icon = isFinned? '🌊' : (isFluid? '💨' : (isCyl? '🌀':'🧊'));
+                const icon = isFinned? '<i class="fa-solid fa-water"></i>' : (isFluid? '<i class="fa-solid fa-wind"></i>' : (isCyl? '<i class="fa-solid fa-circle-notch"></i>':'<i class="fa-solid fa-cube"></i>'));
                 return `<div style="display:flex; gap:12px; align-items:center; margin:0 0 14px; padding:0 0 12px; border-bottom:2px solid #e3f2fd;">
                     <div style="background:#1976d2; color:#fff; width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; box-shadow:0 4px 14px rgba(25,118,210,.35);">${icon}</div>
                     <div style="flex:1; min-width:0;">
@@ -2793,7 +3024,40 @@
 
         // ====== NOVO (Parte 6): Drag & Drop de camadas principais ======
         function enableMainLayerDrag(){
-            try { const list=document.getElementById('layers-list'); if(!list) return; const items=list.querySelectorAll('.layer-item'); items.forEach((el,idx)=>{ el.setAttribute('draggable','true'); el.addEventListener('dragstart',ev=>{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain', idx); el.classList.add('dragging-main'); }); el.addEventListener('dragend',()=> el.classList.remove('dragging-main')); el.addEventListener('dragover',ev=>{ ev.preventDefault(); el.classList.add('drag-over-main'); }); el.addEventListener('dragleave',()=> el.classList.remove('drag-over-main')); el.addEventListener('drop',ev=>{ ev.preventDefault(); el.classList.remove('drag-over-main'); const from=parseInt(ev.dataTransfer.getData('text/plain')); const to=idx; if(!isFinite(from)||!isFinite(to)||from===to) return; const moved=layers.splice(from,1)[0]; layers.splice(to,0,moved); pushHistory('reorder main'); updateLayersList(); }); }); } catch(e){ console.warn('enableMainLayerDrag falhou', e);}        }
+            try {
+                const list = document.getElementById('layers-list');
+                if (!list) return;
+                const items = list.querySelectorAll('.layer-card[data-layer-index]');
+                items.forEach((el) => {
+                    const targetIndex = parseInt(el.getAttribute('data-layer-index'));
+                    el.setAttribute('draggable', 'true');
+                    el.addEventListener('dragstart', (ev) => {
+                        ev.dataTransfer.effectAllowed = 'move';
+                        ev.dataTransfer.setData('text/plain', targetIndex);
+                        el.classList.add('dragging-main');
+                    });
+                    el.addEventListener('dragend', () => el.classList.remove('dragging-main'));
+                    el.addEventListener('dragover', (ev) => {
+                        ev.preventDefault();
+                        el.classList.add('drag-over-main');
+                    });
+                    el.addEventListener('dragleave', () => el.classList.remove('drag-over-main'));
+                    el.addEventListener('drop', (ev) => {
+                        ev.preventDefault();
+                        el.classList.remove('drag-over-main');
+                        const from = parseInt(ev.dataTransfer.getData('text/plain'));
+                        const to = targetIndex;
+                        if (!isFinite(from) || !isFinite(to) || from === to) return;
+                        const moved = layers.splice(from, 1)[0];
+                        layers.splice(to, 0, moved);
+                        pushHistory('reorder main');
+                        updateLayersList();
+                    });
+                });
+            } catch (e) {
+                console.warn('enableMainLayerDrag falhou', e);
+            }
+        }
         window.enableMainLayerDrag = enableMainLayerDrag;
 
         // ====== NOVO (Parte 7): Toolbar utilitária ======
@@ -2899,7 +3163,7 @@
         // Adiciona um bloco paralelo aninhado dentro de um ramo (somente planar)
         function addNestedParallel(parIndex, branchIndex) {
             // FUNCIONALIDADE DESABILITADA - Paralelos aninhados causavam confusão na interface
-            alert('⚠️ Paralelos aninhados foram desabilitados para melhorar a experiência do usuário.\n\nUse múltiplos blocos paralelos separados no circuito principal.\nCálculos aparecem apenas na seção "Resultados" após executar.');
+      alert(' Paralelos aninhados foram desabilitados para melhorar a experiência do usuário.\n\nUse múltiplos blocos paralelos separados no circuito principal.\nCálculos aparecem apenas na seção "Resultados" após executar.');
             return;
         }
         
@@ -3094,7 +3358,7 @@
                         const k1=parseFloat(prev.conductivity), k2=parseFloat(li.conductivity);
                         if(isFinite(k1)&&isFinite(k2)&&k1>0&&k2>0){
                             const ratio = Math.max(k1,k2)/Math.min(k1,k2);
-                            if(ratio>300) info+=' ⚠';
+                            if(ratio>300) info+=' <i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i>';
                         }
                     }
                 }
@@ -3269,15 +3533,136 @@
         }
         // =================== FIM REFATORAÇÃO BLOCO PARALELO ===================
 
+        function safeLayerFormat(v, dp = 3) {
+            if (!isFinite(v)) return '—';
+            const abs = Math.abs(v);
+            if (abs >= 1000 || (abs > 0 && abs < 1e-3)) return Number(v).toExponential(2);
+            return Number(v).toFixed(dp);
+        }
+
+        function estimateLayerResistance(layer) {
+            try {
+                if (!layer) return null;
+                if (layer.type === 'Paralelo') {
+                    const summary = typeof summarizeParallelBlock === 'function' ? summarizeParallelBlock(layer, true) : null;
+                    return summary && isFinite(summary.Req) ? summary.Req : null;
+                }
+                if (/Fluido/.test(layer.type || '')) {
+                    const h = parseFloat(layer.convection || 0);
+                    const area = selectedGeometry === 'cylindrical'
+                        ? (2 * Math.PI * ((cylParams && cylParams.r0) || 0.05) * ((cylParams && cylParams.L) || 1))
+                        : ((planarParams && planarParams.A) || 1);
+                    return h > 0 && area > 0 ? (1 / (h * area)) : null;
+                }
+                const k = parseFloat(layer.conductivity || 0);
+                const L = parseFloat(layer.thickness || 0);
+                const area = selectedGeometry === 'cylindrical'
+                    ? (2 * Math.PI * ((cylParams && cylParams.r0) || 0.05) * ((cylParams && cylParams.L) || 1))
+                    : ((planarParams && planarParams.A) || 1);
+                return k > 0 && L > 0 && area > 0 ? (L / (k * area)) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function buildLayerCardMarkup(layer, index) {
+            if (!layer) return '';
+            const isParallel = layer.type === 'Paralelo';
+            const isFluid = /Fluido/.test(layer.type || '');
+            const isFinned = /SuperficieAletada/.test(layer.type || '');
+            const isSolid = !isParallel && !isFluid && !isFinned;
+            const displayName = isFinned ? layer.type.replace('SuperficieAletada', 'Superfície Aletada') : layer.type;
+            const iconClass = isParallel ? 'fa-code-branch' : (isFluid ? 'fa-tint' : (isFinned ? 'fa-fan' : 'fa-cube'));
+            const toneClass = isParallel ? 'layer-card--parallel' : (isFluid ? 'layer-card--fluid' : (isFinned ? 'layer-card--finned' : 'layer-card--solid'));
+            const toneLabel = isParallel ? 'Paralelo' : (isFluid ? 'Fluido' : (isFinned ? 'Aleta' : 'Sólido'));
+            const selectedClass = selectedLayerIndex === index ? 'selected' : '';
+            const resistance = estimateLayerResistance(layer);
+            const resistanceText = isFinite(resistance) ? `R ≈ ${safeLayerFormat(resistance, 4)} K/W` : 'R —';
+            const layerIsValid = isParallel
+                ? Array.isArray(layer.branches) && layer.branches.length >= 2 && isFinite(estimateLayerResistance(layer))
+                : isFluid
+                    ? parseFloat(layer.convection || 0) > 0
+                    : isFinned
+                        ? isFinite(getFinnedMetrics(layer)?.R_total || getFinnedMetrics(layer)?.R)
+                        : parseFloat(layer.thickness || 0) > 0 && parseFloat(layer.conductivity || 0) > 0;
+            const statusText = layerIsValid ? 'Pronto para calcular' : 'Revise os parâmetros';
+            const statusClass = layerIsValid ? '' : ' invalid';
+
+            if (isParallel) {
+                const summary = typeof summarizeParallelBlock === 'function' ? summarizeParallelBlock(layer, true) : null;
+                const reqText = summary && isFinite(summary.Req) ? `${safeLayerFormat(summary.Req, 4)} K/W` : '—';
+                const branchCount = Array.isArray(layer.branches) ? layer.branches.length : 0;
+                return `
+                    <div class="flow-node">
+                        <div class="layer-card layer-card--parallel clickable-layer ${selectedClass}" data-layer-index="${index}" data-layer-kind="parallel">
+                            <div class="layer-card-header">
+                                <div class="layer-card-main">
+                                    <i class="fas ${iconClass} layer-icon" style="color:#7c3aed;"></i>
+                                    <div>
+                                        <div class="layer-card-title">Bloco paralelo</div>
+                                        <div class="layer-card-name">${displayName}</div>
+                                    </div>
+                                </div>
+                                <span class="layer-pill">${branchCount} ramos</span>
+                            </div>
+                            <div class="layer-card-body">
+                                <div><strong>${branchCount} caminhos térmicos</strong></div>
+                                <div>R eq: ${reqText}</div>
+                                <div>Fluxo em ramificação</div>
+                                <div class="layer-card-status${statusClass}">${statusText}</div>
+                            </div>
+                            <div class="layer-card-actions">
+                                <button class="layer-card-action" type="button" title="Editar" onclick="event.stopPropagation(); if(typeof window.openPropertyPopover === 'function'){ window.openPropertyPopover(event, ${index}); }"><i class="fas fa-pen"></i></button>
+                                <button class="layer-card-action layer-delete" type="button" title="Excluir" onclick="event.stopPropagation(); removeLayer(${index});"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        ${index < layers.length - 1 ? '<div class="layer-flow-connector">↓</div>' : ''}
+                    </div>
+                `;
+            }
+
+            const label = isFluid ? 'Fluido' : (isFinned ? 'Aleta' : 'Sólido');
+            const primaryText = isFluid
+                ? `h = ${safeLayerFormat(parseFloat(layer.convection || 0), 2)} W/m²·K`
+                : (isFinned
+                    ? `η = ${safeLayerFormat(parseFloat(getFinnedMetrics(layer)?.eta_o || 0), 3)}`
+                    : `k = ${safeLayerFormat(parseFloat(layer.conductivity || 0), 3)} W/m·K`);
+            const secondaryText = isFluid
+                ? `T = ${safeLayerFormat(parseFloat(layer.temperature || 0), 2)} °C · ${resistanceText}`
+                : (isFinned
+                    ? `R ≈ ${safeLayerFormat(parseFloat(getFinnedMetrics(layer)?.R_total || getFinnedMetrics(layer)?.R || 0), 4)} K/W`
+                    : `L = ${safeLayerFormat(parseFloat(layer.thickness || 0), 4)} m · ${resistanceText}`);
+
+            return `
+                <div class="flow-node">
+                    <div class="layer-card ${toneClass} clickable-layer ${selectedClass}" data-layer-index="${index}" data-layer-kind="${label.toLowerCase()}">
+                        <div class="layer-card-header">
+                            <div class="layer-card-main">
+                                <i class="fas ${iconClass} layer-icon" style="color:${isParallel ? '#7c3aed' : (isFluid ? '#2563eb' : (isFinned ? '#0f766e' : '#64748b'))};"></i>
+                                <div>
+                                    <div class="layer-card-title">Camada ${index + 1}</div>
+                                    <div class="layer-card-name">${displayName}</div>
+                                </div>
+                            </div>
+                            <span class="layer-pill">${toneLabel}</span>
+                        </div>
+                        <div class="layer-card-body">
+                            <div><strong>${primaryText}</strong></div>
+                            <div>${secondaryText}</div>
+                            <div class="layer-card-status${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="layer-card-actions">
+                            <button class="layer-card-action" type="button" title="Editar" onclick="event.stopPropagation(); if(typeof window.openPropertyPopover === 'function'){ window.openPropertyPopover(event, ${index}); }"><i class="fas fa-pen"></i></button>
+                            <button class="layer-card-action layer-delete" type="button" title="Excluir" onclick="event.stopPropagation(); removeLayer(${index});"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    ${index < layers.length - 1 ? '<div class="layer-flow-connector">↓</div>' : ''}
+                </div>
+            `;
+        }
+
         function updateLayersList() {
             try {
-                // Paralelos aninhados agora suportados — flatten desativado
-                // Função de limpeza desabilitada - problemas corrigidos na origem
-                const cleanupUnwantedElements = () => {
-                    // Limpeza desabilitada pois foi corrigida na renderização
-                    return;
-                };
-                
                 const layersList = document.getElementById('layers-list');
                 if (!layersList) {
                     console.error('Elemento layers-list não encontrado');
@@ -3285,79 +3670,49 @@
                 }
                 
                 layersList.innerHTML = '';
-                cleanupUnwantedElements(); // Limpeza de segurança
 
                 if (layers.length === 0) {
                     layersList.innerHTML = `
                         <div class="no-layers">
                             <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
-                            Clique nos botões acima para adicionar camadas ao circuito térmico
+                            Seu circuito está vazio.<br>
+                            Adicione uma camada sólida, fluido ou estrutura paralela para começar.
                         </div>
                     `;
                     return;
                 }
 
-                // Sempre invalidar caches dependentes da estrutura (x das interfaces e raios cilíndricos)
                 try { lastInterfaceXs = null; lastVBWidth = null; lastCylRadii = null; } catch {}
+
                 layers.forEach((layer, index) => {
-                    const layerElement = document.createElement('div');
-                    layerElement.className = `layer-item ${selectedLayerIndex === index ? 'selected' : ''}`;
-                    
-                    if (layer && layer.type === 'Paralelo') {
-                        layerElement.classList.add('clickable-layer');
-                        layerElement.innerHTML = buildParallelBlock(layer, index);
-                        // Desabilitar drag & drop e edição interna: nenhum enableBranchDrag aqui
-                        layerElement.addEventListener('click', (e)=>{ e.stopPropagation(); selectLayer(index); /* não abre editor de ramos */ });
-                    } else {
-                        // Adiciona data-attributes para identificação
-                        layerElement.setAttribute('data-layer-index', index);
-                        layerElement.classList.add('clickable-layer');
-                        const isFluid = layer.type.includes('Fluido');
-                        const isFinned = layer.type.includes('SuperficieAletada');
-                        let iconClass = isFluid? 'fa-tint' : (isFinned? 'fa-fan':'fa-cube');
-                        let iconColor = isFluid? '#2196f3' : (isFinned? '#00796b' : '#ff9800');
-                        let infoHTML;
-                        if (isFluid) {
-                            infoHTML = `h: ${layer.convection} W/m²·K`;
-                        } else if (isFinned) {
-                            const m = getFinnedMetrics(layer)||{};
-                            const fmt=(v)=> (isFinite(v)? (v>1e3||v<1e-3? Number(v).toExponential(2): Number(v).toPrecision(3)):'—');
-                            infoHTML = `η₀: ${fmt(m.eta_o)} | Rₐ: ${fmt(m.R||m.R_total)} K/W`;
-                        } else {
-                            infoHTML = `Espessura: ${layer.thickness} m, k: ${layer.conductivity} W/m·K`;
-                        }
-                        const displayName = isFinned? (layer.type.replace('SuperficieAletada','Superfície Aletada')) : layer.type;
-                        layerElement.innerHTML = `
-                            <div class="layer-info">
-                                <i class="fas ${iconClass} layer-icon" style="color:${iconColor};"></i>
-                                <div>
-                                    <strong>${displayName}</strong><br>
-                                    <small>${infoHTML}</small>
-                                </div>
-                            </div>
-                            <button onclick="event.stopPropagation(); removeLayer(${index})" class="layer-delete" type="button">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        `;
-                        // Listener direto para garantir abertura usando stub caso delegação falhe
-                        layerElement.addEventListener('click', function(e){
-                            if(e.target.closest('.layer-delete')) return; // ignorar clique no botão de excluir
-                            if(typeof window.openPropertyPopover === 'function'){
-                                window.openPropertyPopover(e, index);
-                            } else {
-                                console.warn('openPropertyPopover indisponível no clique direto.');
-                            }
-                        });
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = buildLayerCardMarkup(layer, index);
+                    const node = wrapper.firstElementChild;
+                    if (node) {
+                        layersList.appendChild(node);
                     }
-                    layersList.appendChild(layerElement);
+                });
+
+                const layerCards = layersList.querySelectorAll('.clickable-layer');
+                layerCards.forEach((card) => {
+                    card.addEventListener('click', function (e) {
+                        if (e.target.closest('.layer-card-action')) return;
+                        const idx = parseInt(card.getAttribute('data-layer-index'));
+                        if (isFinite(idx)) {
+                            selectedLayerIndex = idx;
+                            updateLayersList();
+                            updatePropertiesPanel();
+                            if (typeof window.openPropertyPopover === 'function') {
+                                window.openPropertyPopover(e, idx);
+                            }
+                        }
+                    });
                 });
                 
                 console.log(`Lista atualizada com ${layers.length} camadas`);
                 enableMainLayerDrag(); injectLayerToolbar(); refreshHistoryButtons();
-                // Atualizar painel de avisos e comparação de variantes
                 updateWarningsPanel?.();
                 renderVariantsComparison?.();
-                // Após atualizar a lista, regenere a visualização e valores
                 updateCircuitDisplay();
                 updateResistanceValues();
             } catch (error) {
@@ -3632,7 +3987,7 @@
                             Os cálculos detalhados deste bloco paralelo aparecem na seção <strong>Resultados</strong> após executar o cálculo térmico.
                         </div>
                         <div style="background: #e8f5e9; padding: 10px; border-radius: 6px; border-left: 4px solid #4caf50;">
-                            <strong>💡 Dica:</strong> Edite os ramos individuais clicando diretamente nas camadas na lista de camadas acima.
+                            <strong><i class="fa-solid fa-lightbulb"></i> Dica:</strong> Edite os ramos individuais clicando diretamente nas camadas na lista de camadas acima.
                         </div>
                     </div>
 
@@ -5360,7 +5715,7 @@
                     if (hasNaN) {
                         const warn = document.createElement('div');
                         warn.style.cssText = 'margin:12px 0 0; padding:10px 14px; background:#fff3e0; border:1px solid #ffb74d; color:#e65100; border-radius:8px; font-size:0.85rem; font-weight:600;';
-                        warn.innerHTML = '⚠ Algumas resistências resultaram em NaN. Verifique valores de espessura (>0), k (>0), h (>0) e raios (r₁<r₂).';
+                        warn.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> Algumas resistências resultaram em NaN. Verifique valores de espessura (>0), k (>0), h (>0) e raios (r₁<r₂).';
                         resultsDiv.prepend(warn);
                     }
                 } catch(eWarn){ if(window.__DEBUG_CIRCUIT__) console.warn('Falha aviso NaN', eWarn); }
@@ -5372,7 +5727,7 @@
                 let html = '<div style="text-align:left;">';
                 html += `<div style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 16px 20px; border-radius: 12px 12px 0 0; margin-bottom: 0;">` +
                         `<h4 style="margin: 0; font-size: 1.4em; font-weight: 600; display: flex; align-items: center; gap: 10px;">` +
-                        `<span style="font-size: 1.2em;">📊</span> Resultados do Cálculo Térmico</h4>` +
+                        `<span style="font-size: 1.2em;"><i class="fa-solid fa-chart-column"></i></span> Resultados do Cálculo Térmico</h4>` +
                         `<p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 0.95em;">Análise completa das resistências térmicas e transferência de calor</p>` +
                         `</div>` +
                         `<div style="background: white; border: 1px solid #e0e0e0; border-radius: 0 0 12px 12px; border-top: none; padding: 20px; margin-bottom: 20px;">`;
@@ -5394,7 +5749,7 @@
                         
                         // Card Resistência Total
                         `<div style="background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%); border: 2px solid #4caf50; border-radius: 12px; padding: 16px; text-align: center;">` +
-                        `<div style="color: #2e7d32; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔥 Resistência Térmica Total</div>` +
+                        `<div style="color: #2e7d32; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-fire"></i> Resistência Térmica Total</div>` +
                         `<div style="font-size: 1.8em; font-weight: 700; color: #1b5e20; margin: 8px 0;">R<sub>total</sub> = ${fmtNum(result.R_total)} K/W</div>` +
                         `<div style="font-size: 0.85em; color: #388e3c; font-style: italic;">Oposição total ao fluxo de calor</div>` +
                         `</div>`;
@@ -5402,13 +5757,13 @@
                 if (result.q != null) {
                     // Card Taxa de Calor
                     html += `<div style="background: linear-gradient(135deg, #fff3e0 0%, #fef7ed 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 16px; text-align: center;">` +
-                            `<div style="color: #ef6c00; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">⚡ Taxa de Transferência</div>` +
+                            `<div style="color: #ef6c00; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-bolt"></i> Taxa de Transferência</div>` +
                             `<div style="font-size: 1.8em; font-weight: 700; color: #e65100; margin: 8px 0;">q = ${result.q.toFixed(2)} W</div>` +
                             `<div style="font-size: 0.85em; color: #f57c00; font-style: italic;">ΔT = ${(result.deltaT).toFixed(2)} °C</div>` +
                             `</div>`;
                 } else {
                     html += `<div style="background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%); border: 2px solid #9e9e9e; border-radius: 12px; padding: 16px; text-align: center;">` +
-                            `<div style="color: #616161; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">⚠️ Taxa de Transferência</div>` +
+                            `<div style="color: #616161; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> Taxa de Transferência</div>` +
                             `<div style="font-size: 1.4em; font-weight: 600; color: #757575; margin: 8px 0;">Não Calculado</div>` +
                             `<div style="font-size: 0.85em; color: #9e9e9e; font-style: italic;">Defina temperaturas dos fluidos</div>` +
                             `</div>`;
@@ -5416,7 +5771,7 @@
                 // Cards de coeficientes U
                 if (selectedGeometry === 'cylindrical' && result.U_i != null && result.U_o != null) {
                     html += `<div style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%); border: 2px solid #2196f3; border-radius: 12px; padding: 16px; text-align: center;">` +
-                            `<div style="color: #1565c0; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📐 Coeficientes Globais</div>` +
+                            `<div style="color: #1565c0; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-drafting-compass"></i> Coeficientes Globais</div>` +
                             `<div style="display: flex; justify-content: space-around; margin: 8px 0;">` +
                             `<div><span style="font-size: 1.4em; font-weight: 700; color: #0d47a1;">U<sub>i</sub> = ${result.U_i.toFixed(2)}</span><br><span style="font-size: 0.8em; color: #1976d2;">W/(m²·K)</span></div>` +
                             `<div><span style="font-size: 1.4em; font-weight: 700; color: #0d47a1;">U<sub>o</sub> = ${result.U_o.toFixed(2)}</span><br><span style="font-size: 0.8em; color: #1976d2;">W/(m²·K)</span></div>` +
@@ -5441,12 +5796,12 @@
             const Ause = (planarParams.A||1);
             const Uplan = 1/(result.R_total*Ause);
             html += `<div style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%); border: 2px solid #2196f3; border-radius: 12px; padding: 16px; text-align: center;">` +
-                    `<div style="color: #1565c0; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">📐 Coeficiente Global</div>` +
+                    `<div style="color: #1565c0; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-drafting-compass"></i> Coeficiente Global</div>` +
                     `<div style="font-size: 1.6em; font-weight: 700; color: #0d47a1; margin: 8px 0;">U = ${Uplan.toFixed(2)} W/(m²·K)</div>` +
                     `<div style="font-size: 0.85em; color: #1976d2; font-style: italic;">Transferência por unidade de área</div>` +
                     `</div>` +
                     `<div style="background: linear-gradient(135deg, #f3e5f5 0%, #faf4fb 100%); border: 2px solid #9c27b0; border-radius: 12px; padding: 16px; text-align: center;">` +
-                    `<div style="color: #7b1fa2; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔧 Condutância Térmica</div>` +
+                    `<div style="color: #7b1fa2; font-size: 0.9em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-wrench"></i> Condutância Térmica</div>` +
                     `<div style="font-size: 1.6em; font-weight: 700; color: #4a148c; margin: 8px 0;">UA = ${(1/result.R_total).toFixed(2)} W/K</div>` +
                     `<div style="font-size: 0.85em; color: #8e24aa; font-style: italic;">Capacidade de condução global</div>` +
                     `</div>`;
@@ -5533,7 +5888,7 @@
                         }
                         if (rowsTop.length) {
                             html += `<div style="background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%); border: 2px solid #ffb300; border-radius: 12px; padding: 12px;">`+
-                                    `<div style="color:#e65100; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span>🌟</span> Radiação (resumo)</div>`+
+                                    `<div style="color:#e65100; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span><i class="fa-solid fa-star"></i></span> Radiação (resumo)</div>`+
                                     `<div style="color:#5d4037; font-size:12px; margin-bottom:6px;">Balanço por interface: <span style="font-family:ui-monospace; background:#fff3e0; padding:2px 6px; border-radius:4px;">q/A = h (T_s − T_∞) + ε·σ (T_s⁴ − T_viz⁴)</span></div>`;
                             rowsTop.forEach(rt => {
                                 html += `<div style="background:#ffffff; border:1px solid #ffe0b2; border-radius:8px; padding:8px; margin:6px 0;">`+
@@ -5557,16 +5912,16 @@
                 html += `<div style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0; overflow: hidden;">` +
                         `<div style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 16px 20px; border-bottom: 3px solid #0d47a1;">` +
                         `<h5 style="margin: 0; font-size: 1.2em; font-weight: 600; display: flex; align-items: center; gap: 10px;">` +
-                        `<span style="font-size: 1.1em;">🧮</span> Análise por Camada Individual</h5>` +
+                        `<span style="font-size: 1.1em;"><i class="fa-solid fa-calculator"></i></span> Análise por Camada Individual</h5>` +
                         `<p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 0.9em;">Resistências térmicas detalhadas e substituições numéricas</p>` +
                         `</div>`;
                 html += `<div style="overflow-x: auto;">` +
                         `<table style="width:100%; border-collapse:collapse; margin:0; font-size:13px; background:white;">` +
                         `<thead><tr style="background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%); border-bottom: 2px solid #e0e0e0;">` +
-                        `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;">🏷️ Camada</th>` +
-                        `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;">📐 Fórmula</th>` +
-                        `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;">🔢 Substituição</th>` +
-                        `<th style="padding:12px 16px; text-align:right; color:#424242; font-weight:600;">⚡ R (K/W)</th>` +
+                        `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;"><i class="fa-solid fa-tag"></i> Camada</th>` +
+                        `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;"><i class="fa-solid fa-drafting-compass"></i> Fórmula</th>` +
+                        `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;"><i class="fa-solid fa-hashtag"></i> Substituição</th>` +
+                        `<th style="padding:12px 16px; text-align:right; color:#424242; font-weight:600;"><i class="fa-solid fa-bolt"></i> R (K/W)</th>` +
                         `</tr></thead><tbody>`;
                 result.layers.forEach((Lr, i) => {
                     let substCell = `${Lr.subst}`;
@@ -5627,9 +5982,9 @@
                         }
                     }
                     const rowBg = i%2 === 0 ? 'background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)' : 'background: white';
-                    let typeIcon = '🧱';
-                    if (Lr.kind === 'fluid') typeIcon = '💨';
-                    else if (Lr.kind === 'parallel') typeIcon = '🔀';
+                    let typeIcon = '<i class="fa-solid fa-cube"></i>';
+                    if (Lr.kind === 'fluid') typeIcon = '<i class="fa-solid fa-wind"></i>';
+                    else if (Lr.kind === 'parallel') typeIcon = '<i class="fa-solid fa-code-branch"></i>';
                     const resistanceColor = Lr.R < 0.001 ? '#4caf50' : Lr.R < 0.1 ? '#ff9800' : '#d32f2f';
                     
                     html += `<tr style="${rowBg}; border-bottom: 1px solid #e0e0e0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor='${i%2===0?'#fafafa':'white'}'">`+
@@ -5654,7 +6009,7 @@
             html += `<div style="background:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin:20px 0; overflow:hidden;">`+
                 `<div style="background:linear-gradient(135deg,#8e24aa 0%,#6a1b9a 100%); color:white; padding:16px 20px; border-bottom:3px solid #4a148c;">`+
                 `<h5 style="margin:0; font-size:1.15em; font-weight:600; display:flex; align-items:center; gap:10px;">`+
-                `<span style='font-size:1.1em;'>🧊</span> Desempenho de Superfícies Aletadas</h5>`+
+                `<span style='font-size:1.1em;'><i class="fa-solid fa-cube"></i></span> Desempenho de Superfícies Aletadas</h5>`+
                 `<p style="margin:6px 0 0 0; opacity:0.9; font-size:0.85em;">Eficiências, áreas e resistências equivalentes das superfícies estendidas</p>`+
                 `</div>`;
             // Cards resumo agregados
@@ -5731,7 +6086,7 @@
             try {
                 if (typeof buildFinStepBlock === 'function' && finnedLayers.length) {
                     html += `<div style='padding:4px 20px 18px 20px; border-top:2px dashed #d1c4e9; background:linear-gradient(135deg,#faf5fc 0%, #f7eefb 90%);'>`+
-                        `<div style='font-weight:600; color:#6a1b9a; margin:10px 0 8px; display:flex; align-items:center; gap:6px; font-size:0.95em;'>🧾 Derivações das Aletas (Passo a Passo)</div>`+
+                        `<div style='font-weight:600; color:#6a1b9a; margin:10px 0 8px; display:flex; align-items:center; gap:6px; font-size:0.95em;'><i class="fa-solid fa-file-lines"></i> Derivações das Aletas (Passo a Passo)</div>`+
                         `<div style='font-size:11px; color:#7b1fa2; margin-bottom:10px;'>Sequência textual das etapas usadas para calcular η, áreas efetivas e resistência equivalente de cada superfície aletada.</div>`;
                     finnedLayers.forEach((fl, idxDeriv) => {
                         const dFin = fl.details || {};
@@ -5764,7 +6119,7 @@
         html += `<div style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0; overflow: hidden;">` +
                 `<div style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; padding: 16px 20px; border-bottom: 3px solid #1565c0;">` +
                 `<h5 style="margin: 0; font-size: 1.2em; font-weight: 600; display: flex; align-items: center; gap: 10px;">` +
-                `<span style="font-size: 1.1em;">📐</span> Equações Fundamentais</h5>` +
+                `<span style="font-size: 1.1em;"><i class="fa-solid fa-drafting-compass"></i></span> Equações Fundamentais</h5>` +
                 `<p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 0.9em;">Relações matemáticas governantes e validação dos cálculos</p>` +
                 `</div>` +
                 `<div style="padding: 20px;">`;
@@ -5846,7 +6201,7 @@
                 if (fluidEqRows.length > 0) {
                     html += `<div style="background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%); border: 2px solid #ffb300; border-radius: 10px; padding: 14px; margin-bottom: 12px;">`+
                             `<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">`+
-                            `<span>🌟</span><strong style="color:#e65100;">Radiação aplicada aos fluidos</strong>`+
+                            `<span><i class="fa-solid fa-star"></i></span><strong style="color:#e65100;">Radiação aplicada aos fluidos</strong>`+
                             `</div>`+
                             `<div style="color:#5d4037; font-size:12px; margin-bottom:8px;">Balanço por interface de fluido: <span style="font-family:ui-monospace; background:#fff3e0; padding:2px 6px; border-radius:4px;">q/A = h (T_s − T_∞) + ε·σ (T_s⁴ − T_viz⁴)</span></div>`;
                     fluidEqRows.forEach((row, idx) => {
@@ -5880,9 +6235,9 @@
         const dDT = (hasQ && isFinite(sumDT)) ? (result.deltaT - sumDT) : NaN;
         const passFail = (val)=> (isFinite(val) && Math.abs(val) <= Math.max(1e-8, Math.abs(val)*1e-6)) ? '<span style="color:#2e7d32; font-weight:600;">PASS</span>' : `<span style="color:#c62828; font-weight:600;">Δ=${fmtNum(val)}</span>`;
         html += `<div style="background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%); border: 2px solid #2196f3; border-radius: 10px; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; color: #1565c0; line-height: 1.6;">` +
-            `<div style="font-size: 14px; margin-bottom: 8px;"><strong>🔗 [Eq. G1] Soma de resistências:</strong></div>` +
+            `<div style="font-size: 14px; margin-bottom: 8px;"><strong><i class="fa-solid fa-link"></i> [Eq. G1] Soma de resistências:</strong></div>` +
             `<div style="margin-left: 16px; background: white; padding: 8px; border-radius: 6px; border-left: 4px solid #4caf50;">R_total = ${sumTerms} = ${fmtNum(result.R_total)} K/W</div>` +
-            `${(hasQ?`<div style="font-size: 14px; margin: 12px 0 8px 0;"><strong>📊 [Eq. G3] Quedas por camada:</strong></div>` +
+            `${(hasQ?`<div style="font-size: 14px; margin: 12px 0 8px 0;"><strong><i class="fa-solid fa-chart-column"></i> [Eq. G3] Quedas por camada:</strong></div>` +
             `<div style="margin-left: 16px; background: white; padding: 8px; border-radius: 6px; border-left: 4px solid #ff9800;">ΔT_i = q·R_i<br>` +
             `${result.layers.map((Lr,i)=>`ΔT_${i+1} = ${result.q.toFixed(2)}·${isNaN(Lr.R)?'R'+(i+1):fmtNum(Lr.R)} = ${isNaN(Lr.R)?'N/A':(result.q*Lr.R).toFixed(2)}°C`).join('<br>')}</div>`:'')}`+
             `</div>`;
@@ -5893,16 +6248,16 @@
                     html += `<div style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0; overflow: hidden;">` +
                             `<div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 16px 20px; border-bottom: 3px solid #ef6c00;">` +
                             `<h5 style="margin: 0; font-size: 1.2em; font-weight: 600; display: flex; align-items: center; gap: 10px;">` +
-                            `<span style="font-size: 1.1em;">🌡️</span> Quedas de Temperatura por Camada</h5>` +
+                            `<span style="font-size: 1.1em;"><i class="fa-solid fa-temperature-half"></i></span> Quedas de Temperatura por Camada</h5>` +
                             `<p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 0.9em;">Distribuição das quedas de temperatura ΔT_i através do sistema</p>` +
                             `</div>`;
                     html += `<div style="overflow-x: auto;">` +
                             `<table style="width:100%; border-collapse:collapse; margin:0; font-size:13px; background:white;">` +
                             `<thead><tr style="background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%); border-bottom: 2px solid #e0e0e0;">` +
-                            `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;">🏷️ Camada</th>` +
-                            `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;">📐 Fórmula</th>` +
-                            `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;">🔢 Substituição</th>` +
-                            `<th style="padding:12px 16px; text-align:right; color:#424242; font-weight:600;">🌡️ ΔT_i (°C)</th>` +
+                            `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;"><i class="fa-solid fa-tag"></i> Camada</th>` +
+                            `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;"><i class="fa-solid fa-drafting-compass"></i> Fórmula</th>` +
+                            `<th style="padding:12px 16px; text-align:left; color:#424242; font-weight:600; border-right:1px solid #e0e0e0;"><i class="fa-solid fa-hashtag"></i> Substituição</th>` +
+                            `<th style="padding:12px 16px; text-align:right; color:#424242; font-weight:600;"><i class="fa-solid fa-temperature-half"></i> ΔT_i (°C)</th>` +
                             `</tr></thead><tbody>`;
                     result.layers.forEach((Lr, i) => {
                         const Ri = Lr.R;
@@ -5910,7 +6265,7 @@
                         const subs = (!isNaN(Ri)) ? `${result.q.toFixed(2)} · ${fmtNum(Ri)} = ${dTi.toFixed(2)} °C` : `q · R_${i+1} = N/A`;
                         const rowBg = i%2 === 0 ? 'background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)' : 'background: white';
                         const deltaColor = dTi > 10 ? '#d32f2f' : dTi > 5 ? '#ff9800' : '#4caf50';
-                        const typeIcon = Lr.kind === 'solid' ? '🧱' : '💨';
+                        const typeIcon = Lr.kind === 'solid' ? '<i class="fa-solid fa-cube"></i>' : '<i class="fa-solid fa-wind"></i>';
                         
                         html += `<tr style="${rowBg}; border-bottom: 1px solid #e0e0e0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#fff3e0'" onmouseout="this.style.backgroundColor='${i%2===0?'#fafafa':'white'}'">`+
                                 `<td style="padding:12px 16px; vertical-align:top; border-right:1px solid #e0e0e0;">` +
@@ -5941,7 +6296,7 @@
                     if (quedas.length > 0) {
             html += `<div style="margin: 15px; padding: 15px; background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%); border-radius: 8px; border-left: 4px solid #ffc107;">` +
                 `<h6 style="margin: 0 0 12px 0; color: #e65100; font-weight: 700; display: flex; align-items: center; gap: 6px;">` +
-                `<span>📊</span> Análise das Quedas de Temperatura</h6>` +
+                `<span><i class="fa-solid fa-chart-column"></i></span> Análise das Quedas de Temperatura</h6>` +
                 `<p style="margin: 6px 0 10px 0; color:#5d4037; font-size: 0.9em;">Esta análise ajuda a identificar onde a maior parte do ΔT acontece, quais resistências mais impactam o sistema e onde atuar para reduzir R_total ou equilibrar o gradiente de temperatura.</p>`;
                         
                         const maiorQueda = quedas[0];
@@ -5952,7 +6307,7 @@
                         
                         // Maior queda
             html += `<div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #ffe0b2;">` +
-                `<div style="color: #d32f2f; font-weight: 700; font-size: 0.9em; margin-bottom: 4px;">🔥 Maior Queda</div>` +
+                `<div style="color: #d32f2f; font-weight: 700; font-size: 0.9em; margin-bottom: 4px;"><i class="fa-solid fa-fire"></i> Maior Queda</div>` +
                                 `<div style="font-weight: 600; color: #333;">${maiorQueda.label}</div>` +
                                 `<div style="color: #d32f2f; font-size: 1.1em; font-weight: 600;">ΔT = ${maiorQueda.deltaT.toFixed(2)}°C</div>` +
                 `<div style="color: #666; font-size: 0.85em;">${maiorQueda.percentual.toFixed(1)}% do total</div>` +
@@ -5963,7 +6318,7 @@
                         const resistenciaDominante = quedas.find(q => q.percentual > 50);
                         if (resistenciaDominante) {
                 html += `<div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #ffe0b2;">` +
-                    `<div style="color: #ff9800; font-weight: 700; font-size: 0.9em; margin-bottom: 4px;">⚡ Resistência Dominante</div>` +
+                    `<div style="color: #ff9800; font-weight: 700; font-size: 0.9em; margin-bottom: 4px;"><i class="fa-solid fa-bolt"></i> Resistência Dominante</div>` +
                                     `<div style="font-weight: 600; color: #333;">${resistenciaDominante.label}</div>` +
                                     `<div style="color: #ff9800; font-size: 1.1em; font-weight: 600;">${resistenciaDominante.percentual.toFixed(1)}%</div>` +
                     `<div style="color: #666; font-size: 0.85em;">Controla o sistema</div>` +
@@ -5978,7 +6333,7 @@
                         // Recomendações
                         if (maiorQueda.deltaT > 20 || resistenciaDominante) {
                             html += `<div style="background: #fff3e0; padding: 10px; border-radius: 6px; border-left: 3px solid #ff9800; margin-top: 10px;">` +
-                                    `<strong style="color: #e65100;">💡 Recomendações:</strong><br>` +
+                                    `<strong style="color: #e65100;"><i class="fa-solid fa-lightbulb"></i> Recomendações:</strong><br>` +
                                     `<span style="color: #333; font-size: 0.9em;">`;
                             
                             if (maiorQueda.kind === 'solid') {
@@ -6002,7 +6357,7 @@
                 html += `<div style="background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0; overflow: hidden;">` +
                         `<div style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; padding: 16px 20px; border-bottom: 3px solid #2e7d32;">` +
                         `<h5 style="margin: 0; font-size: 1.2em; font-weight: 600; display: flex; align-items: center; gap: 10px;">` +
-                        `<span style="font-size: 1.1em;">🔍</span> Passo a Passo Detalhado</h5>` +
+                        `<span style="font-size: 1.1em;"><i class="fa-solid fa-magnifying-glass"></i></span> Passo a Passo Detalhado</h5>` +
                         `<p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 0.9em;">Desenvolvimento completo das equações com coeficientes de radiação</p>` +
                         `</div>`;
                 html += `<div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">`;
@@ -6012,7 +6367,7 @@
                         if (selectedGeometry === 'cylindrical') {
                             html += `<div style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%); border: 2px solid #2196f3; border-radius: 10px; padding: 14px;">` +
                                     `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">` +
-                                    `<span style="font-size: 1.2em;">💨</span>` +
+                                    `<span style="font-size: 1.2em;"><i class="fa-solid fa-wind"></i></span>` +
                                     `<strong style="color: #1565c0; font-size: 1.1em;">${Lr.label}</strong>` +
                                     `<span style="background: #bbdefb; color: #0d47a1; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">FLUIDO</span>` +
                                     `</div>` +
@@ -6020,7 +6375,7 @@
                                     
                                     // Seção 1: Equação fundamental
                                     `<div style="background: #f8f9fa; border-left: 4px solid #2196f3; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;">🎯 1. Equação Fundamental da Convecção</div>` +
+                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> 1. Equação Fundamental da Convecção</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `Lei de Newton do resfriamento: <strong>q = h·A·ΔT</strong><br>` +
                                     `Definição de resistência térmica: <strong>R = ΔT/q</strong><br>` +
@@ -6029,7 +6384,7 @@
                                     
                                     // Seção 2: Área cilíndrica
                                     `<div style="background: #f0f8ff; border-left: 4px solid #4caf50; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #2e7d32; margin-bottom: 6px;">📐 2. Área da Superfície Cilíndrica</div>` +
+                                    `<div style="font-weight: 600; color: #2e7d32; margin-bottom: 6px;"><i class="fa-solid fa-drafting-compass"></i> 2. Área da Superfície Cilíndrica</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `A = 2π·r·L<br>` +
                                     `A = 2π·${((d.geom?.r)??0).toFixed(4)}·${(d.geom?.L??0).toFixed(2)} = ${((2*Math.PI*(d.geom?.r??0)*(d.geom?.L??1))).toFixed(4)} m²` +
@@ -6038,7 +6393,7 @@
                                     // Seção 3: Radiação (se aplicável)
                                     `${(d.include_rad ? 
                                         `<div style="background: #fff8e1; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                        `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;">🌟 3. Coeficiente de Radiação Linearizado</div>` +
+                                        `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;"><i class="fa-solid fa-star"></i> 3. Coeficiente de Radiação Linearizado</div>` +
                                         `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                         `h_rad = 4·σ·ε·T³ (linearização da Lei de Stefan-Boltzmann)<br>` +
                                         `h_rad = 4·${(d.sigma??5.670374419e-8)}·${(d.eps??0).toFixed(2)}·${(d.T_K??0).toFixed(2)}³<br>` +
@@ -6046,7 +6401,7 @@
                                         `</div></div>` +
                                         
                                         `<div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                        `<div style="font-weight: 600; color: #7b1fa2; margin-bottom: 6px;">🔗 4. Resistências em Paralelo</div>` +
+                                        `<div style="font-weight: 600; color: #7b1fa2; margin-bottom: 6px;"><i class="fa-solid fa-link"></i> 4. Resistências em Paralelo</div>` +
                                         `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                         `1/R_eq = 1/R_conv + 1/R_rad<br>` +
                                         `R_conv = 1/(h·A) = ${isNaN(d.R_conv)?'N/A':fmtNum(d.R_conv)} K/W<br>` +
@@ -6057,7 +6412,7 @@
                                     
                                     // Seção 4: Cálculo final
                                     `<div style="background: white; border: 2px solid #1976d2; padding: 12px; margin: 8px 0; border-radius: 6px;">` +
-                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;">🎯 Cálculo Final</div>` +
+                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> Cálculo Final</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.8; font-size: 13px;">` +
                                     `<strong>Dados de entrada:</strong><br>` +
                                     `• h = ${(d.h??0).toFixed(2)} W/(m²·K)<br>` +
@@ -6075,7 +6430,7 @@
                         } else {
                             html += `<div style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%); border: 2px solid #2196f3; border-radius: 10px; padding: 14px;">` +
                                     `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">` +
-                                    `<span style="font-size: 1.2em;">💨</span>` +
+                                    `<span style="font-size: 1.2em;"><i class="fa-solid fa-wind"></i></span>` +
                                     `<strong style="color: #1565c0; font-size: 1.1em;">${Lr.label}</strong>` +
                                     `<span style="background: #bbdefb; color: #0d47a1; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">FLUIDO</span>` +
                                     `</div>` +
@@ -6083,7 +6438,7 @@
                                     
                                     // Seção 1: Equação fundamental
                                     `<div style="background: #f8f9fa; border-left: 4px solid #2196f3; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;">🎯 1. Equação Fundamental da Convecção</div>` +
+                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> 1. Equação Fundamental da Convecção</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `Lei de Newton do resfriamento: <strong>q = h·A·ΔT</strong><br>` +
                                     `Definição de resistência térmica: <strong>R = ΔT/q</strong><br>` +
@@ -6092,7 +6447,7 @@
                                     
                                     // Seção 2: Área planar
                                     `<div style="background: #f0f8ff; border-left: 4px solid #4caf50; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #2e7d32; margin-bottom: 6px;">📐 2. Área da Superfície Planar</div>` +
+                                    `<div style="font-weight: 600; color: #2e7d32; margin-bottom: 6px;"><i class="fa-solid fa-drafting-compass"></i> 2. Área da Superfície Planar</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `A = ${(d.geom?.A??1).toFixed(2)} m² (área constante fornecida)` +
                                     `</div></div>` +
@@ -6100,7 +6455,7 @@
                                     // Seção 3: Radiação (se aplicável)
                                     `${(d.include_rad ? 
                                         `<div style="background: #fff8e1; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                        `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;">🌟 3. Coeficiente de Radiação Linearizado</div>` +
+                                        `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;"><i class="fa-solid fa-star"></i> 3. Coeficiente de Radiação Linearizado</div>` +
                                         `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                         `h_rad = 4·σ·ε·T³ (linearização da Lei de Stefan-Boltzmann)<br>` +
                                         `h_rad = 4·${(d.sigma??5.670374419e-8)}·${(d.eps??0).toFixed(2)}·${(d.T_K??0).toFixed(2)}³<br>` +
@@ -6108,7 +6463,7 @@
                                         `</div></div>` +
                                         
                                         `<div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                        `<div style="font-weight: 600; color: #7b1fa2; margin-bottom: 6px;">🔗 4. Resistências em Paralelo</div>` +
+                                        `<div style="font-weight: 600; color: #7b1fa2; margin-bottom: 6px;"><i class="fa-solid fa-link"></i> 4. Resistências em Paralelo</div>` +
                                         `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                         `1/R_eq = 1/R_conv + 1/R_rad<br>` +
                                         `R_conv = 1/(h·A) = ${isNaN(d.R_conv)?'N/A':fmtNum(d.R_conv)} K/W<br>` +
@@ -6119,7 +6474,7 @@
                                     
                                     // Seção 4: Cálculo final
                                     `<div style="background: white; border: 2px solid #1976d2; padding: 12px; margin: 8px 0; border-radius: 6px;">` +
-                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;">🎯 Cálculo Final</div>` +
+                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> Cálculo Final</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.8; font-size: 13px;">` +
                                     `<strong>Dados de entrada:</strong><br>` +
                                     `• h = ${(d.h??0).toFixed(2)} W/(m²·K)<br>` +
@@ -6138,7 +6493,7 @@
                         if (selectedGeometry === 'cylindrical') {
                             html += `<div style="background: linear-gradient(135deg, #fff3e0 0%, #fef7ed 100%); border: 2px solid #ff9800; border-radius: 10px; padding: 14px;">` +
                                     `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">` +
-                                    `<span style="font-size: 1.2em;">🧱</span>` +
+                                    `<span style="font-size: 1.2em;"><i class="fa-solid fa-cube"></i></span>` +
                                     `<strong style="color: #ef6c00; font-size: 1.1em;">${Lr.label}</strong>` +
                                     `<span style="background: #ffcc02; color: #e65100; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">SÓLIDO</span>` +
                                     `</div>` +
@@ -6146,7 +6501,7 @@
                                     
                                     // Seção 1: Lei de Fourier
                                     `<div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;">🎯 1. Lei de Fourier para Coordenadas Cilíndricas</div>` +
+                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> 1. Lei de Fourier para Coordenadas Cilíndricas</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `q = -k·A(r)·dT/dr = -k·(2π·r·L)·dT/dr<br>` +
                                     `Para regime permanente: q = constante<br>` +
@@ -6155,7 +6510,7 @@
                                     
                                     // Seção 2: Integração
                                     `<div style="background: #fff3e0; border-left: 4px solid #ff5722; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #d84315; margin-bottom: 6px;">🧮 2. Integração da Equação de Condução</div>` +
+                                    `<div style="font-weight: 600; color: #d84315; margin-bottom: 6px;"><i class="fa-solid fa-calculator"></i> 2. Integração da Equação de Condução</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `∫[r₁→r₂] q·dr/(2π·k·L·r) = -∫[T₁→T₂] dT<br>` +
                                     `q/(2π·k·L) · ∫[r₁→r₂] dr/r = -(T₂ - T₁)<br>` +
@@ -6165,7 +6520,7 @@
                                     
                                     // Seção 3: Resistência térmica
                                     `<div style="background: #f0f8ff; border-left: 4px solid #2196f3; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;">📐 3. Definição da Resistência Térmica</div>` +
+                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;"><i class="fa-solid fa-drafting-compass"></i> 3. Definição da Resistência Térmica</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `R = ΔT/q = ln(r₂/r₁)/(2π·k·L)<br>` +
                                     `Se houver resistência de contato: R_total = R_cond + R_cont` +
@@ -6173,7 +6528,7 @@
                                     
                                     // Seção 4: Substituição numérica
                                     `<div style="background: white; border: 2px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 6px;">` +
-                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;">🎯 Cálculo Final</div>` +
+                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> Cálculo Final</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.8; font-size: 13px;">` +
                                     `<strong>Dados de entrada:</strong><br>` +
                                     `• r₁ = ${(d.r1??0).toFixed(4)} m (raio interno)<br>` +
@@ -6194,7 +6549,7 @@
                         } else {
                             html += `<div style="background: linear-gradient(135deg, #fff3e0 0%, #fef7ed 100%); border: 2px solid #ff9800; border-radius: 10px; padding: 14px;">` +
                                     `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">` +
-                                    `<span style="font-size: 1.2em;">🧱</span>` +
+                                    `<span style="font-size: 1.2em;"><i class="fa-solid fa-cube"></i></span>` +
                                     `<strong style="color: #ef6c00; font-size: 1.1em;">${Lr.label}</strong>` +
                                     `<span style="background: #ffcc02; color: #e65100; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600;">SÓLIDO</span>` +
                                     `</div>` +
@@ -6202,7 +6557,7 @@
                                     
                                     // Seção 1: Lei de Fourier
                                     `<div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;">🎯 1. Lei de Fourier para Coordenadas Cartesianas</div>` +
+                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> 1. Lei de Fourier para Coordenadas Cartesianas</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `q = -k·A·dT/dx<br>` +
                                     `Para regime permanente e área constante: q = constante<br>` +
@@ -6211,7 +6566,7 @@
                                     
                                     // Seção 2: Integração
                                     `<div style="background: #fff3e0; border-left: 4px solid #ff5722; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #d84315; margin-bottom: 6px;">🧮 2. Integração da Equação de Condução</div>` +
+                                    `<div style="font-weight: 600; color: #d84315; margin-bottom: 6px;"><i class="fa-solid fa-calculator"></i> 2. Integração da Equação de Condução</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `∫[0→L] q·dx/(k·A) = -∫[T₁→T₂] dT<br>` +
                                     `q/(k·A) · ∫[0→L] dx = -(T₂ - T₁)<br>` +
@@ -6221,7 +6576,7 @@
                                     
                                     // Seção 3: Resistência térmica
                                     `<div style="background: #f0f8ff; border-left: 4px solid #2196f3; padding: 12px; margin: 8px 0; border-radius: 0 6px 6px 0;">` +
-                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;">📐 3. Definição da Resistência Térmica</div>` +
+                                    `<div style="font-weight: 600; color: #1976d2; margin-bottom: 6px;"><i class="fa-solid fa-drafting-compass"></i> 3. Definição da Resistência Térmica</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.6;">` +
                                     `R = ΔT/q = L/(k·A)<br>` +
                                     `Se houver resistência de contato: R_total = R_cond + R_cont` +
@@ -6229,7 +6584,7 @@
                                     
                                     // Seção 4: Substituição numérica
                                     `<div style="background: white; border: 2px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 6px;">` +
-                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;">🎯 Cálculo Final</div>` +
+                                    `<div style="font-weight: 600; color: #f57c00; margin-bottom: 6px;"><i class="fa-solid fa-bullseye"></i> Cálculo Final</div>` +
                                     `<div style="font-family: 'Courier New', monospace; color: #333; line-height: 1.8; font-size: 13px;">` +
                                     `<strong>Dados de entrada:</strong><br>` +
                                     `• L = ${(d.L??0).toFixed(4)} m (espessura)<br>` +
@@ -6255,11 +6610,11 @@
                         const bgGrad = 'linear-gradient(135deg,#f3e5f5 0%,#ede7f6 100%)';
                         html += `<div style="background:${bgGrad}; border:2px solid #9c27b0; border-radius:10px; padding:14px;">`+
                             `<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">`+
-                            `<span style='font-size:1.2em;'>🧊</span>`+
+                            `<span style='font-size:1.2em;'><i class="fa-solid fa-cube"></i></span>`+
                             `<strong style="color:#4a148c; font-size:1.05em;">${Lr.label || 'Superfície Aletada'} – ${labelTipo}</strong>`+
                             `<span style="background:#ce93d8; color:#4a148c; padding:2px 8px; border-radius:12px; font-size:0.75em; font-weight:600;">FINNED</span>`+
                             `</div>`+
-                            `<div style="color:${colorBase}; margin-bottom:10px; font-weight:600; font-size:0.95em;">⚙ Desenvolvimento da Resistência Equivalente da Superfície Aletada</div>`+
+                            `<div style="color:${colorBase}; margin-bottom:10px; font-weight:600; font-size:0.95em;"><i class="fa-solid fa-gear"></i> Desenvolvimento da Resistência Equivalente da Superfície Aletada</div>`+
                             `<div style="display:flex; flex-direction:column; gap:8px; font-family:'Courier New', monospace; font-size:12px; line-height:1.5; color:#311b92;">`+
                             passo('1', isPin? 'Perímetro (pino)' : 'Perímetro (placa)', isPin? `P = π·d = π·${fmtNum(fd.t_fin||fd.d_pin)} = ${fmtNum(fd.P)}` : `P = 2(w + t) = 2(${fmtNum(fd.w_fin)} + ${fmtNum(fd.t_fin)}) = ${fmtNum(fd.P)}`)+
                             passo('2', isPin? 'Área da seção' : 'Área da seção', isPin? `A_c = π(d/2)² = π(${fmtNum((fd.t_fin||fd.d_pin)/2)})² = ${fd.A_c?fd.A_c.toExponential(3):'—'} m²` : `A_c = w·t = ${fmtNum(fd.w_fin)}·${fmtNum(fd.t_fin)} = ${fd.A_c?fd.A_c.toExponential(3):'—'} m²`)+
@@ -6283,7 +6638,7 @@
                 if (result.q != null) {
                     html += `<div style="background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%); border: 2px solid #4caf50; border-radius: 10px; padding: 14px; margin-top: 8px;">` +
                             `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">` +
-                            `<span style="font-size: 1.2em;">⚖️</span>` +
+                            `<span style="font-size: 1.2em;"><i class="fa-solid fa-scale-balanced"></i></span>` +
                             `<strong style="color: #2e7d32; font-size: 1.1em;">Balanço Térmica Global</strong>` +
                             `</div>` +
                             `<div style="color: #388e3c; margin-bottom: 6px; font-weight: 500;">q = ΔT_total / R_total = ${(result.q).toFixed(4)} W</div>` +
@@ -6407,7 +6762,7 @@
             // 📊 CABEÇALHO - Resultados do Cálculo Térmico
             // ═══════════════════════════════════════════════════════════
             h += `<div style='text-align:center; margin-bottom:24px;'>`+
-                 `<h1 style='margin:0 0 8px; font-size:1.8rem; font-weight:700; color:#1976d2;'>📊 Resultados do Cálculo Térmico</h1>`+
+                 `<h1 style='margin:0 0 8px; font-size:1.8rem; font-weight:700; color:#1976d2;'><i class="fa-solid fa-chart-column"></i> Resultados do Cálculo Térmico</h1>`+
                  `<p style='margin:0 0 12px; font-size:1rem; color:#666;'>Análise completa das resistências térmicas e transferência de calor</p>`+
                  `<div style='background:#e3f2fd; display:inline-block; padding:8px 16px; border-radius:20px; font-size:0.9rem; color:#1976d2; font-weight:600;'>`+
                  `<strong>Geometria:</strong> ${selectedGeometry==='planar'?'Planar':'Cilíndrica'}${Aplan?' (A = '+fmt(Aplan,2)+' m²)':''}`+
@@ -6421,24 +6776,24 @@
             // 🔥 Card: Resistência Total
             h += `<div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ef5350; transition:transform 0.2s;'>`+
                  `<div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>`+
-                 `<div style='background:linear-gradient(135deg,#ff6b6b,#ee5a6f); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(239,83,80,0.3);'>🔥</div>`+
+                 `<div style='background:linear-gradient(135deg,#ff6b6b,#ee5a6f); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(239,83,80,0.3);'><i class="fa-solid fa-fire"></i></div>`+
                  `<div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>RESISTÊNCIA TÉRMICA TOTAL</div></div>`+
                  `</div>`+
                  `<div style='font-size:2.5rem; font-weight:800; color:#ef5350; margin-bottom:6px; line-height:1;'>${fmt(Rtot,5)}</div>`+
                  `<div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>K/W</div>`+
-                 `<div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'>💡 Oposição total ao fluxo de calor</div>`+
+                 `<div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Oposição total ao fluxo de calor</div>`+
                  `</div>`;
             
             // ⚡ Card: Taxa de Transferência
             if(hasQ && qv!=null){
                 h += `<div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ffa726;'>`+
                      `<div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>`+
-                     `<div style='background:linear-gradient(135deg,#ffb347,#ffcc33); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(255,167,38,0.3);'>⚡</div>`+
+                     `<div style='background:linear-gradient(135deg,#ffb347,#ffcc33); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(255,167,38,0.3);'><i class="fa-solid fa-bolt"></i></div>`+
                      `<div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>TAXA DE TRANSFERÊNCIA</div></div>`+
                      `</div>`+
                      `<div style='font-size:2.5rem; font-weight:800; color:#ff8f00; margin-bottom:6px; line-height:1;'>${fmt(qv,2)}</div>`+
                      `<div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W (Watts)</div>`+
-                     `<div style='font-size:0.88rem; color:#ff6f00; font-weight:600;'>📏 ΔT = ${deltaT!=null?fmt(deltaT,2):'—'} °C</div>`+
+                     `<div style='font-size:0.88rem; color:#ff6f00; font-weight:600;'><i class="fa-solid fa-ruler"></i> ΔT = ${deltaT!=null?fmt(deltaT,2):'—'} °C</div>`+
                      `</div>`;
             }
             
@@ -6446,12 +6801,12 @@
             if(selectedGeometry==='planar' && U!=null){
                 h += `<div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #42a5f5;'>`+
                      `<div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>`+
-                     `<div style='background:linear-gradient(135deg,#42a5f5,#478ed1); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(66,165,245,0.3);'>📐</div>`+
+                     `<div style='background:linear-gradient(135deg,#42a5f5,#478ed1); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(66,165,245,0.3);'><i class="fa-solid fa-drafting-compass"></i></div>`+
                      `<div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>COEFICIENTE GLOBAL</div></div>`+
                      `</div>`+
                      `<div style='font-size:2.5rem; font-weight:800; color:#1976d2; margin-bottom:6px; line-height:1;'>${fmt(U,2)}</div>`+
                      `<div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W/(m²·K)</div>`+
-                     `<div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'>💡 Transferência por unidade de área</div>`+
+                     `<div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Transferência por unidade de área</div>`+
                      `</div>`;
             }
             
@@ -6459,12 +6814,12 @@
             if(UA!=null){
                 h += `<div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ab47bc;'>`+
                      `<div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>`+
-                     `<div style='background:linear-gradient(135deg,#ab47bc,#8e24aa); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(171,71,188,0.3);'>🔧</div>`+
+                     `<div style='background:linear-gradient(135deg,#ab47bc,#8e24aa); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(171,71,188,0.3);'><i class="fa-solid fa-wrench"></i></div>`+
                      `<div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>CONDUTÂNCIA TÉRMICA</div></div>`+
                      `</div>`+
                      `<div style='font-size:2.5rem; font-weight:800; color:#8e24aa; margin-bottom:6px; line-height:1;'>${fmt(UA,2)}</div>`+
                      `<div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W/K</div>`+
-                     `<div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'>💡 Capacidade de condução global</div>`+
+                     `<div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Capacidade de condução global</div>`+
                      `</div>`;
             }
             
@@ -6475,11 +6830,11 @@
                 h += `<div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #5e35b1;'>`+
                      `<div style='font-size:0.9rem; color:#555; line-height:2; font-family:"Courier New",Consolas,monospace;'>`;
                 if(U!=null){
-                    h += `<div style='margin-bottom:12px; padding:12px; background:#f5f5f5; border-radius:8px;'><strong style='color:#1976d2; font-size:1rem;'>📐 Fórmula de U:</strong><br>`+
+                    h += `<div style='margin-bottom:12px; padding:12px; background:#f5f5f5; border-radius:8px;'><strong style='color:#1976d2; font-size:1rem;'><i class="fa-solid fa-drafting-compass"></i> Fórmula de U:</strong><br>`+
                          `<span style='color:#333;'>U = 1/(R<sub>total</sub>·A) = 1/(${fmt(Rtot,4)} · ${fmt(Aplan,4)}) = <span style='font-size:1.15rem; font-weight:700; color:#1976d2;'>${fmt(U,4)}</span> W/m²·K</span></div>`;
                 }
                 if(UA!=null){
-                    h += `<div style='padding:12px; background:#f5f5f5; border-radius:8px;'><strong style='color:#8e24aa; font-size:1rem;'>🔧 Fórmula de UA:</strong><br>`+
+                    h += `<div style='padding:12px; background:#f5f5f5; border-radius:8px;'><strong style='color:#8e24aa; font-size:1rem;'><i class="fa-solid fa-wrench"></i> Fórmula de UA:</strong><br>`+
                          `<span style='color:#333;'>UA = 1/R<sub>total</sub> = 1/(${fmt(Rtot,4)}) = <span style='font-size:1.15rem; font-weight:700; color:#8e24aa;'>${fmt(UA,4)}</span> W/K</span></div>`;
                 }
                 h += `</div></div>`;
@@ -6487,7 +6842,7 @@
             
             // 💡 Interpretação final
             h += `<div style='background:#fff; border-radius:8px; padding:12px 16px; font-size:0.9rem; color:#37474f; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);'>`+
-                 `<strong>💡 Interpretação:</strong> R_total indica a oposição total ao fluxo de calor. Quanto menor, melhor o desempenho térmico. U normaliza pela área, permitindo comparações entre sistemas.</div>`;
+                 `<strong><i class="fa-solid fa-lightbulb"></i> Interpretação:</strong> R_total indica a oposição total ao fluxo de calor. Quanto menor, melhor o desempenho térmico. U normaliza pela área, permitindo comparações entre sistemas.</div>`;
             
             // FIM DO RELATÓRIO
             h += `</div>`; // Fecha container principal
@@ -6562,13 +6917,13 @@
             html += `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #009688;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#009688; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>📈</span> Perfil de Temperatura
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-chart-line"></i></span> Perfil de Temperatura
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Distribuição espacial da temperatura ao longo do sistema</p>
                     <div style='background:#fff; border:1px solid #eee; border-radius:12px; padding:20px; text-align:center;'>
                         <canvas id='temp-profile-canvas' style='width:100%; max-width:800px; height:300px; display:block; margin:0 auto; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);'></canvas>
                         <div style='color:#666; font-size:0.9rem; margin-top:12px; font-style:italic;'>
-                            ${selectedGeometry === 'planar' ? '📏 Planar: x representa a espessura acumulada (m)' : '🔄 Cilíndrico: x representa o raio (m)'}<br>
+                            ${selectedGeometry === 'planar' ? '<i class="fa-solid fa-ruler"></i> Planar: x representa a espessura acumulada (m)' : '<i class="fa-solid fa-arrows-rotate"></i> Cilíndrico: x representa o raio (m)'}<br>
                             Segmentos fluidos aparecem como saltos verticais (espessura desprezível)
                         </div>
                     </div>
@@ -6696,12 +7051,12 @@
             html += `
                 <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ef5350; transition:transform 0.2s;'>
                     <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                        <div style='background:linear-gradient(135deg,#ff6b6b,#ee5a6f); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(239,83,80,0.3);'>🔥</div>
+                        <div style='background:linear-gradient(135deg,#ff6b6b,#ee5a6f); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(239,83,80,0.3);'><i class="fa-solid fa-fire"></i></div>
                         <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>RESISTÊNCIA TÉRMICA TOTAL</div></div>
                     </div>
                     <div style='font-size:2.5rem; font-weight:800; color:#ef5350; margin-bottom:6px; line-height:1;'>R<sub>total</sub> = ${fmt(Rtot, 4)}</div>
                     <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>K/W</div>
-                    <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'>💡 Oposição total ao fluxo de calor</div>
+                    <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Oposição total ao fluxo de calor</div>
                 </div>
             `;
 
@@ -6724,7 +7079,7 @@
                 html += `
                 <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #26a69a;'>
                     <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                        <div style='background:linear-gradient(135deg,#4db6ac,#26a69a); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; box-shadow:0 4px 12px rgba(38,166,154,0.3);'>🌡️</div>
+                        <div style='background:linear-gradient(135deg,#4db6ac,#26a69a); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; box-shadow:0 4px 12px rgba(38,166,154,0.3);'><i class="fa-solid fa-temperature-half"></i></div>
                         <div style='flex:1;'><div style='font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; color:#00796b; font-weight:700; margin-bottom:4px;'>TEMPERATURAS DE CONTORNO</div>
                         <div style='font-size:0.65rem; display:inline-block; background:#e0f2f1; color:#004d40; padding:4px 8px; border-radius:12px; font-weight:600;'>${badge}</div></div>
                     </div>
@@ -6741,12 +7096,12 @@
                 html += `
                     <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ffa726;'>
                         <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                            <div style='background:linear-gradient(135deg,#ffb347,#ffcc33); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(255,167,38,0.3);'>⚡</div>
+                            <div style='background:linear-gradient(135deg,#ffb347,#ffcc33); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(255,167,38,0.3);'><i class="fa-solid fa-bolt"></i></div>
                             <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>TAXA DE TRANSFERÊNCIA</div></div>
                         </div>
                         <div style='font-size:2.5rem; font-weight:800; color:#ff8f00; margin-bottom:6px; line-height:1;'>q = ${fmt(qv, 2)} W</div>
                         <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>Watts</div>
-                        <div style='font-size:0.88rem; color:#ff6f00; font-weight:600;'>📏 ΔT = ${deltaT != null ? fmt(deltaT, 2) : '—'} °C</div>
+                        <div style='font-size:0.88rem; color:#ff6f00; font-weight:600;'><i class="fa-solid fa-ruler"></i> ΔT = ${deltaT != null ? fmt(deltaT, 2) : '—'} °C</div>
                         <div style='font-size:0.7rem; color:#b26a00; font-style:italic;'>${hasQOriginal ? 'Valor direto' : 'Inferido: q = ΔT_total / R_total'}</div>
                     </div>
                 `;
@@ -6757,12 +7112,12 @@
                 html += `
                     <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #42a5f5;'>
                         <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                            <div style='background:linear-gradient(135deg,#42a5f5,#478ed1); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(66,165,245,0.3);'>📐</div>
+                            <div style='background:linear-gradient(135deg,#42a5f5,#478ed1); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(66,165,245,0.3);'><i class="fa-solid fa-drafting-compass"></i></div>
                             <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>COEFICIENTE GLOBAL</div></div>
                         </div>
                         <div style='font-size:2.5rem; font-weight:800; color:#1976d2; margin-bottom:6px; line-height:1;'>U = ${fmt(U, 2)}</div>
                         <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W/(m²·K)</div>
-                        <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'>💡 Transferência por unidade de área</div>
+                        <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Transferência por unidade de área</div>
                     </div>
                 `;
             }
@@ -6772,12 +7127,12 @@
                 html += `
                     <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ab47bc;'>
                         <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                            <div style='background:linear-gradient(135deg,#ab47bc,#8e24aa); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(171,71,188,0.3);'>🔧</div>
+                            <div style='background:linear-gradient(135deg,#ab47bc,#8e24aa); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(171,71,188,0.3);'><i class="fa-solid fa-wrench"></i></div>
                             <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>CONDUTÂNCIA TÉRMICA</div></div>
                         </div>
                         <div style='font-size:2.5rem; font-weight:800; color:#8e24aa; margin-bottom:6px; line-height:1;'>UA = ${fmt(UA, 2)}</div>
                         <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W/K</div>
-                        <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'>💡 Capacidade de condução global</div>
+                        <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Capacidade de condução global</div>
                     </div>
                 `;
             }
@@ -6793,7 +7148,7 @@
                 if (U != null) {
                     html += `
                         <div style='margin-bottom:12px; padding:12px; background:#f5f5f5; border-radius:8px;'>
-                            <strong style='color:#1976d2; font-size:1rem;'>📐 Fórmula de U:</strong><br>
+                            <strong style='color:#1976d2; font-size:1rem;'><i class="fa-solid fa-drafting-compass"></i> Fórmula de U:</strong><br>
                             <span style='color:#333;'>U = 1/(R<sub>total</sub>·A) = 1/(${fmt(Rtot, 4)} · ${fmt(Aplan, 4)}) = <span style='font-size:1.15rem; font-weight:700; color:#1976d2;'>${fmt(U, 4)}</span> W/m²·K</span>
                         </div>
                     `;
@@ -6801,7 +7156,7 @@
                 if (UA != null) {
                     html += `
                         <div style='padding:12px; background:#f5f5f5; border-radius:8px;'>
-                            <strong style='color:#8e24aa; font-size:1rem;'>🔧 Fórmula de UA:</strong><br>
+                            <strong style='color:#8e24aa; font-size:1rem;'><i class="fa-solid fa-wrench"></i> Fórmula de UA:</strong><br>
                             <span style='color:#333;'>UA = 1/R<sub>total</sub> = 1/(${fmt(Rtot, 4)}) = <span style='font-size:1.15rem; font-weight:700; color:#8e24aa;'>${fmt(UA, 4)}</span> W/K</span>
                         </div>
                     `;
@@ -6825,7 +7180,7 @@
             let html = `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #6a1b9a;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#6a1b9a; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>🧊</span> Superfícies Aletadas – Parâmetros Geométricos & Desempenho
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-cube"></i></span> Superfícies Aletadas – Parâmetros Geométricos & Desempenho
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Derivações completas para cada grupo de aletas e grandezas globais equivalentes</p>
             `;
@@ -6912,7 +7267,7 @@
             let html = `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #ff9800;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#ff9800; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>🧮</span> Análise por Camada Individual
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-calculator"></i></span> Análise por Camada Individual
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Resistências térmicas detalhadas e substituições numéricas</p>
             `;
@@ -6922,7 +7277,7 @@
                 html += `
                     <div style='background:linear-gradient(135deg,#e0f2f1 0%,#f1f8e9 100%); border:1px solid #4caf50; border-radius:10px; padding:12px; margin-bottom:16px;'>
                         <h4 style='margin:0 0 8px; color:#2e7d32; font-weight:600; display:flex; align-items:center; gap:6px;'>
-                            <span>❄️</span> Superfícies Aletadas (${finnedLayers.length})
+                            <span><i class="fa-regular fa-snowflake"></i></span> Superfícies Aletadas (${finnedLayers.length})
                         </h4>
                 `;
                 
@@ -6984,7 +7339,7 @@
                                 justify-content: center;
                                 font-size: 1.1em;
                                 box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-                            '>📊</span>
+                            '><i class="fa-solid fa-chart-column"></i></span>
                             Resumo das Resistências Térmicas por Camada
                         </h4>
                         
@@ -7011,7 +7366,7 @@
                                         border-right: 1px solid rgba(255,255,255,0.1);
                                     '>
                                         <div style='display: flex; align-items: center; gap: 8px;'>
-                                            <span>🏷️</span> Camada
+                                            <span><i class="fa-solid fa-tag"></i></span> Camada
                                         </div>
                                     </th>
                                     <th style='
@@ -7022,7 +7377,7 @@
                                         border-right: 1px solid rgba(255,255,255,0.1);
                                     '>
                                         <div style='display: flex; align-items: center; gap: 8px;'>
-                                            <span>📐</span> Fórmula Aplicada
+                                            <span><i class="fa-solid fa-drafting-compass"></i></span> Fórmula Aplicada
                                         </div>
                                     </th>
                                     <th style='
@@ -7033,7 +7388,7 @@
                                         border-right: 1px solid rgba(255,255,255,0.1);
                                     '>
                                         <div style='display: flex; align-items: center; gap: 8px;'>
-                                            <span>🔢</span> Substituição Numérica
+                                            <span><i class="fa-solid fa-hashtag"></i></span> Substituição Numérica
                                         </div>
                                     </th>
                                     <th style='
@@ -7044,7 +7399,7 @@
                                         border-right: 1px solid rgba(255,255,255,0.1);
                                     '>
                                         <div style='display: flex; align-items: center; justify-content: center; gap: 8px;'>
-                                            <span>⚡</span> R (K/W)
+                                            <span><i class="fa-solid fa-bolt"></i></span> R (K/W)
                                         </div>
                                     </th>
                                     <th style='
@@ -7054,7 +7409,7 @@
                                         font-size: 0.95em;
                                     '>
                                         <div style='display: flex; align-items: center; justify-content: center; gap: 8px;'>
-                                            <span>📈</span> Contrib. (%)
+                                            <span><i class="fa-solid fa-chart-line"></i></span> Contrib. (%)
                                         </div>
                                     </th>
                                 </tr>
@@ -7070,18 +7425,18 @@
                 const contrib = isFinite(Lr.R) && isFinite(result.R_total) && result.R_total > 0 
                     ? (Lr.R / result.R_total * 100) : 0;
                 
-                let icon = '🧱';
+                let icon = '<i class="fa-solid fa-cube"></i>';
                 let typeColor = '#f57c00';
                 let typeBg = 'rgba(255, 152, 0, 0.1)';
                 let kindLabel = 'Condução';
                 
                 if (Lr.kind === 'fluid') {
-                    icon = '💨';
+                    icon = '<i class="fa-solid fa-wind"></i>';
                     typeColor = '#1976d2';
                     typeBg = 'rgba(33, 150, 243, 0.1)';
                     kindLabel = 'Convecção';
                 } else if (Lr.kind === 'finned') {
-                    icon = '❄️';
+                    icon = '<i class="fa-regular fa-snowflake"></i>';
                     typeColor = '#7b1fa2';
                     typeBg = 'rgba(156, 39, 176, 0.1)';
                     kindLabel = 'Sup. Aletada';
@@ -7113,13 +7468,13 @@
                 
                 // Cor da contribuição
                 let contribColor = '#4caf50';
-                let contribIcon = '✅';
+                let contribIcon = '<i class="fa-solid fa-circle-check" style="color:#2e7d32"></i>';
                 if (contrib > 50) {
                     contribColor = '#f44336';
-                    contribIcon = '🔥';
+                    contribIcon = '<i class="fa-solid fa-fire"></i>';
                 } else if (contrib > 20) {
                     contribColor = '#ff9800';
-                    contribIcon = '⚠️';
+                    contribIcon = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i>';
                 }
                 
                 html += `
@@ -7286,7 +7641,7 @@
                                 align-items: center;
                                 gap: 8px;
                             '>
-                                <span>💡</span> Legenda dos Ícones
+                                <span><i class="fa-solid fa-lightbulb"></i></span> Legenda dos Ícones
                             </h5>
                             <div style='
                                 display: grid;
@@ -7296,22 +7651,22 @@
                                 color: #6c757d;
                             '>
                                 <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span>🧱</span> <strong>Condução:</strong> Camadas sólidas
+                                    <span><i class="fa-solid fa-cube"></i></span> <strong>Condução:</strong> Camadas sólidas
                                 </div>
                                 <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span>💨</span> <strong>Convecção:</strong> Interfaces fluidas
+                                    <span><i class="fa-solid fa-wind"></i></span> <strong>Convecção:</strong> Interfaces fluidas
                                 </div>
                                 <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span>❄️</span> <strong>Sup. Aletada:</strong> Superfícies com aletas
+                                    <span><i class="fa-regular fa-snowflake"></i></span> <strong>Sup. Aletada:</strong> Superfícies com aletas
                                 </div>
                                 <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span>🔥</span> <strong>Alta contrib.:</strong> > 50% da resistência total
+                                    <span><i class="fa-solid fa-fire"></i></span> <strong>Alta contrib.:</strong> > 50% da resistência total
                                 </div>
                                 <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span>⚠️</span> <strong>Média contrib.:</strong> 20-50% da resistência
+                                    <span><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i></span> <strong>Média contrib.:</strong> 20-50% da resistência
                                 </div>
                                 <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span>✅</span> <strong>Baixa contrib.:</strong> < 20% da resistência
+                                    <span><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i></span> <strong>Baixa contrib.:</strong> < 20% da resistência
                                 </div>
                             </div>
                         </div>
@@ -7377,7 +7732,7 @@
                             font-size: 2em;
                             box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
 
-                        '>📚</span> 
+                        '><i class="fa-solid fa-book"></i></span> 
                         3. Etapas Didáticas da Solução
                     </h3>
                     
@@ -7397,7 +7752,7 @@
                             line-height: 1.6;
                             font-weight: 500;
                         '>
-                            <strong>📖 Metodologia:</strong> Seguindo os princípios do livro "Fundamentals of Heat and Mass Transfer" (Incropera & DeWitt), 
+                            <strong><i class="fa-solid fa-book-open"></i> Metodologia:</strong> Seguindo os princípios do livro "Fundamentals of Heat and Mass Transfer" (Incropera & DeWitt), 
                             apresentamos a solução passo a passo com <em>equações fundamentais</em>, <em>substituições numéricas</em> e <em>resultados intermediários</em>.
                         </p>
                     </div>
@@ -7442,7 +7797,7 @@
                                 font-size: 1em;
                                 box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
                             '>1</span>
-                            🔥 Condução nas Camadas Sólidas
+                            <i class="fa-solid fa-fire"></i> Condução nas Camadas Sólidas
                         </h4>
                         
                         <div style='margin-left: 20px;'>
@@ -7462,7 +7817,7 @@
                                     align-items: center;
                                     gap: 8px;
                                 '>
-                                    <span>📐</span> Equação Fundamental (Lei de Fourier - Regime Permanente)
+                                    <span><i class="fa-solid fa-drafting-compass"></i></span> Equação Fundamental (Lei de Fourier - Regime Permanente)
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7513,7 +7868,7 @@
                                 align-items: center;
                                 gap: 8px;
                             '>
-                                <span>🧱</span> Camada ${label}: ${materialName}
+                                <span><i class="fa-solid fa-cube"></i></span> Camada ${label}: ${materialName}
                             </h6>
                             
                             <div style='
@@ -7526,11 +7881,11 @@
                                 border-radius: 8px;
                                 border-left: 4px solid #ff8f00;
                             '>
-                                <div style='color: #1565c0; margin-bottom: 8px;'><strong>📝 Substituição Numérica:</strong></div>
+                                <div style='color: #1565c0; margin-bottom: 8px;'><strong><i class="fa-solid fa-pen-to-square"></i> Substituição Numérica:</strong></div>
                                 R<sub>${label}</sub> = L<sub>${label}</sub> / (k<sub>${label}</sub> × A)<br>
                                 R<sub>${label}</sub> = ${fmt(L, 4)} m / (${fmt(k, 3)} W/m·K × ${fmt(A, 4)} m²)<br>
                                 <div style='background: linear-gradient(135deg, #e8f5e8, #f1f8e9); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #4caf50;'>
-                                    <strong style='color: #2e7d32;'>✅ R<sub>${label}</sub> = ${fmt(Lr.R || 0, 4)} K/W</strong>
+                                    <strong style='color: #2e7d32;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> R<sub>${label}</sub> = ${fmt(Lr.R || 0, 4)} K/W</strong>
                                 </div>
                             </div>
                         </div>
@@ -7581,7 +7936,7 @@
                                 font-size: 1em;
                                 box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
                             '>2</span>
-                            💨 Convecção nos Fluidos
+                            <i class="fa-solid fa-wind"></i> Convecção nos Fluidos
                         </h4>
                         
                         <div style='margin-left: 20px;'>
@@ -7601,7 +7956,7 @@
                                     align-items: center;
                                     gap: 8px;
                                 '>
-                                    <span>📐</span> Equação Fundamental (Lei de Newton do Resfriamento)
+                                    <span><i class="fa-solid fa-drafting-compass"></i></span> Equação Fundamental (Lei de Newton do Resfriamento)
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7650,7 +8005,7 @@
                                 align-items: center;
                                 gap: 8px;
                             '>
-                                <span>💨</span> Fluido ${label}: ${Lr.label || 'Convecção'}
+                                <span><i class="fa-solid fa-wind"></i></span> Fluido ${label}: ${Lr.label || 'Convecção'}
                             </h6>
                             
                             <div style='
@@ -7663,11 +8018,11 @@
                                 border-radius: 8px;
                                 border-left: 4px solid #2196f3;
                             '>
-                                <div style='color: #1565c0; margin-bottom: 8px;'><strong>📝 Substituição Numérica:</strong></div>
+                                <div style='color: #1565c0; margin-bottom: 8px;'><strong><i class="fa-solid fa-pen-to-square"></i> Substituição Numérica:</strong></div>
                                 R<sub>${label}</sub> = 1 / (h<sub>${label}</sub> × A)<br>
                                 R<sub>${label}</sub> = 1 / (${fmt(h, 3)} W/m²·K × ${fmt(A, 4)} m²)<br>
                                 <div style='background: linear-gradient(135deg, #e3f2fd, #f0f9ff); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #2196f3;'>
-                                    <strong style='color: #0d47a1;'>✅ R<sub>${label}</sub> = ${fmt(Lr.R || 0, 4)} K/W</strong>
+                                    <strong style='color: #0d47a1;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> R<sub>${label}</sub> = ${fmt(Lr.R || 0, 4)} K/W</strong>
                                 </div>
                             </div>
                         </div>
@@ -7721,7 +8076,7 @@
                                 font-size: 1em;
                                 box-shadow: 0 6px 20px rgba(156, 39, 176, 0.5);
                             '>${fluidLayers.length > 0 ? '3' : '2'}</span>
-                            🛠️ Superfície Aletada (Aletas ${isPin ? 'Cilíndricas/PIN' : 'Retangulares'})
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Superfície Aletada (Aletas ${isPin ? 'Cilíndricas/PIN' : 'Retangulares'})
                         </h4>
                         
                         <div style='margin-left: 20px;'>
@@ -7734,7 +8089,7 @@
                                 margin-bottom: 18px;
                             '>
                                 <h5 style='margin: 0 0 12px; color: #4a148c; font-weight: 700; font-size: 1.1em;'>
-                                    <span>📏</span> Parâmetro m (Characteristic Length)
+                                    <span><i class="fa-solid fa-ruler"></i></span> Parâmetro m (Characteristic Length)
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7764,7 +8119,7 @@
                                     }<br>
                                     m = √(${fmt(d.h || 0, 3)} × ${fmt(2 * ((d.w || 0) + (d.t || 0)), 4)} / (${fmt(d.k || 0, 3)} × ${fmt(d.A_c || 0, 6)})) <br>
                                     <div style='background: linear-gradient(135deg, #f3e5f5, #faf4fb); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #9c27b0;'>
-                                        <strong style='color: #4a148c;'>✅ m = ${fmt(d.m || 0, 4)} m⁻¹</strong>
+                                        <strong style='color: #4a148c;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> m = ${fmt(d.m || 0, 4)} m⁻¹</strong>
                                     </div>
                                 </div>
                             </div>
@@ -7778,7 +8133,7 @@
                                 margin-bottom: 18px;
                             '>
                                 <h5 style='margin: 0 0 12px; color: #4a148c; font-weight: 700; font-size: 1.1em;'>
-                                    <span>⚡</span> Eficiência da Aleta Individual (η<sub>f</sub>)
+                                    <span><i class="fa-solid fa-bolt"></i></span> Eficiência da Aleta Individual (η<sub>f</sub>)
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7805,7 +8160,7 @@
                                     mL = ${fmt(d.m || 0, 4)} × ${fmt(d.L_fin || d.L || 0, 4)} = ${fmt(d.mL || 0, 4)}<br>
                                     η<sub>f</sub> = tanh(${fmt(d.mL || 0, 4)}) / ${fmt(d.mL || 0, 4)} <br>
                                     <div style='background: linear-gradient(135deg, #f3e5f5, #faf4fb); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #9c27b0;'>
-                                        <strong style='color: #4a148c;'>✅ η<sub>f</sub> = ${fmt(d.eta_f || 0, 4)}</strong>
+                                        <strong style='color: #4a148c;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> η<sub>f</sub> = ${fmt(d.eta_f || 0, 4)}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -7819,7 +8174,7 @@
                                 margin-bottom: 18px;
                             '>
                                 <h5 style='margin: 0 0 12px; color: #4a148c; font-weight: 700; font-size: 1.1em;'>
-                                    <span>🌟</span> Eficiência Global da Superfície (η<sub>o</sub>)
+                                    <span><i class="fa-solid fa-star"></i></span> Eficiência Global da Superfície (η<sub>o</sub>)
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7848,7 +8203,7 @@
                                     A<sub>t</sub> = A<sub>b</sub> + A<sub>f</sub> = ${fmt(d.A_b || 0, 4)} + ${fmt(d.A_f || 0, 4)} = ${fmt(d.A_total || d.A_t || 0, 4)} m²<br>
                                     η<sub>o</sub> = 1 - (${fmt(d.A_f || 0, 4)}/${fmt(d.A_total || d.A_t || 0, 4)})(1 - ${fmt(d.eta_f || 0, 4)})<br>
                                     <div style='background: linear-gradient(135deg, #f3e5f5, #faf4fb); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #9c27b0;'>
-                                        <strong style='color: #4a148c;'>✅ η<sub>o</sub> = ${fmt(d.eta_o || 0, 4)}</strong>
+                                        <strong style='color: #4a148c;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> η<sub>o</sub> = ${fmt(d.eta_o || 0, 4)}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -7862,7 +8217,7 @@
                                 margin-bottom: 18px;
                             '>
                                 <h5 style='margin: 0 0 12px; color: #4a148c; font-weight: 700; font-size: 1.1em;'>
-                                    <span>🎯</span> Resistência Térmica Equivalente
+                                    <span><i class="fa-solid fa-bullseye"></i></span> Resistência Térmica Equivalente
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7888,7 +8243,7 @@
                                 '>
                                     R<sub>t,o</sub> = 1 / (${fmt(d.eta_o || 0, 4)} × ${fmt(d.h || 0, 3)} × ${fmt(d.A_total || d.A_t || 0, 4)})<br>
                                     <div style='background: linear-gradient(135deg, #f3e5f5, #faf4fb); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #9c27b0;'>
-                                        <strong style='color: #4a148c;'>✅ R<sub>t,o</sub> = ${fmt(d.R_total || 0, 4)} K/W</strong>
+                                        <strong style='color: #4a148c;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> R<sub>t,o</sub> = ${fmt(d.R_total || 0, 4)} K/W</strong>
                                     </div>
                                 </div>
                             </div>
@@ -7938,7 +8293,7 @@
                             font-size: 1em;
                             box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
                         '>${nextStep}</span>
-                        🔗 Soma das Resistências em Série
+                        <i class="fa-solid fa-link"></i> Soma das Resistências em Série
                     </h4>
                     
                     <div style='margin-left: 20px;'>
@@ -7950,7 +8305,7 @@
                             margin-bottom: 18px;
                         '>
                             <h5 style='margin: 0 0 12px; color: #0d47a1; font-weight: 700; font-size: 1.1em;'>
-                                <span>📐</span> Circuito Térmico Equivalente
+                                <span><i class="fa-solid fa-drafting-compass"></i></span> Circuito Térmico Equivalente
                             </h5>
                             <div style='
                                 font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -7974,10 +8329,10 @@
                                 border-radius: 8px;
                                 border-left: 4px solid #2196f3;
                             '>
-                                <div style='color: #1565c0; margin-bottom: 8px;'><strong>📝 Substituição Numérica:</strong></div>
+                                <div style='color: #1565c0; margin-bottom: 8px;'><strong><i class="fa-solid fa-pen-to-square"></i> Substituição Numérica:</strong></div>
                                 R<sub>total</sub> = ${resistanceValues} K/W<br>
                                 <div style='background: linear-gradient(135deg, #e3f2fd, #f0f9ff); padding: 8px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #2196f3;'>
-                                    <strong style='color: #0d47a1; font-size: 1.1em;'>✅ R<sub>total</sub> = ${fmt(result.R_total, 4)} K/W</strong>
+                                    <strong style='color: #0d47a1; font-size: 1.1em;'><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i> R<sub>total</sub> = ${fmt(result.R_total, 4)} K/W</strong>
                                 </div>
                             </div>
                         </div>
@@ -8024,7 +8379,7 @@
                                 font-size: 1em;
                                 box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
                             '>${finalStep}</span>
-                            🔥 Taxa de Transferência de Calor
+                            <i class="fa-solid fa-fire"></i> Taxa de Transferência de Calor
                         </h4>
                         
                         <div style='margin-left: 20px;'>
@@ -8036,7 +8391,7 @@
                                 margin-bottom: 18px;
                             '>
                                 <h5 style='margin: 0 0 12px; color: #b71c1c; font-weight: 700; font-size: 1.1em;'>
-                                    <span>📐</span> Lei de Ohm Térmica
+                                    <span><i class="fa-solid fa-drafting-compass"></i></span> Lei de Ohm Térmica
                                 </h5>
                                 <div style='
                                     font-family: "KaTeX_Math", "Times New Roman", serif; 
@@ -8060,10 +8415,10 @@
                                     border-radius: 8px;
                                     border-left: 4px solid #f44336;
                                 '>
-                                    <div style='color: #c62828; margin-bottom: 8px;'><strong>📝 Substituição Numérica:</strong></div>
+                                    <div style='color: #c62828; margin-bottom: 8px;'><strong><i class="fa-solid fa-pen-to-square"></i> Substituição Numérica:</strong></div>
                                     q = ${fmt(result.deltaT || 0, 4)} K / ${fmt(result.R_total, 4)} K/W<br>
                                     <div style='background: linear-gradient(135deg, #ffebee, #fce4ec); padding: 12px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #f44336;'>
-                                        <strong style='color: #b71c1c; font-size: 1.2em;'>🎯 q = ${fmt(result.q, 4)} W</strong>
+                                        <strong style='color: #b71c1c; font-size: 1.2em;'><i class="fa-solid fa-bullseye"></i> q = ${fmt(result.q, 4)} W</strong>
                                     </div>
                                 </div>
                             </div>
@@ -8101,7 +8456,7 @@
                             justify-content: center;
                             font-size: 1em;
                             flex-shrink: 0;
-                        '>📝</span>
+                        '><i class="fa-solid fa-pen-to-square"></i></span>
                         <div>
                             <strong style='color: #212121; font-size: 1em;'>Considerações Metodológicas:</strong>
                         </div>
@@ -8131,7 +8486,7 @@
             let html = `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #2196f3;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#2196f3; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>📐</span> Equações Fundamentais
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-drafting-compass"></i></span> Equações Fundamentais
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Relações matemáticas governantes e validação dos cálculos</p>
             `;
@@ -8143,7 +8498,7 @@
             
             html += `
                 <div style='background:linear-gradient(135deg,#f0f8ff 0%,#e3f2fd 100%); border:2px solid #2196f3; border-radius:10px; padding:16px; font-family:"Courier New",monospace; font-size:13px; color:#1565c0; line-height:1.6; margin-bottom:16px;'>
-                    <div style='font-size:14px; margin-bottom:8px;'><strong>🔗 [Eq. G1] Soma de resistências:</strong></div>
+                    <div style='font-size:14px; margin-bottom:8px;'><strong><i class="fa-solid fa-link"></i> [Eq. G1] Soma de resistências:</strong></div>
                     <div style='margin-left:16px; background:white; padding:8px; border-radius:6px; border-left:4px solid #4caf50;'>
                         R_total = ${resistanceTerms} = ${fmt(result.R_total, 4)} K/W
                     </div>
@@ -8154,7 +8509,7 @@
             if (result.q != null && isFinite(result.q)) {
                 html += `
                     <div style='background:linear-gradient(135deg,#fff3e0 0%,#fef7ed 100%); border:2px solid #ff9800; border-radius:10px; padding:16px; font-family:"Courier New",monospace; font-size:13px; color:#ef6c00; line-height:1.6; margin-bottom:16px;'>
-                        <div style='font-size:14px; margin-bottom:8px;'><strong>📆 [Eq. G3] Quedas por camada:</strong></div>
+                        <div style='font-size:14px; margin-bottom:8px;'><strong><i class="fa-solid fa-table-cells"></i> [Eq. G3] Quedas por camada:</strong></div>
                         <div style='margin-left:16px; background:white; padding:8px; border-radius:6px; border-left:4px solid #ff9800;'>
                             ΔT_i = q·R_i<br>
                 `;
@@ -8187,7 +8542,7 @@
             let html = `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #ff5722;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#ff5722; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>🌡️</span> Análise de Quedas de Temperatura
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-temperature-half"></i></span> Análise de Quedas de Temperatura
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Distribuição de temperaturas ao longo do circuito térmico</p>
             `;
@@ -8195,7 +8550,7 @@
             if (!hasValidQ) {
                 html += `
                     <div style='background:#fff8e1; border:1px solid #ffcc02; border-radius:8px; padding:16px; text-align:center; color:#ef6c00;'>
-                        ⚠️ Taxa de calor não disponível para cálculo de temperaturas individuais
+                        <i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> Taxa de calor não disponível para cálculo de temperaturas individuais
                     </div>
                 `;
             } else {
@@ -8206,10 +8561,10 @@
                             <table class="table table-sm table-bordered" style='margin:0; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;'>
                                 <thead style='background:linear-gradient(135deg,#ff5722,#d84315); color:white;'>
                                     <tr>
-                                        <th style='text-align:center; padding:12px; font-weight:600;'>🏷️ Camada</th>
-                                        <th style='text-align:center; padding:12px; font-weight:600;'>🔥 Resistência (K/W)</th>
-                                        <th style='text-align:center; padding:12px; font-weight:600;'>🌡️ Queda ΔT (°C)</th>
-                                        <th style='text-align:center; padding:12px; font-weight:600;'>📈 % Total</th>
+                                        <th style='text-align:center; padding:12px; font-weight:600;'><i class="fa-solid fa-tag"></i> Camada</th>
+                                        <th style='text-align:center; padding:12px; font-weight:600;'><i class="fa-solid fa-fire"></i> Resistência (K/W)</th>
+                                        <th style='text-align:center; padding:12px; font-weight:600;'><i class="fa-solid fa-temperature-half"></i> Queda ΔT (°C)</th>
+                                        <th style='text-align:center; padding:12px; font-weight:600;'><i class="fa-solid fa-chart-line"></i> % Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -8221,7 +8576,7 @@
                         const deltaT = result.q * Lr.R;
                         const percentage = (deltaT / result.deltaT) * 100;
                         const layerType = Lr.kind || 'layer';
-                        const icon = layerType === 'solid' ? '🧱' : layerType === 'finned' ? '🌿' : '🔄';
+                        const icon = layerType === 'solid' ? '<i class="fa-solid fa-cube"></i>' : layerType === 'finned' ? '<i class="fa-solid fa-leaf"></i>' : '<i class="fa-solid fa-arrows-rotate"></i>';
                         const color = layerType === 'solid' ? '#ff9800' : layerType === 'finned' ? '#9c27b0' : '#2196f3';
                         
                         html += `
@@ -8247,7 +8602,7 @@
                 // Linha de total
                 html += `
                             <tr style='background:#f5f5f5; font-weight:700; border-top:2px solid #ff5722;'>
-                                <td style='padding:12px; text-align:center; color:#ff5722;'>📈 TOTAL</td>
+                                <td style='padding:12px; text-align:center; color:#ff5722;'><i class="fa-solid fa-chart-line"></i> TOTAL</td>
                                 <td style='padding:12px; text-align:center; font-family:"Courier New",monospace;'>
                                     ${fmt(result.R_total, 4)}
                                 </td>
@@ -8265,7 +8620,7 @@
                 // Perfil de temperatura
                 html += `
                     <div style='background:linear-gradient(135deg,#e8f5e8 0%,#f3e5f5 100%); border:1px solid #4caf50; border-radius:10px; padding:16px; margin-bottom:16px;'>
-                        <h4 style='margin:0 0 12px; color:#2e7d32; font-weight:600;'>📉 Perfil de Temperatura</h4>
+                        <h4 style='margin:0 0 12px; color:#2e7d32; font-weight:600;'><i class="fa-solid fa-chart-line"></i> Perfil de Temperatura</h4>
                         <div style='font-family:"Courier New",monospace; font-size:0.9rem; color:#333; line-height:1.8;'>
                 `;
                 
@@ -8304,7 +8659,7 @@
             let html = `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #795548;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#795548; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>🛠️</span> Etapas Detalhadas de Cálculo
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-screwdriver-wrench"></i></span> Etapas Detalhadas de Cálculo
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Desenvolvimento matemático completo para cada tipo de camada</p>
             `;
@@ -8314,7 +8669,7 @@
                 html += `
                     <div style='background:linear-gradient(135deg,#fff3e0 0%,#fef7ed 100%); border:2px solid #ff9800; border-radius:12px; padding:20px; margin-bottom:20px;'>
                         <h4 style='margin:0 0 16px; color:#e65100; font-weight:700; display:flex; align-items:center; gap:8px;'>
-                            <span>🧱</span> Desenvolvimento – Camadas Sólidas
+                            <span><i class="fa-solid fa-cube"></i></span> Desenvolvimento – Camadas Sólidas
                         </h4>
                         <div style='background:white; border:1px solid #ffcc02; border-radius:8px; padding:16px; font-family:"Courier New",monospace; font-size:0.9rem; color:#333; line-height:1.8;'>
                 `;
@@ -8345,7 +8700,7 @@
                 html += `
                     <div style='background:linear-gradient(135deg,#f3e5f5 0%,#faf4fb 100%); border:2px solid #9c27b0; border-radius:12px; padding:20px; margin-bottom:20px;'>
                         <h4 style='margin:0 0 16px; color:#6a1b9a; font-weight:700; display:flex; align-items:center; gap:8px;'>
-                            <span>🌿</span> Desenvolvimento – Superfície Aletada
+                            <span><i class="fa-solid fa-leaf"></i></span> Desenvolvimento – Superfície Aletada
                         </h4>
                         <div style='background:white; border:1px solid #ce93d8; border-radius:8px; padding:16px; font-family:"Courier New",monospace; font-size:0.9rem; color:#333; line-height:1.8;'>
                             <div style='margin-bottom:16px; padding:12px; background:#fafafa; border-left:4px solid #9c27b0; border-radius:4px;'>
@@ -8411,7 +8766,7 @@
             let html = `
                 <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #4caf50;'>
                     <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#4caf50; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'>⚖️</span> Balanço Térmico e Temperaturas de Interface
+                        <span style='font-size:1.2em;'><i class="fa-solid fa-scale-balanced"></i></span> Balanço Térmico e Temperaturas de Interface
                     </h3>
                     <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Validação da conservação de energia e distribuição de temperaturas</p>
             `;
@@ -8419,14 +8774,14 @@
             if (!hasValidQ) {
                 html += `
                     <div style='background:#fff8e1; border:1px solid #ffcc02; border-radius:8px; padding:16px; text-align:center; color:#ef6c00;'>
-                        ⚠️ Balanço térmico não disponível sem taxa de calor conhecida
+                        <i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> Balanço térmico não disponível sem taxa de calor conhecida
                     </div>
                 `;
             } else {
                 // Equação principal do balanço
                 html += `
                     <div style='background:linear-gradient(135deg,#e8f5e8 0%,#f1f8e9 100%); border:2px solid #4caf50; border-radius:10px; padding:16px; margin-bottom:20px;'>
-                        <h4 style='margin:0 0 12px; color:#2e7d32; font-weight:600;'>⚖️ Equação do Balanço Térmico</h4>
+                        <h4 style='margin:0 0 12px; color:#2e7d32; font-weight:600;'><i class="fa-solid fa-scale-balanced"></i> Equação do Balanço Térmico</h4>
                         <div style='font-family:"Courier New",monospace; font-size:1rem; color:#1b5e20; line-height:1.6; text-align:center;'>
                             <div style='background:white; padding:12px; border-radius:6px; border-left:4px solid #4caf50; margin-bottom:12px;'>
                                 <strong>q = ΔT_total / R_total = ${fmtTemp(result.deltaT || 0, 2)} / ${fmt(result.R_total, 4)} = ${fmt(result.q, 4)} W</strong>
@@ -8442,7 +8797,7 @@
                 if (interfaces.length > 0) {
                     html += `
                         <div style='margin-bottom:20px;'>
-                            <h4 style='margin:0 0 12px; color:#1976d2; font-weight:600;'>🌡️ Temperaturas nas Interfaces</h4>
+                            <h4 style='margin:0 0 12px; color:#1976d2; font-weight:600;'><i class="fa-solid fa-temperature-half"></i> Temperaturas nas Interfaces</h4>
                             <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px;'>
                     `;
                     
@@ -8469,19 +8824,19 @@
                 
                 html += `
                     <div style='background:linear-gradient(135deg,#e3f2fd 0%,#f0f7ff 100%); border:1px solid #90caf9; border-radius:10px; padding:16px;'>
-                        <h4 style='margin:0 0 12px; color:#1976d2; font-weight:600;'>🔍 Validação dos Cálculos</h4>
+                        <h4 style='margin:0 0 12px; color:#1976d2; font-weight:600;'><i class="fa-solid fa-magnifying-glass"></i> Validação dos Cálculos</h4>
                         <div style='font-family:"Courier New",monospace; font-size:0.9rem; color:#333; line-height:1.6;'>
                             <div style='background:white; padding:10px; border-radius:6px; margin-bottom:8px;'>
                                 <strong>Consistência das Resistências:</strong><br>
                                 ΣR_i = ${fmt(sumRcalc, 6)} K/W<br>
                                 R_total = ${fmt(result.R_total, 6)} K/W<br>
-                                Diferença: ΔR = ${fmt(dR, 8)} K/W ${dR < 1e-6 ? '<span style="color:#4caf50; font-weight:600;">✓ PASS</span>' : '<span style="color:#f44336; font-weight:600;">⚠ FAIL</span>'}
+                                Diferença: ΔR = ${fmt(dR, 8)} K/W ${dR < 1e-6 ? '<span style="color:#4caf50; font-weight:600;">✓ PASS</span>' : '<span style="color:#f44336; font-weight:600;"><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> FAIL</span>'}
                             </div>
                             <div style='background:white; padding:10px; border-radius:6px;'>
                                 <strong>Consistência da Taxa de Calor:</strong><br>
                                 q_calculado = ΔT/R_total = ${fmt(qCheck, 6)} W<br>
                                 q_informado = ${fmt(result.q, 6)} W<br>
-                                Diferença: Δq = ${fmt(dq, 8)} W ${dq < 1e-6 ? '<span style="color:#4caf50; font-weight:600;">✓ PASS</span>' : '<span style="color:#f44336; font-weight:600;">⚠ FAIL</span>'}
+                                Diferença: Δq = ${fmt(dq, 8)} W ${dq < 1e-6 ? '<span style="color:#4caf50; font-weight:600;">✓ PASS</span>' : '<span style="color:#f44336; font-weight:600;"><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> FAIL</span>'}
                             </div>
                         </div>
                     </div>
@@ -8490,7 +8845,7 @@
             
             html += `
                 <div style='background:#f5f5f5; border:1px dashed #999; border-radius:8px; padding:16px; margin-top:16px; font-size:0.9rem; color:#555; line-height:1.5;'>
-                    <strong>📊 Resumo:</strong> O balanço térmico confirma que a energia é conservada no sistema. 
+                    <strong><i class="fa-solid fa-chart-column"></i> Resumo:</strong> O balanço térmico confirma que a energia é conservada no sistema. 
                     As temperaturas de interface mostram a distribuição espacial e ajudam a identificar pontos críticos 
                     para melhorias no design térmico.
                 </div>
@@ -8517,7 +8872,7 @@
             let html = `
             <div id='heat-rate-section' data-fast-updatable='1' style='background:#fff; border-radius:14px; padding:22px 26px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #ff7043;'>
                 <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#ff7043; display:flex; align-items:center; gap:8px;'>
-                    <span style='font-size:1.2em;'>🔥</span> Taxa de Calor Global e Fórmulas Fundamentais
+                    <span style='font-size:1.2em;'><i class="fa-solid fa-fire"></i></span> Taxa de Calor Global e Fórmulas Fundamentais
                 </h3>
                 <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Derivação e identificação da expressão de q para cada mecanismo</p>`;
 
@@ -8576,7 +8931,7 @@
             });
 
             if (rows.length){
-                html += `<h4 style='margin:0 0 14px; color:#bf360c; font-weight:600;'>📚 Fórmulas Específicas por Componente</h4>`+
+                html += `<h4 style='margin:0 0 14px; color:#bf360c; font-weight:600;'><i class="fa-solid fa-book"></i> Fórmulas Específicas por Componente</h4>`+
                         `<div style='overflow-x:auto; margin-bottom:20px;'>`+
                         `<table style='width:100%; border-collapse:collapse; font-size:12px;'>`+
                         `<thead><tr style='background:#ffe0b2;'><th style='padding:8px 10px; text-align:left;'>Mecanismo</th><th style='padding:8px 10px; text-align:left;'>Fórmula Base</th><th style='padding:8px 10px; text-align:left;'>Substituição (sem ΔT numérico)</th><th style='padding:8px 10px; text-align:left;'>Resistência Equivalente</th></tr></thead><tbody>`;
@@ -8823,7 +9178,7 @@
                       `<div style='background:#e8f5e9; border:1px solid #66bb6a; padding:10px 14px; border-radius:10px; font-family:ui-monospace; font-size:12px;'>q = ΔT_total / R_total = ${(dT!=null)?dT.toFixed(2):'N/A'} / ${fmt(Rtot,5)} = ${q.toFixed(4)} W</div></section>`; }
         // 9. Equações Fundamentais e Passo a Passo (resumo)
         h += `<section style='margin-bottom:14px;'>`+
-            `<h4 style='margin:0 0 10px; color:#1976d2; font-size:1.05em; display:flex; align-items:center; gap:6px;'>9. 📐 Equações Fundamentais</h4>`+
+            `<h4 style='margin:0 0 10px; color:#1976d2; font-size:1.05em; display:flex; align-items:center; gap:6px;'>9. <i class="fa-solid fa-drafting-compass"></i> Equações Fundamentais</h4>`+
                 `<div style='background:#f0f8ff; border:1px solid #90caf9; border-radius:10px; padding:12px 14px; font-family:ui-monospace; font-size:11.5px; line-height:1.55;'>`+
                 `[Eq. G1] R_total = Σ R_i = ${layerStats.map(s=> isFinite(s.Ri)? fmt(s.Ri,4):'R'+(s.index+1)).join(' + ')} = ${fmt(Rtot,4)} K/W`+
                 (q? `<br>[Eq. G3] ΔT_i = q·R_i`:'')+
@@ -8974,7 +9329,7 @@
                 `<div style='background:#e8f5e9; border:1px solid #66bb6a; padding:10px 14px; border-radius:10px; font-family:ui-monospace; font-size:12px;'>q = ΔT_total / R_total = ${(dT!=null)?dT.toFixed(2):'N/A'} / ${fmt(Rtot,5)} = ${q.toFixed(4)} W</div></section>`; }
         // 9. Equações Fundamentais
         h += `<section style='margin-bottom:14px;'>`+
-            `<h4 style='margin:0 0 10px; color:#004d40; font-size:1.05em;'>9. 📐 Equações Fundamentais</h4>`+
+            `<h4 style='margin:0 0 10px; color:#004d40; font-size:1.05em;'>9. <i class="fa-solid fa-drafting-compass"></i> Equações Fundamentais</h4>`+
             `<div style='background:#f0f8ff; border:1px solid #90caf9; border-radius:10px; padding:12px 14px; font-family:ui-monospace; font-size:11.5px; line-height:1.55;'>`+
             `[Eq. RC1] R_cond,cyl = ln(r₂/r₁)/(2πkL)`+
             `<br>[Eq. RC2] R_conv = 1/(hA)`+
@@ -9022,7 +9377,7 @@
         
 
         function testeSimples() {
-            alert('🔧 Teste JavaScript: Funcionando!\n\nSe você vê esta mensagem, o JavaScript está OK.');
+      alert(' Teste JavaScript: Funcionando!\n\nSe você vê esta mensagem, o JavaScript está OK.');
         }
 
         
@@ -9705,7 +10060,7 @@
             return `
                 <div style="background: #f0f8ff; border: 1px solid #1976d2; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
                     <h4 style="margin: 0 0 15px; color: #1976d2; display: flex; align-items: center; gap: 8px;">
-                        <span>🌊</span> Parâmetros da Superfície Aletada
+                        <span><i class="fa-solid fa-water"></i></span> Parâmetros da Superfície Aletada
                     </h4>
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 15px;">
@@ -9758,7 +10113,7 @@
                     </div>
                     
                     <div style="background: #e8f5e9; border-radius: 8px; padding: 12px; margin-top: 15px;">
-                        <h5 style="margin: 0 0 8px; color: #2e7d32;">📊 Resultados Calculados</h5>
+                        <h5 style="margin: 0 0 8px; color: #2e7d32;"><i class="fa-solid fa-chart-column"></i> Resultados Calculados</h5>
                         <div id="fin-results" style="font-family: monospace; font-size: 0.9em; color: #1b5e20;">
                             <div><span style='background:#2e7d32; color:#fff; padding:1px 6px; border-radius:6px; font-size:0.55rem; margin-right:6px;'>—</span>η_f = ${fmtNum(metrics.eta_f, 3)} | η_o = ${fmtNum(metrics.eta_o, 3)}</div>
                             <div><span style='background:#1b5e20; color:#fff; padding:1px 6px; border-radius:6px; font-size:0.55rem; margin-right:6px;'>K/W</span>R_equiv = ${fmtNum(metrics.R, 4)}</div>
@@ -9803,7 +10158,7 @@
                     return `
                         <div style='background:#f3e5f5; border:1px solid #ce93d8; padding:16px 18px; border-radius:14px; margin-bottom:14px;'>
                             <h4 style='margin:0 0 10px; display:flex; gap:8px; align-items:center; font-size:1rem; color:#6a1b9a;'>
-                                <span>🔀</span> Bloco Paralelo (leitura)
+                                <span><i class="fa-solid fa-code-branch"></i></span> Bloco Paralelo (leitura)
                             </h4>
                             <div style='font-size:12px; color:#4a148c; margin-bottom:6px;'>R_eq = ${ReqStr}</div>
                             <div style='font-size:11px; color:#555;'>Gerencie ramos e camadas diretamente na lista principal. Paralelos dentro de ramos foram desativados.</div>
@@ -9919,7 +10274,7 @@
                 return `
                     <div style="background:#e3f2fd; border:1px solid #2196f3; border-radius:12px; padding:20px; margin-bottom:15px;">
                         <h4 style="margin:0 0 15px; color:#1976d2; display:flex; align-items:center; gap:8px;">
-                            <span>💨</span> Propriedades do Fluido
+                            <span><i class="fa-solid fa-wind"></i></span> Propriedades do Fluido
                         </h4>
                         <div style="background:#ffffff; border:1px solid #bbdefb; padding:14px; border-radius:10px; margin-bottom:18px;">
                             <h5 style="color:#1976d2; margin:0 0 10px 0; font-size:0.9rem;">Resultado da Resistência</h5>
@@ -9983,7 +10338,7 @@
                 return `
                     <div style="background:#fff3e0; border:1px solid #ffb74d; border-radius:16px; padding:20px 22px; margin-bottom:18px;">
                         <h4 style="margin:0 0 14px; font-size:1rem; font-weight:700; color:#e65100; display:flex; align-items:center; gap:8px;">
-                            <span>🧊</span> Sólido
+                            <span><i class="fa-solid fa-cube"></i></span> Sólido
                         </h4>
                         <div id="solid-R-box" style="background:#fff8e1; border:1px solid #ffe082; padding:10px 12px; border-radius:10px; font-family:monospace; font-size:0.7rem; line-height:1.25; color:#5d4037; margin-bottom:14px;">Resultado da Resistência: —</div>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px;">
@@ -10108,7 +10463,7 @@
                         ${sublayers.map((s,i)=>buildSublayerBlock(s,i)).join('')}
                     </div>
                     <div style='background:#e8f5e9; padding:12px; border-radius:10px; margin-top:8px;'>
-                        <h4 style='margin:0 0 6px; color:#2e7d32; font-size:0.95rem;'>📊 Métricas</h4>
+                        <h4 style='margin:0 0 6px; color:#2e7d32; font-size:0.95rem;'><i class="fa-solid fa-chart-column"></i> Métricas</h4>
                         <div id='pl-metrics' style='font-family:monospace; font-size:0.8rem; line-height:1.4;'>—</div>
                     </div>
                     <div class='prop-actions' style='margin-top:12px;'>
@@ -10198,7 +10553,7 @@
                 .replace('Conducao','Condução')
                 .replace('Conveccao','Convecção')
                 .replace('SuperficieAletada','Superfície Aletada');
-            const palette = isFinned? ['#1565c0','🌟'] : (isFluidLocal? ['#0288d1','💧'] : (isCylUI? ['#6a1b9a','🌀'] : ['#455a64','⚙️']));
+            const palette = isFinned? ['#1565c0','<i class="fa-solid fa-star"></i>'] : (isFluidLocal? ['#0288d1','<i class="fa-solid fa-droplet"></i>'] : (isCylUI? ['#6a1b9a','<i class="fa-solid fa-circle-notch"></i>'] : ['#455a64','<i class="fa-solid fa-gear"></i>']));
             const [titleColor, titleIcon] = palette;
             // Área efetiva para cálculos planar
             const A_plan = (selectedGeometry==='planar'? (planarParams.A||1.0) : 1.0);
@@ -10220,7 +10575,7 @@
                 html += "<label style='display:flex; gap:6px; align-items:center; font-size:0.7rem; margin-top:6px;'><input id='fl-rad-toggle' type='checkbox' "+(layer.include_radiation? 'checked':'')+"> Incluir radiação linearizada</label>";
                 html += "</div>";
                 html += "<div style='background:#e3f2fd; padding:10px 12px; border-radius:10px; margin-top:8px;'>";
-                html += "<h4 style='margin:0 0 6px; font-size:0.8rem; color:#01579b;'>📊 Métricas Convecção</h4>";
+                html += "<h4 style='margin:0 0 6px; font-size:0.8rem; color:#01579b;'><i class='fa-solid fa-chart-column'></i> Métricas Convecção</h4>";
                 html += "<div id='fl-metrics' style='font-family:monospace; font-size:0.72rem; line-height:1.35;'>—</div>";
                 html += "</div>";
                 return html;
@@ -10251,7 +10606,7 @@
                     html += "<div style='flex:1; min-width:140px;'><label class='form-label'><span style='background:#37474f; color:#fff; padding:2px 6px; border-radius:6px; font-size:0.65rem; margin-right:6px;'>m²</span>Área A</label><input id='pl-A' type='number' step='0.0001' class='form-control' value='"+Ap+"'></div>";
                 }
                 html += "</div></div>";
-                html += "<div style='background:#fff3e0; padding:10px 12px; border-radius:10px; margin-top:8px;'><h4 style='margin:0 0 6px; font-size:0.8rem; color:#e65100;'>📊 Métricas Condução Plana</h4><div id='pl-metrics-box' style='font-family:monospace; font-size:0.72rem; line-height:1.35;'>—</div></div>";
+                html += "<div style='background:#fff3e0; padding:10px 12px; border-radius:10px; margin-top:8px;'><h4 style='margin:0 0 6px; font-size:0.8rem; color:#e65100;'><i class='fa-solid fa-chart-column'></i> Métricas Condução Plana</h4><div id='pl-metrics-box' style='font-family:monospace; font-size:0.72rem; line-height:1.35;'>—</div></div>";
                 return html;
             }
             // Se for aletada manter createFinnedContent existente (já tem métricas internas)
@@ -10288,7 +10643,7 @@
                         "</div>"+
                         "<div style='font-size:.55rem; color:#5e35b1; margin-top:6px;'>Se marcado, usa r₁/r₂ informados e ignora r₁ + espessura.</div>"+
                     "</div>";
-                    cylHTML += "<div style='background:#ede7f6; padding:10px 12px; border-radius:10px;'><h4 style='margin:0 0 6px; font-size:0.8rem; color:#4a148c;'>📊 Métricas Cilíndricas</h4><div id='cyl-metrics' style='font-family:monospace; font-size:0.7rem; line-height:1.35;'>—</div></div>";
+                    cylHTML += "<div style='background:#ede7f6; padding:10px 12px; border-radius:10px;'><h4 style='margin:0 0 6px; font-size:0.8rem; color:#4a148c;'><i class='fa-solid fa-chart-column'></i> Métricas Cilíndricas</h4><div id='cyl-metrics' style='font-family:monospace; font-size:0.7rem; line-height:1.35;'>—</div></div>";
                     cylHTML += "</div>";
                     coreHTML=cylHTML;
             } else if(isPlanarCond){
@@ -10322,7 +10677,7 @@
                     const rInfo = computeLayerResistance(layer);
                     resistanceBlock = `
                         <div style="background:${isFinned?'#e8f5e9':'#fff3e0'}; border:1px solid ${isFinned?'#c5e1a5':'#ffe0b2'}; padding:12px 14px; border-radius:12px; margin-top:10px;">
-                            <h4 style="margin:0 0 6px; font-size:0.8rem; color:${isFinned?'#2e7d32':'#e65100'}; display:flex; align-items:center; gap:6px;">🔎 Resultado da Resistência</h4>
+                            <h4 style="margin:0 0 6px; font-size:0.8rem; color:${isFinned?'#2e7d32':'#e65100'}; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-magnifying-glass"></i> Resultado da Resistência</h4>
                             <div id='solid-R-box' style="font-family:monospace; font-size:0.68rem; line-height:1.35; background:rgba(255,255,255,0.55); padding:8px 10px; border-radius:8px;">
                                 <div>${rInfo.detail}</div>
                                 <div style='opacity:.7; margin-top:4px;'>${areaInfo.formula}</div>
@@ -10800,7 +11155,7 @@
                         font-size: 1.5em;
                         box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
                     ">
-                        ${isFinned ? '🌊' : _isFluid ? '💨' : '🧊'}
+                        ${isFinned ? '<i class="fa-solid fa-water"></i>' : _isFluid ? '<i class="fa-solid fa-wind"></i>' : '<i class="fa-solid fa-cube"></i>'}
                     </div>
                     <div>
                         <h3 style="margin: 0; color: #1976d2; font-size: 1.3em; font-weight: 700;">${layer.type}</h3>
@@ -11189,8 +11544,6 @@
                 console.log('🔗 Fallback de clique em camadas ativado.');
             }
         })();
-            
-        // (removed stray closing brace here)
         
         function closePropertyPopover() {
             if (currentPopover && currentPopover.parentNode) {

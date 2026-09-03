@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados</title>
+    <title>Resultados do Circuito Térmico</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body {
             background: linear-gradient(120deg, #e0eafc, #fff 100%);
@@ -80,31 +81,46 @@
             margin: 0.5rem 0.5rem 0 0.5rem;
             background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
             color: #fff;
-            font-size: 1.13rem;
-            padding: 0.7rem 2.2rem;
+            font-size: 1.05rem;
+            padding: 0.65rem 1.8rem;
             border: none;
             border-radius: 2rem;
             box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
             font-weight: 600;
             transition: all 0.3s;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
         }
         .btn-custom:hover, .btn-custom:focus {
             background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
-            transform: scale(1.04);
+            transform: scale(1.03);
             box-shadow: 0 8px 28px rgba(25, 118, 210, 0.22);
             outline: none;
             color: #fff;
+            text-decoration: none;
+        }
+        .btn-csv {
+            background: linear-gradient(90deg, #1b5e20 0%, #2e7d32 100%) !important;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.25) !important;
+            color: #fff !important;
+        }
+        .btn-csv:hover, .btn-csv:focus {
+            background: linear-gradient(90deg, #144917 0%, #1e5c23 100%) !important;
+            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.35) !important;
+            color: #fff !important;
         }
         .btn-link.btn-custom {
-            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
-            color: #1976d2;
+            background: linear-gradient(90deg, #eceff1 0%, #cfd8dc 100%);
+            color: #37474f;
             font-weight: 600;
             margin-left: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .btn-link.btn-custom:hover, .btn-link.btn-custom:focus {
-            background: linear-gradient(90deg, #78909c 0%, #90caf9 100%);
-            color: #111;
+            background: linear-gradient(90deg, #cfd8dc 0%, #b0bec5 100%);
+            color: #212121;
         }
         .result-table-container {
             overflow-x: auto;
@@ -125,7 +141,7 @@
         <div class="card">
             <h1>Resultados</h1>
 
-            <h2>📊 Métricas de Desempenho</h2>
+            <h2><i class="fa-solid fa-chart-column mr-2 text-primary"></i>Métricas de Desempenho</h2>
             <div class="result-table-container">
                 <table class="table table-striped">
                     <thead>
@@ -144,11 +160,11 @@
                             <td {% if resultado[4] >= 2 %}style="background-color: #e8f5e8;"{% elif resultado[4] > 1 %}style="background-color: #fff8e1;"{% else %}style="background-color: #ffebee;"{% endif %}>
                                 {{ resultado[4] | round(3) }}
                                 {% if resultado[4] >= 2 %}
-                                    <span style="color: #4caf50; font-weight: bold;">✅</span>
+                                    <span style="color: #2e7d32; font-weight: bold; margin-left: 6px;"><i class="fa-solid fa-circle-check"></i></span>
                                 {% elif resultado[4] > 1 %}
-                                    <span style="color: #ff9800; font-weight: bold;">⚠️</span>
+                                    <span style="color: #ed6c02; font-weight: bold; margin-left: 6px;"><i class="fa-solid fa-triangle-exclamation"></i></span>
                                 {% else %}
-                                    <span style="color: #f44336; font-weight: bold;">❌</span>
+                                    <span style="color: #d32f2f; font-weight: bold; margin-left: 6px;"><i class="fa-solid fa-circle-xmark"></i></span>
                                 {% endif %}
                             </td>
                             <td>{{ resultado[5] | round(6) }}</td>
@@ -161,82 +177,73 @@
             </div>
 
             <div style="background: #f4f8ff; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #1976d2;">
-                <h3 style="color: #1976d2; margin-bottom: 15px;">🌡️ Condição de Contorno Aplicada</h3>
-                <div style="margin-bottom: 15px; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #e3f0fc;">
+                <h3 style="color: #1976d2; margin-bottom: 15px;"><i class="fa-solid fa-temperature-three-quarters mr-2"></i>Condição de Contorno Aplicada</h3>
+                <div style="margin-bottom: 15px; padding: 12px 15px; background: #ffffff; border-radius: 8px; border: 1px solid #e3f0fc;">
                     {% if condicao_ponta == 'adiabatica' %}
-                        <strong style="color: #2196f3;">🔹 Ponta Adiabática:</strong> Não há transferência de calor na extremidade da aleta
-                        <br><small style="color: #666; font-style: italic;">Condição: dT/dx|ₓ₌ₗ = 0</small>
+                        <strong style="color: #1976d2;"><i class="fa-solid fa-shield-halved mr-1"></i> Ponta Adiabática:</strong> Não há transferência de calor na extremidade da aleta
+                        <br><small style="color: #666; font-style: italic;">Condição de contorno: dT/dx|ₓ₌ₗ = 0</small>
                     {% elif condicao_ponta == 'conveccao' %}
-                        <strong style="color: #ff9800;">🔸 Convecção na Ponta:</strong> Transferência de calor por convecção na extremidade
-                        <br><small style="color: #666; font-style: italic;">Condição: -k(dT/dx)|ₓ₌ₗ = h(T_L - T_∞)</small>
+                        <strong style="color: #ed6c02;"><i class="fa-solid fa-wind mr-1"></i> Convecção na Ponta:</strong> Transferência de calor por convecção na extremidade
+                        <br><small style="color: #666; font-style: italic;">Condição de contorno: -k(dT/dx)|ₓ₌ₗ = h(T_L - T_∞)</small>
                     {% elif condicao_ponta == 'infinita' %}
-                        <strong style="color: #4caf50;">🔸 Aleta Infinitamente Longa:</strong> Temperatura na ponta tende ao ambiente
-                        <br><small style="color: #666; font-style: italic;">Condição: T(x→∞) = T_∞</small>
+                        <strong style="color: #2e7d32;"><i class="fa-solid fa-infinity mr-1"></i> Aleta Infinitamente Longa:</strong> Temperatura na ponta tende ao ambiente
+                        <br><small style="color: #666; font-style: italic;">Condição de contorno: T(x→∞) = T_∞</small>
                     {% elif condicao_ponta == 'temp_especificada' %}
-                        <strong style="color: #e91e63;">🔸 Temperatura Especificada:</strong> T_L = {{ T_L if T_L else '---' }}°C na ponta
-                        <br><small style="color: #666; font-style: italic;">Condição: T(x=L) = T_L</small>
+                        <strong style="color: #c2185b;"><i class="fa-solid fa-temperature-arrow-up mr-1"></i> Temperatura Especificada:</strong> T_L = {{ T_L if T_L else '---' }}°C na ponta
+                        <br><small style="color: #666; font-style: italic;">Condição de contorno: T(x=L) = T_L</small>
                     {% else %}
-                        <strong style="color: #2196f3;">🔹 Ponta Adiabática:</strong> Não há transferência de calor na extremidade da aleta
-                        <br><small style="color: #666; font-style: italic;">Condição: dT/dx|ₓ₌ₗ = 0 (padrão)</small>
+                        <strong style="color: #1976d2;"><i class="fa-solid fa-shield-halved mr-1"></i> Ponta Adiabática:</strong> Não há transferência de calor na extremidade da aleta
+                        <br><small style="color: #666; font-style: italic;">Condição de contorno: dT/dx|ₓ₌ₗ = 0 (padrão)</small>
                     {% endif %}
                 </div>
                 
-                <h3 style="color: #1976d2; margin-bottom: 15px;">📚 Fundamentos Teóricos</h3>
+                <h3 style="color: #1976d2; margin-bottom: 15px;"><i class="fa-solid fa-book-open mr-2"></i>Fundamentos Teóricos</h3>
                 <div style="margin-bottom: 15px;">
                     <strong>Efetividade (εₐ):</strong> 
                     <span style="font-family: 'Times New Roman', serif; font-size: 1.1em;">εₐ = qₐ/(hAₜᵣ,ᵦθᵦ)</span>
                     <br><small style="color: #666;">
                         <strong>Interpretação:</strong><br>
-                        • εₐ ≥ 2: ✅ <span style="color: #4caf50;">Excelente desempenho</span> - transfere mais que o dobro<br>
-                        • 1 < εₐ < 2: ⚠️ <span style="color: #ff9800;">Aceitável</span> - ainda melhora a transferência<br>
-                        • εₐ ≤ 1: ❌ <span style="color: #f44336;">Não recomendado</span> - pior que sem aleta
+                        • εₐ ≥ 2: <span style="color: #2e7d32; font-weight: 600;"><i class="fa-solid fa-circle-check mr-1"></i>Excelente desempenho</span> — transfere mais que o dobro<br>
+                        • 1 < εₐ < 2: <span style="color: #ed6c02; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Aceitável</span> — melhora a transferência<br>
+                        • εₐ ≤ 1: <span style="color: #d32f2f; font-weight: 600;"><i class="fa-solid fa-circle-xmark mr-1"></i>Não recomendado</span> — ineficiente em relação à base sem aleta
                     </small>
                 </div>
                 <div style="margin-bottom: 15px;">
                     <strong>Eficiência (ηₐ):</strong> 
                     <span style="font-family: 'Times New Roman', serif; font-size: 1.1em;">ηₐ = Q_aleta/Q_max</span>
-                    <small style="color: #666;"> (varia conforme condição de contorno)</small>
+                    <small style="color: #666;"> (calculada analiticamente conforme a geometria e condição de contorno)</small>
                 </div>
                 <div>
-                    <strong>Otimização:</strong> Preferência por alto <em>k</em>, alto <em>P/Aₜᵣ</em>, baixo <em>h</em>
+                    <strong>Diretriz de Otimização:</strong> Preferência por materiais de alto <em>k</em>, geometrias com alta razão <em>P/Aₜᵣ</em> e baixos coeficientes <em>h</em>.
                 </div>
             </div>
 
             <!-- Métricas de Engenharia -->
             {% if metricas_lista %}
-            <h2>🔧 Métricas de Engenharia</h2>
+            <h2><i class="fa-solid fa-gears mr-2 text-primary"></i>Métricas de Engenharia</h2>
             {% for metricas, interpretacoes in zip(metricas_lista, interpretacoes_lista) %}
             <div style="background: #f8fbff; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #2196f3;">
-                <h4 style="color: #1976d2; margin-bottom: 15px;">📐 Análise da Aleta {{ loop.index }}</h4>
+                <h4 style="color: #1976d2; margin-bottom: 15px;"><i class="fa-solid fa-drafting-compass mr-2"></i>Análise da Aleta {{ loop.index }}</h4>
                 
                 <!-- Propriedades Físicas -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <div style="background: white; padding: 15px; border-radius: 8px;">
-                        <h5 style="color: #1976d2; margin-bottom: 10px;">📏 Propriedades Físicas</h5>
+                        <h5 style="color: #1976d2; margin-bottom: 10px;"><i class="fa-solid fa-cube mr-2"></i>Propriedades Físicas</h5>
                         <p><strong>Volume:</strong> {{ "%.2e"|format(metricas.volume) }} m³</p>
                         <p><strong>Massa:</strong> {{ "%.3f"|format(metricas.massa) }} kg</p>
                     </div>
                     
                     <div style="background: white; padding: 15px; border-radius: 8px;">
-                        <h5 style="color: #1976d2; margin-bottom: 10px;">💰 Análise Econômica</h5>
+                        <h5 style="color: #1976d2; margin-bottom: 10px;"><i class="fa-solid fa-coins mr-2"></i>Análise Econômica</h5>
                         <p><strong>Custo Total:</strong> ${{ "%.2f"|format(metricas.custo_total) }}</p>
                         <p><strong>Custo-Benefício:</strong> {{ "%.2f"|format(metricas.razao_custo_beneficio) }} W/$</p>
                     </div>
                 </div>
                 
-                <!-- Análise Econômica -->
-                <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
-
-                    
-
-                </div>
-                
-
-                
                 <!-- Interpretações e Recomendações -->
                 {% if interpretacoes.pontos_fortes %}
                 <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                    <h6 style="color: #4caf50; margin-bottom: 10px;">✅ Pontos Fortes</h6>
+                    <h6 style="color: #2e7d32; margin-bottom: 10px;"><i class="fa-solid fa-circle-check mr-2"></i>Pontos Fortes</h6>
                     {% for ponto in interpretacoes.pontos_fortes %}
                     <p style="margin-bottom: 5px;">• {{ ponto }}</p>
                     {% endfor %}
@@ -245,7 +252,7 @@
                 
                 {% if interpretacoes.alertas %}
                 <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                    <h6 style="color: #ff9800; margin-bottom: 10px;">⚠️ Alertas</h6>
+                    <h6 style="color: #ed6c02; margin-bottom: 10px;"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Alertas</h6>
                     {% for alerta in interpretacoes.alertas %}
                     <p style="margin-bottom: 5px;">• {{ alerta }}</p>
                     {% endfor %}
@@ -254,7 +261,7 @@
                 
                 {% if interpretacoes.recomendacoes %}
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                    <h6 style="color: #1976d2; margin-bottom: 10px;">💡 Recomendações</h6>
+                    <h6 style="color: #1976d2; margin-bottom: 10px;"><i class="fa-solid fa-lightbulb mr-2"></i>Recomendações</h6>
                     {% for recomendacao in interpretacoes.recomendacoes %}
                     <p style="margin-bottom: 5px;">• {{ recomendacao }}</p>
                     {% endfor %}
@@ -264,30 +271,66 @@
             {% endfor %}
             {% endif %}
 
-            <h2>📈 Gráficos Interativos</h2>
+            <h2><i class="fa-solid fa-chart-line mr-2 text-primary"></i>Gráficos Interativos</h2>
             
-            <!-- Gráfico de Distribuição de Temperatura -->
+            <!-- Gráfico de Distribuição de Temperatura com Botão de CSV Minimalista -->
             <div style="margin-bottom: 30px;">
-                <h3 style="color: #1976d2; margin-bottom: 15px;">🌡️ Distribuição de Temperatura</h3>
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                    <h3 style="color: #1976d2; margin: 0; font-size: 1.15rem;"><i class="fa-solid fa-temperature-half mr-2"></i>Distribuição de Temperatura</h3>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportarGraficoCSV()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #cfd8dc; color: #455a64; background: #fafafa; font-weight: 500;" title="Salvar dados da curva em arquivo CSV">
+                        <i class="fa-solid fa-file-csv mr-1 text-secondary"></i> Salvar CSV
+                    </button>
+                </div>
                 <div style="background: white; border-radius: 12px; box-shadow: 0 4px 18px #1976d220; padding: 10px;">
                     {{ grafico_html|safe }}
                 </div>
             </div>
 
+            <!-- Tabela de Resultados da Distribuição de Temperatura -->
+            <div style="margin-top: 30px; margin-bottom: 30px;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                    <h3 style="color: #1976d2; margin: 0; font-size: 1.15rem;">
+                        <i class="fa-solid fa-table-list mr-2"></i>Tabela de Resultados — Distribuição de Temperatura
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-copiar-tabela" onclick="copiarTabelaResultados()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;" title="Copiar linhas da tabela para colar no Excel, Word ou Markdown">
+                            <i class="fa-solid fa-copy mr-1"></i> Copiar Tabela
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportarGraficoCSV()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #cfd8dc; color: #455a64; background: #fafafa; font-weight: 500;" title="Salvar dados em arquivo CSV">
+                            <i class="fa-solid fa-file-csv mr-1 text-secondary"></i> Salvar CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="result-table-container" style="max-height: 400px; overflow-y: auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(25, 118, 210, 0.08); border: 1px solid #e3f2fd;">
+                    <table class="table table-striped table-hover table-sm text-center mb-0" id="tabela-distribuicao-temp">
+                        <thead style="position: sticky; top: 0; background: #f0f7ff; z-index: 2; border-bottom: 2px solid #bbdefb;">
+                            <tr id="thead-tr-distribuicao">
+                                <th>L (m)</th>
+                                <th>Cobre (C°)</th>
+                                <th>Alumínio (C°)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-distribuicao">
+                            <!-- preenchido automaticamente via script da base única -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Seção Didática: Resolução Passo a Passo -->
             {% if dados_didaticos_lista %}
-            <h2>📚 Resolução Passo a Passo - Seção Variável</h2>
+            <h2><i class="fa-solid fa-graduation-cap mr-2 text-primary"></i>Resolução Passo a Passo — Análise Analítica</h2>
             {% for dados_didaticos in dados_didaticos_lista %}
             {% if dados_didaticos and dados_didaticos.passos_resolucao %}
             <div style="background: #f8fbff; padding: 25px; border-radius: 15px; margin: 25px 0; border-left: 5px solid #1976d2;">
                 <h3 style="color: #1976d2; margin-bottom: 20px;">
-                    🔬 Análise Detalhada: {{ dados_didaticos.tipo_aleta_original }}
+                    <i class="fa-solid fa-microscope mr-2"></i>Análise Detalhada: {{ dados_didaticos.tipo_aleta_original }}
                 </h3>
                 
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                    <p><strong>🎯 Método Utilizado:</strong> {{ dados_didaticos.metodo }}</p>
-                    <p><strong>📐 Tipo Mapeado:</strong> {{ dados_didaticos.tipo_aleta_mapeado }}</p>
-                    <p><strong>🌡️ Condição de Contorno:</strong> {{ dados_didaticos.condicao_ponta }}</p>
+                    <p class="mb-1"><strong><i class="fa-solid fa-bullseye mr-1 text-primary"></i> Método Utilizado:</strong> {{ dados_didaticos.metodo }}</p>
+                    <p class="mb-1"><strong><i class="fa-solid fa-shapes mr-1 text-primary"></i> Tipo Mapeado:</strong> {{ dados_didaticos.tipo_aleta_mapeado }}</p>
+                    <p class="mb-0"><strong><i class="fa-solid fa-temperature-half mr-1 text-primary"></i> Condição de Contorno:</strong> {{ dados_didaticos.condicao_ponta }}</p>
                 </div>
 
                 {% for passo in dados_didaticos.passos_resolucao %}
@@ -304,7 +347,7 @@
                     
                     {% if passo.valores %}
                     <div style="background: #fff3e0; padding: 12px; border-radius: 6px; margin: 10px 0;">
-                        <strong>📊 Valores:</strong> {{ passo.valores }}
+                        <strong><i class="fa-solid fa-square-poll-vertical mr-1 text-primary"></i> Valores:</strong> {{ passo.valores }}
                     </div>
                     {% endif %}
                 </div>
@@ -312,7 +355,7 @@
 
                 <!-- Resumo dos Resultados -->
                 <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                    <h4 style="color: #4caf50; margin-bottom: 15px;">✅ Resultados Finais</h4>
+                    <h4 style="color: #2e7d32; margin-bottom: 15px;"><i class="fa-solid fa-circle-check mr-2"></i>Resultados Finais</h4>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div>
                             <strong>Taxa de Calor:</strong><br>
@@ -333,20 +376,32 @@
             {% endfor %}
             {% endif %}
 
-            <h2>Relatório</h2>
-            <div class="text-center">
-                <a href="{{ url_for('static', filename='relatorio.txt') }}" class="btn btn-custom" download="relatorio_aletas.txt">Baixar Relatório</a>
-                <a href="/" class="btn btn-link btn-custom">Voltar</a>
+            <h2><i class="fa-solid fa-file-export mr-2 text-primary"></i>Exportações e Relatórios</h2>
+            <div class="text-center d-flex justify-content-center align-items-center flex-wrap">
+                <button type="button" class="btn btn-outline-secondary btn-custom" onclick="exportarGraficoCSV()" style="background: #ffffff; border: 1px solid #cfd8dc; color: #37474f; font-weight: 500;">
+                    <i class="fa-solid fa-file-csv mr-2 text-secondary"></i>Salvar CSV do Gráfico
+                </button>
+                <a href="{{ url_for('static', filename='relatorio.txt') }}" class="btn btn-custom" download="relatorio_aletas.txt">
+                    <i class="fa-solid fa-file-lines mr-2"></i>Baixar Relatório (TXT)
+                </a>
+                <a href="/" class="btn btn-link btn-custom">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Voltar
+                </a>
             </div>
         </div>
     </div>
+
+    <!-- Dados estruturados das curvas em formato JSON para exportação direta e infalível -->
+    <script id="dados-grafico-json" type="application/json">
+        {{ dados_grafico_json|safe if dados_grafico_json else '{}' }}
+    </script>
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- MathJax para renderizar equações -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
         window.MathJax = {
@@ -355,6 +410,176 @@
                 displayMath: [['$$', '$$'], ['\\[', '\\]']]
             }
         };
+
+        function formatarNumeroTabela(val, maxDecimais = 4) {
+            if (val === null || val === undefined || isNaN(val)) return '';
+            const n = Number(val);
+            let str = n.toFixed(maxDecimais);
+            if (str.includes('.')) {
+                str = str.replace(/0+$/, '').replace(/\.$/, '');
+            }
+            return str.replace('.', ',');
+        }
+
+        function formatarNomeColunaTemp(nomeOriginal) {
+            let limpo = (nomeOriginal || 'Temperatura').trim();
+            limpo = limpo.replace(/\s*\([°C\s]+\)$/i, '').replace(/\s*\(C°\)$/i, '').trim();
+            return `${limpo} (C°)`;
+        }
+
+        // Ordenação obrigatória: Cobre sempre antes de Alumínio (não inverter)
+        function ordenarCurvasObrigatorio(curvas) {
+            if (!curvas || curvas.length <= 1) return curvas;
+            let copia = curvas.slice();
+            copia.sort((a, b) => {
+                const nomeA = (a.nome || '').toLowerCase();
+                const nomeB = (b.nome || '').toLowerCase();
+                const aCobre = nomeA.includes('cobre');
+                const bCobre = nomeB.includes('cobre');
+                const aAlum = nomeA.includes('alum');
+                const bAlum = nomeB.includes('alum');
+                if (aCobre && !bCobre) return -1;
+                if (!aCobre && bCobre) return 1;
+                if (aAlum && !bAlum) return 1;
+                if (!aAlum && bAlum) return -1;
+                return 0;
+            });
+            return copia;
+        }
+
+        function obterDadosEstruturados() {
+            const jsonEl = document.getElementById('dados-grafico-json');
+            if (!jsonEl || !jsonEl.textContent) return null;
+            try {
+                const payload = JSON.parse(jsonEl.textContent);
+                if (payload && payload.curvas && payload.curvas.length > 0) {
+                    const x_pts = payload.Posicao_x_m || payload.x_m;
+                    if (x_pts && x_pts.length > 0) {
+                        return {
+                            x_m: x_pts,
+                            curvas: ordenarCurvasObrigatorio(payload.curvas)
+                        };
+                    }
+                }
+            } catch (e) {
+                console.warn('[Tabela/CSV] Falha ao ler JSON estruturado:', e);
+            }
+            return null;
+        }
+
+        // Renderização da tabela visual na tela (HTML)
+        function preencherTabelaVisual() {
+            const dados = obterDadosEstruturados();
+            if (!dados) return;
+
+            const trThead = document.getElementById('thead-tr-distribuicao');
+            const tbody = document.getElementById('tbody-distribuicao');
+            if (!trThead || !tbody) return;
+
+            // Cabeçalho estrito de 3 colunas: L (m) | Cobre (C°) | Alumínio (C°)
+            let theadHtml = '<th>L (m)</th>';
+            dados.curvas.forEach(c => {
+                theadHtml += `<th>${formatarNomeColunaTemp(c.nome)}</th>`;
+            });
+            trThead.innerHTML = theadHtml;
+
+            // Linhas de dados (L(m), Cobre, Alumínio...)
+            let tbodyHtml = '';
+            for (let i = 0; i < dados.x_m.length; i++) {
+                const l_val = formatarNumeroTabela(dados.x_m[i], 4);
+                let rowHtml = `<tr><td><strong>${l_val}</strong></td>`;
+                dados.curvas.forEach(c => {
+                    const t_val = (c.temperaturas && c.temperaturas[i] !== undefined)
+                        ? formatarNumeroTabela(c.temperaturas[i], 2)
+                        : '';
+                    rowHtml += `<td>${t_val}</td>`;
+                });
+                rowHtml += '</tr>';
+                tbodyHtml += rowHtml;
+            }
+            tbody.innerHTML = tbodyHtml;
+        }
+
+        function copiarTabelaResultados() {
+            const dados = obterDadosEstruturados();
+            if (!dados) return;
+
+            let linhas = [];
+            let cabecalho = ['L (m)'];
+            dados.curvas.forEach(c => cabecalho.push(formatarNomeColunaTemp(c.nome)));
+            linhas.push(cabecalho.join('\t'));
+
+            for (let i = 0; i < dados.x_m.length; i++) {
+                let linha = [formatarNumeroTabela(dados.x_m[i], 4)];
+                dados.curvas.forEach(c => {
+                    const t_val = (c.temperaturas && c.temperaturas[i] !== undefined)
+                        ? formatarNumeroTabela(c.temperaturas[i], 2)
+                        : '';
+                    linha.push(t_val);
+                });
+                linhas.push(linha.join('\t'));
+            }
+
+            const textoCopiar = linhas.join('\r\n');
+            navigator.clipboard.writeText(textoCopiar).then(() => {
+                const btn = document.getElementById('btn-copiar-tabela');
+                if (btn) {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check mr-1 text-success"></i> Copiado!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                }
+            }).catch(err => {
+                console.error('Falha ao copiar tabela:', err);
+            });
+        }
+
+        // Função de Exportação de Dados para CSV com campos entre aspas (RFC 4180)
+        // Nunca divide valores no meio nem insere ponto-e-vírgula nos dados
+        function exportarGraficoCSV() {
+            const dados = obterDadosEstruturados();
+            if (dados) {
+                let cabecalho = ['"L (m)"'];
+                dados.curvas.forEach(c => {
+                    cabecalho.push(`"${formatarNomeColunaTemp(c.nome)}"`);
+                });
+                
+                let linhas = [cabecalho.join(',')];
+                for (let i = 0; i < dados.x_m.length; i++) {
+                    const l_m_str = formatarNumeroTabela(dados.x_m[i], 4);
+                    let linha = [`"${l_m_str}"`];
+                    dados.curvas.forEach(c => {
+                        const valY = (c.temperaturas && c.temperaturas[i] !== undefined) 
+                            ? formatarNumeroTabela(c.temperaturas[i], 2) 
+                            : '';
+                        linha.push(`"${valY}"`);
+                    });
+                    linhas.push(linha.join(','));
+                }
+                
+                baixarArquivoCSV(linhas.join('\r\n'), 'distribuicao_temperatura_aleta');
+                return;
+            }
+
+            alert('Os dados da tabela ainda estão sendo carregados. Por favor, aguarde alguns instantes.');
+        }
+
+        function baixarArquivoCSV(csvConteudoTexto, prefixoNome) {
+            const csvConteudo = '\uFEFF' + csvConteudoTexto;
+            const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '_');
+            link.setAttribute('download', `${prefixoNome}_${timestamp}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            preencherTabelaVisual();
+        });
     </script>
 </body>
 </html>

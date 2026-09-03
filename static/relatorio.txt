@@ -1,25 +1,25 @@
 Resultados das Aletas
-Tipo de Aleta: 6)aletas de perfil triangular
-Eficiência (eta_aleta): 0.491516
-Taxa de Transferência de Calor (Q_aleta): 5.632123 W
-Efetividade (epsilon_a): 9.561388
-Parâmetro m: 7.453560 m^-1
-Perímetro P: 0.062832 m
-Área Transversal A_tr: 0.000314159 m^2
+Tipo de Aleta: 1)aletas retangulares retas
+Eficiência (eta_aleta): 0.469611
+Taxa de Transferência de Calor (Q_aleta): 35.925241 W
+Efetividade (epsilon_a): 95.800642
+Parâmetro m: 10.307764 m^-1
+Perímetro P: 0.204000 m
+Área Transversal A_tr: 0.000200000 m^2
 Comprimento (m) x Temperatura (°C):
 0.000000 m: 100.000000 °C
-0.003571 m: 99.723757 °C
-0.007143 m: 99.468283 °C
-0.010714 m: 99.233508 °C
-0.014286 m: 99.019365 °C
-0.017857 m: 98.825797 °C
-0.021429 m: 98.652748 °C
-0.025000 m: 98.500170 °C
-0.028571 m: 98.368022 °C
-0.032143 m: 98.256267 °C
-0.035714 m: 98.164873 °C
-0.039286 m: 98.093815 °C
-0.042857 m: 98.043074 °C
-0.046429 m: 98.012634 °C
-0.050000 m: 98.002489 °C
+0.014286 m: 90.083890 °C
+0.028571 m: 81.581590 °C
+0.042857 m: 74.308404 °C
+0.057143 m: 68.106340 °C
+0.071429 m: 62.840670 °C
+0.085714 m: 58.397008 °C
+0.100000 m: 54.678825 °C
+0.114286 m: 51.605352 °C
+0.128571 m: 49.109824 °C
+0.142857 m: 47.138031 °C
+0.157143 m: 45.647140 °C
+0.171429 m: 44.604765 °C
+0.185714 m: 43.988261 °C
+0.200000 m: 43.784237 °C
 

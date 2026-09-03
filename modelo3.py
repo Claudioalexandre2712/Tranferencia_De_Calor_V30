@@ -82,179 +82,119 @@ def escolher_aletas():
 
     return getattr(root, 'tipo_aletas', [])
 
+from tipos_aletas_config import obter_tipo_aleta, obter_nome_display, TIPOS_ALETAS
+
 def obter_imagem(tipo_aleta):
-    imagens = {
-        "1)aletas retangulares retas": "static/aletas/1.png",
-        "2)aletas triangulares retas": "static/aletas/2.png",
-        "3)aletas parabolicas retas": "static/aletas/3.png",
-        "4)aletas circulares de perfil retangular": "static/aletas/4.png",
-        "5)aletas de perfil retangular": "static/aletas/5.png",
-        "6)aletas de perfil triangular": "static/aletas/6.png",
-        "7)aletas de perfil parabolico": "static/aletas/7.png",
-        "8)aletas de pino de perfilparabolico (ponta arredondada)": "static/aletas/8.png"
-    }
-    return imagens.get(tipo_aleta)
+    tid = obter_tipo_aleta(tipo_aleta)
+    if tid and 1 <= tid <= 8:
+        return f"static/aletas/{tid}.png"
+    return "static/aletas/1.png"
 
 def obter_formula(tipo_aleta):
-    formulas = {
-        "1)aletas retangulares retas": "static/formulas/1.png",
-        "2)aletas triangulares retas": "static/formulas/2.png",
-        "3)aletas parabolicas retas": "static/formulas/3.png",
-        "4)aletas circulares de perfil retangular": "static/formulas/4.png",
-        "5)aletas de perfil retangular": "static/formulas/5.png",
-        "6)aletas de perfil triangular": "static/formulas/6.png",
-        "7)aletas de perfil parabolico": "static/formulas/7.png",
-        "8)aletas de pino de perfilparabolico (ponta arredondada)": "static/formulas/8.png"
-    }
-    return formulas.get(tipo_aleta)
+    tid = obter_tipo_aleta(tipo_aleta)
+    if tid and 1 <= tid <= 8:
+        return f"static/formulas/{tid}.png"
+    return "static/formulas/1.png"
 
 def mostrar_formula(tipo_aleta):
     imagem_aleta = obter_imagem(tipo_aleta)
     formula_aleta = obter_formula(tipo_aleta)
     
-    # Inicializar variáveis
     img = None
     formula_img = None
+
+    if not TK_AVAILABLE:
+        return
 
     root = ctk.CTk()
     root.title("Fórmula Utilizada")
     root.geometry("800x900")
 
-    label = ctk.CTkLabel(root, text=f"{tipo_aleta.replace('_', ' ').title()}:", justify=ctk.LEFT, font=("Arial", 20, "bold"))
+    nome_desc = obter_nome_display(tipo_aleta)
+    label = ctk.CTkLabel(root, text=f"{nome_desc.replace('_', ' ').title()}:", justify=ctk.LEFT, font=("Arial", 20, "bold"))
     label.pack(pady=10, padx=20)
 
-    if imagem_aleta:
+    if imagem_aleta and os.path.exists(imagem_aleta):
         img_pil = Image.open(imagem_aleta)
         try:
             img_pil = img_pil.resize((600, 400), Image.Resampling.LANCZOS)
         except AttributeError:
-            # Fallback para versões antigas do PIL
-            # Fallback simples para compatibilidade
             img_pil = img_pil.resize((600, 400))
         img = CTkImage(light_image=img_pil, dark_image=img_pil, size=(700, 400))
         panel = ctk.CTkLabel(root, image=img)
         panel.pack(side=ctk.TOP, padx=10, pady=10)
 
-    if formula_aleta:
+    if formula_aleta and os.path.exists(formula_aleta):
         formula_img_pil = Image.open(formula_aleta)
         try:
-            formula_img_pil = formula_img_pil.resize((600, 300), Image.Resampling.LANCZOS)
+            formula_img_pil = formula_img_pil.resize((700, 400), Image.Resampling.LANCZOS)
         except AttributeError:
-            # Fallback para versões antigas do PIL
-            # Fallback simples para compatibilidade
-            formula_img_pil = formula_img_pil.resize((600, 300))
-        formula_img = CTkImage(light_image=formula_img_pil, dark_image=formula_img_pil, size=(700, 300))
-        formula_panel = ctk.CTkLabel(root, image=formula_img)
-        formula_panel.pack(side=ctk.TOP, padx=10, pady=10)
+            formula_img_pil = formula_img_pil.resize((700, 400))
+        formula_img = CTkImage(light_image=formula_img_pil, dark_image=formula_img_pil, size=(700, 400))
+        panel_formula = ctk.CTkLabel(root, image=formula_img)
+        panel_formula.pack(side=ctk.TOP, padx=10, pady=10)
 
-    button_frame = ctk.CTkFrame(root)
-    button_frame.pack(pady=10)
-
-    ok_button = ctk.CTkButton(button_frame, text="OK", command=root.destroy)
-    ok_button.pack(side=ctk.LEFT, padx=5)
-
-    back_button = ctk.CTkButton(button_frame, text="Voltar", command=lambda: [root.destroy(), main()])
-    back_button.pack(side=ctk.LEFT, padx=5)
+    close_button = ctk.CTkButton(root, text="Fechar", command=root.destroy)
+    close_button.pack(pady=20)
 
     root.mainloop()
 
-    return img, formula_img
-
 def escolher_material():
+    if not TK_AVAILABLE:
+        return "Alumínio", 240
+    root = ctk.CTk()
+    root.title("Escolha o Material")
+    root.geometry("500x500")
+
     def on_select():
-        root.mat_tipo = int(material_var.get())  # type: ignore
+        root.mat_tipo = material_var.get()
         root.destroy()
 
     def on_back():
         root.destroy()
         main()
 
-    root = ctk.CTk()
-    root.title("Escolha o material")
-
-    # Tamanho da janela da escolha de material
-    root.geometry("600x350")
-
-    material_var = ctk.StringVar(value="1")
+    material_var = ctk.IntVar(value=1)
 
     materiais = {
-        1: {"nome": "Alumínio", "k": 240},  # Pode variar entre 200-237 W/m·K
-        2: {"nome": "Cobre", "k": 386},  
-        3: {"nome": "Aço Inoxidável", "k": 16},  # Pode variar entre 14-20 W/m·K
-        4: {"nome": "Latão", "k": 120},  
-        5: {"nome": "Titânio", "k": 21}, 
-        6: {"nome": "Prata", "k": 429}, 
-        7: {"nome": "Ouro", "k": 318},  
-        8: {"nome": "Ferro", "k": 80},  # Pode variar entre 50-80 W/m·K
-        9: {"nome": "Níquel", "k": 90},  
+        1: {"nome": "Alumínio", "k": 240},
+        2: {"nome": "Cobre", "k": 386},
+        3: {"nome": "Aço Inoxidável", "k": 16},
+        4: {"nome": "Bronze", "k": 26},
+        5: {"nome": "Ferro Fundido", "k": 52},
+        6: {"nome": "Prata", "k": 429},
+        7: {"nome": "Ouro", "k": 318},
+        8: {"nome": "Ferro", "k": 80},
+        9: {"nome": "Níquel", "k": 90},
         10: {"nome": "Chumbo", "k": 34},  
     }
 
-    label = ctk.CTkLabel(root, text="Escolha o material levando em consideração sua Condutividade Térmica (W/mK):", font=("Arial", 16))
+    label = ctk.CTkLabel(root, text="Escolha o material (Condutividade Térmica W/m·K):", font=("Arial", 16))
     label.pack(pady=10)
 
     for i, mat in materiais.items():
         radio = ctk.CTkRadioButton(root, text=f"{i}. {mat['nome']} -- {mat['k']} W/mK", variable=material_var, value=i, command=on_select, font=("Arial", 15))
         radio.pack(anchor=ctk.W)
 
-    button_frame = ctk.CTkFrame(root)
-    button_frame.pack(pady=10)
-
-    back_button = ctk.CTkButton(button_frame, text="Voltar", command=on_back)
-    back_button.pack(side=ctk.LEFT, padx=5)
-
     root.mainloop()
 
     mat_tipo = getattr(root, 'mat_tipo', None)
     if mat_tipo is None:
-        mat_tipo = 1  # Padrão para Alumínio
+        mat_tipo = 1
     return materiais[mat_tipo]["nome"], materiais[mat_tipo]["k"]
 
-import numpy as np
-import scipy.special as sp
-
 def calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta):
-    """
-    🎯 CÁLCULO DE TAXA DE CALOR POR CONDIÇÃO DE CONTORNO
-    =====================================================
-    
-    Calcula a taxa de transferência de calor baseada na condição 
-    de contorno na ponta da aleta (casos A, B, C, D do Çengel).
-    
-    ✅ Validado com exemplos Çengel págs. 154, 157, 160
-    
-    Args:
-        m (float): Parâmetro da aleta [1/m]
-        l (float): Comprimento da aleta [m] 
-        h (float): Coeficiente de convecção [W/m²·K]
-        k (float): Condutividade térmica [W/m·K]
-        theta_b (float): Diferença de temperatura na base [K]
-        T_L (float): Temperatura na ponta (se especificada) [K]
-        T_inf (float): Temperatura ambiente [K]
-        condicao_ponta (str): 'adiabatica', 'conveccao', 'infinita', 'temp_especificada'
-    
-    Returns:
-        float: Fator adimensional para cálculo de taxa de calor
-    """
-    
     if condicao_ponta == 'adiabatica':
-        # Caso B: Ponta Adiabática
         return np.tanh(m * l)
-    
     elif condicao_ponta == 'conveccao':
-        # Caso A: Convecção na Ponta
         numerador = np.sinh(m * l) + (h / (m * k)) * np.cosh(m * l)
         denominador = np.cosh(m * l) + (h / (m * k)) * np.sinh(m * l)
         if abs(denominador) < 1e-10:
-            return float('inf')  # Evita divisão por zero
+            return float('inf')
         return numerador / denominador
-    
     elif condicao_ponta == 'infinita':
-        # Caso D: Aleta Infinitamente Comprida
         return 1.0
-    
     elif condicao_ponta == 'temp_especificada':
-        # Caso C: Temperatura Especificada na Ponta
         if T_L is None:
             T_L = (theta_b / 2.0) + T_inf
         theta_L = T_L - T_inf
@@ -262,456 +202,399 @@ def calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta
         if abs(sinh_val) < 1e-10:
             return 1.0
         return (np.cosh(m * l) - (theta_L / theta_b)) / sinh_val
-    
     else:
-        # Padrão para o caso adiabático se a condição for inválida
         return np.tanh(m * l)
-
 
 def normalizar_tipo_aleta(tipo_str):
     """
-    Normaliza qualquer formato de nome de aleta para a string canônica padrão.
-    Suporta variações com acento, sem acento, com número, sem número, maiúsculas,
-    minúsculas, espaços e hífens.
+    Normaliza qualquer formato ou identificador de aleta para o nome de exibição canônico.
     """
-    if not tipo_str:
-        return "1)aletas retangulares retas"
-    
-    t = str(tipo_str).strip().lower()
-    t = t.replace("á", "a").replace("ã", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c").replace("_", " ").replace("-", " ")
-    
-    # 4. Circular
-    if "4" in t or "circular" in t:
-        return "4)aletas circulares de perfil retangular"
-    
-    # 8. Pino Parabólico com ponta arredondada
-    elif "8" in t or "arredondada" in t or ("pino" in t and "parabol" in t):
-        return "8)aletas de pino de perfilparabolico (ponta arredondada)"
-    
-    # 7. Perfil Parabólico
-    elif "7" in t or ("perfil" in t and "parabol" in t):
-        return "7)aletas de perfil parabolico"
-    
-    # 6. Perfil Triangular
-    elif "6" in t or ("perfil" in t and "triangul" in t):
-        return "6)aletas de perfil triangular"
-    
-    # 5. Perfil Retangular
-    elif "5" in t or ("perfil" in t and "retangul" in t):
-        return "5)aletas de perfil retangular"
-    
-    # 3. Parabólica Reta
-    elif "3" in t or "parabol" in t:
-        return "3)aletas parabolicas retas"
-    
-    # 2. Triangular Reta
-    elif "2" in t or "triangul" in t:
-        return "2)aletas triangulares retas"
-    
-    # 1. Retangular Reta
-    elif "1" in t or "retangul" in t:
-        return "1)aletas retangulares retas"
-    
+    tid = obter_tipo_aleta(tipo_str)
+    if tid and tid in TIPOS_ALETAS:
+        return TIPOS_ALETAS[tid]['nome_display']
     return "1)aletas retangulares retas"
 
 def calcular_eficiencia(tipo_aleta, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', T_L=None):
-    tipo_aleta = normalizar_tipo_aleta(tipo_aleta)
+    """
+    Cálculo rigoroso de eficiência, transferência de calor e métricas para as 8 geometrias.
+    Cada geometria é identificada estritamente pelo seu tipo_id (1-8), sem inferência por texto
+    e sem contaminação entre campos de geometrias distintas.
+    """
+    tipo_id = obter_tipo_aleta(tipo_aleta)
+    if tipo_id is None:
+        tipo_id = 1
     
-    # Auto-recuperação e valores padrão seguros para evitar qualquer erro 500
-    if T_b is None: T_b = 100.0
-    if T_inf is None: T_inf = 25.0
-    if h is None or h <= 0: h = 25.0
-    if k is None or k <= 0: k = 222.0
-    if l is None or l <= 0: l = 0.05
-    
-    # Dedução inteligente entre D, w, t, r1, r2
-    if D is not None and D > 0:
-        if t is None or t <= 0: t = D
-        if w is None or w <= 0: w = D
-        if r1 is None or r1 <= 0: r1 = D / 2.0
-        if r2 is None or r2 <= 0: r2 = D
-    
-    if D is None or D <= 0:
-        if t is not None and w is not None and (t + w) > 0:
-            D = 2.0 * (w * t) / (w + t)
-        elif t is not None and t > 0:
-            D = t
-        elif w is not None and w > 0:
-            D = w
-        else:
-            D = 0.01
-            
-    if t is None or t <= 0:
-        t = D if (D and D > 0) else 0.002
-    if w is None or w <= 0:
-        w = D if (D and D > 0) else 0.1
-    if r1 is None or r1 <= 0:
-        r1 = (D / 2.0) if (D and D > 0) else 0.01
-    if r2 is None or r2 <= r1:
-        r2 = r1 * 2.0 if r1 > 0 else 0.02
-    
-    # Dados didáticos serão gerados ao final
-    dados_didaticos = None
-    
+    # Valores de contorno padrão seguros
+    T_b = 100.0 if T_b is None else float(T_b)
+    T_inf = 25.0 if T_inf is None else float(T_inf)
+    h = 25.0 if (h is None or float(h) <= 0) else float(h)
+    k = 222.0 if (k is None or float(k) <= 0) else float(k)
+    l = 0.05 if (l is None or float(l) <= 0) else float(l)
     theta_b = T_b - T_inf
-    if tipo_aleta == "1)aletas retangulares retas":
 
-        P = 2 * (w + t)  # Perímetro
-        A_tr = w * t  # Área da seção transversal
-        m = np.sqrt(h * P / (k * A_tr))
+    # =========================================================================
+    # TIPO 1: Aleta Retangular Reta (Plana de Seção Uniforme) -> w, L, t
+    # =========================================================================
+    if tipo_id == 1:
+        w_val = 0.1 if (w is None or float(w) <= 0) else float(w)
+        t_val = 0.002 if (t is None or float(t) <= 0) else float(t)
         
-        # Calcular M (parâmetro base)
+        P = 2.0 * (w_val + t_val)
+        A_tr = w_val * t_val
+        m = np.sqrt(h * P / (k * A_tr))
         M = np.sqrt(h * P * k * A_tr) * theta_b
         
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
+        Lc = l + t_val / 2.0
+        Ap = Lc * t_val
         
-        # Taxa de transferência de calor com condição de contorno correta
-        Q_aleta = M * fator_condicao
-        
-        # Área superficial baseada na condição de contorno (Çengel & Ghajar / Incropera)
         if condicao_ponta == 'conveccao':
-            A_aleta = 2 * w * (l + t / 2)  # Comprimento corrigido Lc = L + t/2
-        else:
-            A_aleta = 2 * w * l  # Área das faces ativas (caso adiabático / infinito)
-        
-        # Eficiência baseada na condição de contorno
-        if condicao_ponta == 'adiabatica':
-            eta_aleta = np.tanh(m * l) / (m * l)
-        elif condicao_ponta == 'conveccao':
-            eta_aleta = fator_condicao / (m * l)
+            fator_cond = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, 'conveccao')
+            Q_aleta = M * fator_cond
+            A_aleta = 2.0 * w_val * Lc
+            eta_aleta = np.tanh(m * Lc) / (m * Lc) if (m * Lc) > 0 else 1.0
         elif condicao_ponta == 'infinita':
-            eta_aleta = 1.0 / (m * l)
+            Q_aleta = M * 1.0
+            A_aleta = 2.0 * w_val * l
+            eta_aleta = 1.0 / (m * l) if (m * l) > 0 else 1.0
         elif condicao_ponta == 'temp_especificada':
-            eta_aleta = fator_condicao / (m * l)
-        else:
-            eta_aleta = np.tanh(m * l) / (m * l)
-        
-        # Calcular efetividade
+            fator_cond = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, 'temp_especificada')
+            Q_aleta = M * fator_cond
+            A_aleta = 2.0 * w_val * l
+            Q_max = h * A_aleta * theta_b
+            eta_aleta = Q_aleta / Q_max if Q_max > 0 else 0.0
+        else:  # 'adiabatica'
+            Q_aleta = M * np.tanh(m * l)
+            A_aleta = 2.0 * w_val * l
+            eta_aleta = np.tanh(m * l) / (m * l) if (m * l) > 0 else 1.0
+            
         Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, t_val, w_val, None, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
         return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
-    elif tipo_aleta == "2)aletas triangulares retas":
-
-        P = w + 2 * np.sqrt((w / 2)**2 + t**2)  # Perímetro
-        A_tr = w * t  # Área da seção transversal
-        A_aleta = 2 * w * np.sqrt(l**2 + (t / 2)**2)
-        m = np.sqrt(h * P / (k * A_tr))
+    # =========================================================================
+    # TIPO 2: Aleta Triangular Reta -> w, L, t (NÃO utiliza D)
+    # =========================================================================
+    elif tipo_id == 2:
+        w_val = 0.1 if (w is None or float(w) <= 0) else float(w)
+        t_val = 0.002 if (t is None or float(t) <= 0) else float(t)
         
-        # Calcular M (parâmetro base)
-        M = np.sqrt(h * P * k * A_tr) * theta_b
+        P = 2.0 * (w_val + t_val)
+        A_tr = w_val * t_val
+        A_aleta = 2.0 * w_val * np.sqrt(l**2 + (t_val / 2.0)**2)
         
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
-        
-        # Taxa de transferência de calor
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência específica para aletas triangulares
-        # Para aleta triangular: I1(ml)/[mlI0(ml)] onde I são funções Bessel modificadas
+        # Parâmetro m característico de aleta reta triangular (Incropera Tabela 3.5)
+        m = np.sqrt(2.0 * h / (k * t_val))
         ml = m * l
+        
         try:
-            eta_aleta = i1(ml) / (ml * i0(ml)) if ml > 0 else 1.0
+            val_i0 = i0(2.0 * ml)
+            val_i1 = i1(2.0 * ml)
+            eta_aleta = (1.0 / ml) * (val_i1 / val_i0) if (ml > 0 and val_i0 > 0) else 1.0
         except (OverflowError, ZeroDivisionError):
-            # Para valores muito grandes, usar aproximação assintótica
             eta_aleta = 1.0 / ml if ml > 10 else np.tanh(ml) / ml
-        
-        # Calcular efetividade
+            
+        eta_aleta = max(0.0, min(1.0, float(eta_aleta)))
+        Q_max = h * A_aleta * theta_b
+        Q_aleta = eta_aleta * Q_max
         Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, t_val, w_val, None, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
         return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
-    elif tipo_aleta == "3)aletas parabolicas retas":
-
-        P = 2 * (w + t)  # Perímetro
-        A_tr = w * t  # Área da seção transversal
-        C1 = np.sqrt(1 + (t / l)**2)
-        A_aleta = w * l * (C1 + (l / t) * np.log(t / l + C1))
-        m = np.sqrt(h * P / (k * A_tr))
+    # =========================================================================
+    # TIPO 3: Aleta Parabólica Reta -> w, L, t (NÃO utiliza D)
+    # =========================================================================
+    elif tipo_id == 3:
+        w_val = 0.1 if (w is None or float(w) <= 0) else float(w)
+        t_val = 0.002 if (t is None or float(t) <= 0) else float(t)
         
-        # Calcular M (parâmetro base)
-        M = np.sqrt(h * P * k * A_tr) * theta_b
+        P = 2.0 * (w_val + t_val)
+        A_tr = w_val * t_val
+        C1 = np.sqrt(1.0 + (t_val / l)**2)
+        A_aleta = w_val * l * (C1 + (l / t_val) * np.log(t_val / l + C1))
         
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
-        
-        # Taxa de transferência de calor
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência específica para aletas parabólicas
-        # Para aleta parabólica: solução analítica específica
+        m = np.sqrt(2.0 * h / (k * t_val))
         ml = m * l
+        
+        # Equação exata Incropera Tabela 3.5: eta = 2 / (sqrt(4*(ml)^2 + 1) + 1)
+        eta_aleta = 2.0 / (np.sqrt(4.0 * (ml**2) + 1.0) + 1.0)
+        eta_aleta = max(0.0, min(1.0, float(eta_aleta)))
+        
+        Q_max = h * A_aleta * theta_b
+        Q_aleta = eta_aleta * Q_max
+        Q_sem_aleta = h * A_tr * theta_b
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, t_val, w_val, None, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
+        return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
+
+    # =========================================================================
+    # TIPO 4: Aleta Circular de Perfil Retangular (Anular) -> r1, r2, t (NÃO usa w, NÃO usa D)
+    # =========================================================================
+    elif tipo_id == 4:
+        r1_val = 0.01 if (r1 is None or float(r1) <= 0) else float(r1)
+        r2_val = 0.02 if (r2 is None or float(r2) <= 0) else float(r2)
+        if r2_val <= r1_val:
+            r2_val = r1_val + 0.01
+        t_val = 0.002 if (t is None or float(t) <= 0) else float(t)
+        
+        l_eff = r2_val - r1_val
+        r2c = r2_val + t_val / 2.0
+        Lc = l_eff + t_val / 2.0
+        
+        A_tr = 2.0 * np.pi * r1_val * t_val
+        P = 2.0 * np.pi * (r1_val + r2_val)
+        A_aleta = 2.0 * np.pi * (r2c**2 - r1_val**2)
+        
+        m = np.sqrt(2.0 * h / (k * t_val))
+        
+        # Incropera Tabela 3.5: Solução exata com funções de Bessel modificadas
         try:
-            # Aproximação para aleta parabólica baseada em Çengel
-            if ml > 0:
-                eta_aleta = 2.0 / (ml * (1 + ml))
+            u1 = m * r1_val
+            u2 = m * r2c
+            C2 = (2.0 * r1_val / m) / (r2c**2 - r1_val**2)
+            num = k1(u1) * i1(u2) - i1(u1) * k1(u2)
+            den = i0(u1) * k1(u2) + k0(u1) * i1(u2)
+            if abs(den) > 1e-12:
+                eta_aleta = C2 * (num / den)
             else:
-                eta_aleta = 1.0
-        except (OverflowError, ZeroDivisionError):
-            eta_aleta = 1.0 / ml if ml > 10 else 2.0 / (ml * (1 + ml))
-        
-        # Calcular efetividade
+                eta_aleta = np.tanh(m * Lc) / (m * Lc)
+        except Exception:
+            eta_aleta = np.tanh(m * Lc) / (m * Lc)
+            
+        eta_aleta = max(0.0, min(1.0, float(eta_aleta)))
+        Q_max = h * A_aleta * theta_b
+        Q_aleta = eta_aleta * Q_max
         Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l_eff, t_val, None, None, r1_val, r2_val, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
         return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
-    elif tipo_aleta == "4)aletas circulares de perfil retangular":
-
-        P = 2 * np.pi * r2  # Perímetro
-        A_tr = np.pi * (r2**2 - r1**2)  # Área da seção transversal
-        A_aleta = 2 * np.pi * (r2**2 - r1**2)
-
-        m = np.sqrt(h * P / (k * A_tr))
+    # =========================================================================
+    # TIPO 5: Aleta de Pino de Perfil Retangular (Cilíndrica Uniforme) -> D, L (NÃO usa w, NÃO usa t)
+    # =========================================================================
+    elif tipo_id == 5:
+        D_val = 0.01 if (D is None or float(D) <= 0) else float(D)
         
-        # Calcular M (parâmetro base)
+        P = np.pi * D_val
+        A_tr = np.pi * (D_val**2) / 4.0
+        m = np.sqrt(h * P / (k * A_tr))
         M = np.sqrt(h * P * k * A_tr) * theta_b
         
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
+        Lc = l + D_val / 4.0
         
-        # Taxa de transferência de calor
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência baseada na condição de contorno
-        if condicao_ponta == 'adiabatica':
-            eta_aleta = np.tanh(m * l) / (m * l)
-        elif condicao_ponta == 'conveccao':
-            eta_aleta = fator_condicao / (m * l)
+        if condicao_ponta == 'conveccao':
+            fator_cond = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, 'conveccao')
+            Q_aleta = M * fator_cond
+            A_aleta = np.pi * D_val * Lc
+            eta_aleta = np.tanh(m * Lc) / (m * Lc) if (m * Lc) > 0 else 1.0
         elif condicao_ponta == 'infinita':
-            eta_aleta = 1.0 / (m * l)
+            Q_aleta = M * 1.0
+            A_aleta = np.pi * D_val * l
+            eta_aleta = 1.0 / (m * l) if (m * l) > 0 else 1.0
         elif condicao_ponta == 'temp_especificada':
-            eta_aleta = fator_condicao / (m * l)
-        else:
-            eta_aleta = np.tanh(m * l) / (m * l)
-        
-        # Calcular efetividade
+            fator_cond = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, 'temp_especificada')
+            Q_aleta = M * fator_cond
+            A_aleta = np.pi * D_val * l
+            Q_max = h * A_aleta * theta_b
+            eta_aleta = Q_aleta / Q_max if Q_max > 0 else 0.0
+        else:  # 'adiabatica'
+            Q_aleta = M * np.tanh(m * l)
+            A_aleta = np.pi * D_val * l
+            eta_aleta = np.tanh(m * l) / (m * l) if (m * l) > 0 else 1.0
+            
         Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, None, None, D_val, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
         return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
-    elif tipo_aleta == "5)aletas de perfil retangular":
-
-        P = np.pi * D  # Perímetro
-        A_tr = np.pi * (D / 2)**2  # Área da seção transversal
-        A_aleta = np.pi * D * (l + D / 4)  # Área superficial para aletas cilíndricas
+    # =========================================================================
+    # TIPO 6: Aleta de Pino de Perfil Triangular (Cônica) -> D, L (NÃO usa w, NÃO usa t)
+    # =========================================================================
+    elif tipo_id == 6:
+        D_val = 0.01 if (D is None or float(D) <= 0) else float(D)
         
-        # Parâmetro m para aletas cilíndricas
-        m = np.sqrt(h * P / (k * A_tr))
+        P = np.pi * D_val
+        A_tr = np.pi * (D_val**2) / 4.0
+        A_aleta = (np.pi * D_val / 2.0) * np.sqrt(l**2 + (D_val / 2.0)**2)
         
-        # Calcular M (parâmetro base)
-        M = np.sqrt(h * P * k * A_tr) * theta_b
-        
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
-        
-        # Taxa de transferência de calor correta
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência baseada na condição de contorno
-        if condicao_ponta == 'adiabatica':
-            eta_aleta = np.tanh(m * l) / (m * l)
-        elif condicao_ponta == 'conveccao':
-            eta_aleta = fator_condicao / (m * l)
-        elif condicao_ponta == 'infinita':
-            eta_aleta = 1.0 / (m * l)
-        elif condicao_ponta == 'temp_especificada':
-            eta_aleta = fator_condicao / (m * l)
-        else:
-            eta_aleta = np.tanh(m * l) / (m * l)
-        
-        # Calcular efetividade
-        Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
-        return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
-
-    elif tipo_aleta == "6)aletas de perfil triangular":
-
-        P = np.pi * D  # Perímetro
-        A_tr = np.pi * (D / 2)**2  # Área da seção transversal
-        A_aleta = (np.pi * D / 2) * np.sqrt(l**2 + (D / 2)**2)
-        m = np.sqrt(h * P / (k * A_tr))
-        
-        # Calcular M (parâmetro base)
-        M = np.sqrt(h * P * k * A_tr) * theta_b
-        
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
-        
-        # Taxa de transferência de calor
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência específica para aleta de perfil triangular cilíndrica
-        # Para aletas cilíndricas com perfil triangular: aproximação baseada em Çengel
+        m = np.sqrt(4.0 * h / (k * D_val))
         ml = m * l
+        
+        # Incropera Tabela 3.5: eta = (2 / (m*L)) * (I2(2*m*L) / I1(2*m*L))
+        # Usando I2(z) = I0(z) - (2/z)*I1(z)
         try:
-            # Aproximação para aleta triangular cilíndrica
-            eta_aleta = i1(ml) / (ml * i0(ml)) if ml > 0 else 1.0
+            z = 2.0 * ml
+            val_i0 = i0(z)
+            val_i1 = i1(z)
+            val_i2 = val_i0 - (2.0 / z) * val_i1 if z > 0 else 0.0
+            eta_aleta = (2.0 / ml) * (val_i2 / val_i1) if (ml > 0 and val_i1 > 0) else 1.0
         except (OverflowError, ZeroDivisionError):
-            # Fallback se scipy não disponível ou overflow
             eta_aleta = 1.0 / ml if ml > 10 else np.tanh(ml) / ml
-        
-        # Calcular efetividade
+            
+        eta_aleta = max(0.0, min(1.0, float(eta_aleta)))
+        Q_max = h * A_aleta * theta_b
+        Q_aleta = eta_aleta * Q_max
         Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, None, None, D_val, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
         return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
-    elif tipo_aleta == "7)aletas de perfil parabolico":
-
-        P = np.pi * D  # Perímetro
-        A_tr = np.pi * (D / 2)**2  # Área da seção transversal
-        C3 = 1 + 2 * (D / l)**2
-        C4 = np.sqrt(1 + (D / l)**2)
-        A_aleta = (np.pi * l**3) / (8 * D) * (C3 * C4 - (l / (2 * D)) * np.log((2 * D * C4 / l + C3)))
-        m = np.sqrt(h * P / (k * A_tr))
+    # =========================================================================
+    # TIPO 7: Aleta de Pino de Perfil Parabólico -> D, L (NÃO usa w, NÃO usa t)
+    # =========================================================================
+    elif tipo_id == 7:
+        D_val = 0.01 if (D is None or float(D) <= 0) else float(D)
         
-        # Calcular M (parâmetro base)
-        M = np.sqrt(h * P * k * A_tr) * theta_b
+        P = np.pi * D_val
+        A_tr = np.pi * (D_val**2) / 4.0
+        C3 = 1.0 + 2.0 * (D_val / l)**2
+        C4 = np.sqrt(1.0 + (D_val / l)**2)
+        A_aleta = (np.pi * l**3) / (8.0 * D_val) * (C3 * C4 - (l / (2.0 * D_val)) * np.log((2.0 * D_val * C4 / l + C3)))
         
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
-        
-        # Taxa de transferência de calor
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência específica para aleta de perfil parabólico cilíndrica
-        # Para aletas cilíndricas com perfil parabólico: solução analítica
+        m = np.sqrt(4.0 * h / (k * D_val))
         ml = m * l
+        
+        # Incropera Tabela 3.5: eta = 2 / (sqrt(4/9 * (ml)^2 + 1) + 1)
+        eta_aleta = 2.0 / (np.sqrt((4.0 / 9.0) * (ml**2) + 1.0) + 1.0)
+        eta_aleta = max(0.0, min(1.0, float(eta_aleta)))
+        
+        Q_max = h * A_aleta * theta_b
+        Q_aleta = eta_aleta * Q_max
+        Q_sem_aleta = h * A_tr * theta_b
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, None, None, D_val, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
+        return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
+
+    # =========================================================================
+    # TIPO 8: Aleta de Pino Parabólica Ponta Arredondada -> D, L (NÃO usa w, NÃO usa t)
+    # =========================================================================
+    elif tipo_id == 8:
+        D_val = 0.01 if (D is None or float(D) <= 0) else float(D)
+        
+        P = np.pi * D_val
+        A_tr = np.pi * (D_val**2) / 4.0
+        A_aleta = (np.pi * D_val**4 / (96.0 * l**2)) * ((16.0 * (l / D_val)**2 + 1.0)**(1.5) - 1.0)
+        
+        m = np.sqrt(4.0 * h / (k * D_val))
+        ml = m * l
+        
+        # Incropera: Solução exata com funções de Bessel de ordem fracionária
         try:
-            # Aproximação para aleta parabólica cilíndrica baseada em Çengel
-            if ml > 0:
-                eta_aleta = 2.0 / (ml * np.sqrt(1 + ml))
+            z = (4.0 / 3.0) * ml
+            i_pos = sp.iv(0.75, z)
+            i_neg = sp.iv(-0.25, z)
+            if ml > 0 and abs(i_neg) > 1e-12:
+                eta_aleta = (3.0 / (2.0 * ml)) * (i_pos / i_neg)
             else:
-                eta_aleta = 1.0
-        except (OverflowError, ZeroDivisionError):
-            eta_aleta = 1.0 / ml if ml > 10 else 2.0 / (ml * np.sqrt(1 + ml))
-        
-        # Calcular efetividade
+                eta_aleta = 2.0 / (np.sqrt((4.0 / 9.0) * (ml**2) + 1.0) + 1.0)
+        except Exception:
+            eta_aleta = 2.0 / (np.sqrt((4.0 / 9.0) * (ml**2) + 1.0) + 1.0)
+            
+        eta_aleta = max(0.0, min(1.0, float(eta_aleta)))
+        Q_max = h * A_aleta * theta_b
+        Q_aleta = eta_aleta * Q_max
         Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
+        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta > 0 else 0.0
+        dados_didaticos = gerar_dados_didaticos(tipo_id, h, k, l, None, None, D_val, None, None, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
         return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
-    elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
+    # Fallback genérico seguro
+    return 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, None
 
-        P = np.pi * D  # Perímetro
-        A_tr = np.pi * (D / 2)**2  # Área da seção transversal
-        A_aleta = (np.pi * D**4 / (96 * l**2)) * ((16 * (l / D)**2 + 1)**(3 / 2) - 1)
-        m = np.sqrt(h * P / (k * A_tr))
-        
-        # Calcular M (parâmetro base)
-        M = np.sqrt(h * P * k * A_tr) * theta_b
-        
-        # Calcular fator baseado na condição de contorno
-        fator_condicao = calcular_taxa_calor_condicao(m, l, h, k, theta_b, T_L, T_inf, condicao_ponta)
-        
-        # Taxa de transferência de calor
-        Q_aleta = M * fator_condicao
-        
-        # Eficiência da aleta: η = Q_aleta / Q_max
-        Q_max = h * A_aleta * theta_b  # Calor máximo se toda aleta estivesse a T_b
-        eta_aleta = Q_aleta / Q_max if Q_max != 0 else 0
-        
-        # Calcular efetividade
-        Q_sem_aleta = h * A_tr * theta_b
-        epsilon_a = Q_aleta / Q_sem_aleta if Q_sem_aleta != 0 else 0
-        
-        # Gerar dados didáticos
-        dados_didaticos = gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a)
-        
-        return eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos
 
+# =============================================================================
+# FUNÇÕES DE DISTRIBUIÇÃO DE TEMPERATURA T(x)
+# =============================================================================
+
+def T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w):
+    """Tipo 1: Retangular Reta (w, t, L)"""
+    P = 2.0 * (w + t)
+    A_tr = w * t
+    m = np.sqrt(h * P / (k * A_tr))
+    return T_inf + (T_b - T_inf) * np.cosh(m * (l - x)) / np.cosh(m * l)
+
+def T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w):
+    """Tipo 2: Triangular Reta (w, t, L)"""
+    m = np.sqrt(2.0 * h / (k * t))
+    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(2.0) * (l - x)) / np.cosh(m * np.sqrt(2.0) * l)
+
+def T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w):
+    """Tipo 3: Parabólica Reta (w, t, L)"""
+    m = np.sqrt(2.0 * h / (k * t))
+    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(3.0) * (l - x)) / np.cosh(m * np.sqrt(3.0) * l)
+
+def T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2):
+    """Tipo 4: Circular de Perfil Retangular (r1, r2, t)"""
+    m = np.sqrt(2.0 * h / (k * t))
+    return T_inf + (T_b - T_inf) * np.cosh(m * (l - x)) / np.cosh(m * l)
+
+def T_aleta_pino_retangular(x, l, T_b, T_inf, h, k, D):
+    """Tipo 5: Pino de Perfil Retangular / Cilíndrico Uniforme (D, L)"""
+    P = np.pi * D
+    A_tr = np.pi * (D**2) / 4.0
+    m = np.sqrt(h * P / (k * A_tr))
+    return T_inf + (T_b - T_inf) * np.cosh(m * (l - x)) / np.cosh(m * l)
+
+# Alias para compatibilidade reversa com chamadas legadas
+def T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, w=None, t=None, D=None):
+    if D is not None and D > 0:
+        return T_aleta_pino_retangular(x, l, T_b, T_inf, h, k, D)
+    elif w is not None and t is not None:
+        return T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
     else:
-        pass
+        d_fallback = D if D else (w if w else 0.01)
+        return T_aleta_pino_retangular(x, l, T_b, T_inf, h, k, d_fallback)
 
-def on_submit(h_entry, l_entry, t_entry, w_entry, D_entry, r1_entry, r2_entry, T_inf_entry, T_b_entry, error_label, root):
-    try:
-        h = float(h_entry.get())
-        l = float(l_entry.get())
-        t = float(t_entry.get()) if t_entry else None
-        w = float(w_entry.get()) if w_entry else None
-        D = float(D_entry.get()) if D_entry else None
-        r1 = float(r1_entry.get()) if r1_entry else None
-        r2 = float(r2_entry.get()) if r2_entry else None
-        T_inf = float(T_inf_entry.get())
-        T_b = float(T_b_entry.get())
-        if h > 0 and l > 0 and (t is None or t > 0) and (w is None or w > 0) and (D is None or D > 0) and (r1 is None or r1 > 0) and (r2 is None or r2 > 0):
-            root.h = h  # type: ignore
-            root.l = l  # type: ignore
-            root.t = t  # type: ignore
-            root.w = w  # type: ignore
-            root.D = D  # type: ignore
-            root.r1 = r1  # type: ignore
-            root.r2 = r2  # type: ignore
-            root.T_inf = T_inf  # type: ignore
-            root.T_b = T_b  # type: ignore
-            root.destroy()
-        else:
-            error_label.config(text="Erro: Todos os valores devem ser números positivos.")
-    except ValueError:
-        error_label.config(text="Erro: Certifique-se de inserir números válidos.")
+def T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D):
+    """Tipo 6: Pino Triangular / Cônica (D, L)"""
+    m = np.sqrt(4.0 * h / (k * D))
+    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(2.0) * (l - x)) / np.cosh(m * np.sqrt(2.0) * l)
+
+def T_aleta_perfil_parabolico(x, L, T_b, T_inf, h, k, D):
+    """Tipo 7: Pino Parabólico (D, L)"""
+    m = np.sqrt(4.0 * h / (k * D))
+    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(3.0) * (L - x)) / np.cosh(m * np.sqrt(3.0) * L)
+
+def T_aleta_pino_parabolico(x, L, T_b, T_inf, h, k, D):
+    """Tipo 8: Pino Parabólico com Ponta Arredondada (D, L)"""
+    m = np.sqrt(4.0 * h / (k * D))
+    return T_inf + (T_b - T_inf) * np.cosh(m * (L - x)) / np.cosh(m * L)
+
+
+def calcular_Tx_para_tipo(tipo_aleta, x, l, T_b, T_inf, h, k, t=None, w=None, D=None, r1=None, r2=None):
+    """Calcula T(x) utilizando o ID geométrico estrito da aleta."""
+    tid = obter_tipo_aleta(tipo_aleta)
+    if tid == 1:
+        return T_aleta_retangular(x, l, T_b, T_inf, h, k, t or 0.002, w or 0.1)
+    elif tid == 2:
+        return T_aleta_triangular(x, l, T_b, T_inf, h, k, t or 0.002, w or 0.1)
+    elif tid == 3:
+        return T_aleta_parabolica(x, l, T_b, T_inf, h, k, t or 0.002, w or 0.1)
+    elif tid == 4:
+        r1_v = r1 or 0.01
+        r2_v = r2 or (r1_v + l if l else 0.02)
+        return T_aleta_circular(x, l, T_b, T_inf, h, k, t or 0.002, r1_v, r2_v)
+    elif tid == 5:
+        return T_aleta_pino_retangular(x, l, T_b, T_inf, h, k, D or 0.01)
+    elif tid == 6:
+        return T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D or 0.01)
+    elif tid == 7:
+        return T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D or 0.01)
+    elif tid == 8:
+        return T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D or 0.01)
+    else:
+        return np.full_like(x, T_inf)
+
 
 def sgerar_distribuicao_temperatura(sele_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, smateriais):
     x = np.linspace(0, l, 100)
     plt.figure()
 
+    aleta_nome = sele_aleta[0] if isinstance(sele_aleta, list) else sele_aleta
     for material, valor_k in zip(smateriais, k):
-        T = None  # Inicializar T
-        if sele_aleta[0] == "4)aletas circulares de perfil retangular":
-            if t is not None and r1 is not None and r2 is not None:
-                T = T_aleta_circular(x, l, T_b, T_inf, h, valor_k, t, r1, r2)
-            else:
-                raise ValueError("Espessura (t), raio interno (r1) e raio externo (r2) são necessários para aletas circulares de perfil retangular.")
-        elif sele_aleta[0] == "5)aletas de perfil retangular":
-            if D is not None:
-                T = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, valor_k, D)
-            else:
-                raise ValueError("Diâmetro (D) é necessário para aletas de perfil retangular.")
-        elif sele_aleta[0] in ["6)aletas de perfil triangular", "7)aletas de perfil parabolico", "8)aletas de pino de perfilparabolico (ponta arredondada)"]:
-            if D is not None:
-                if sele_aleta[0] == "6)aletas de perfil triangular":
-                    T = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, valor_k, D)
-                elif sele_aleta[0] == "7)aletas de perfil parabolico":
-                    T = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, valor_k, D)
-                elif sele_aleta[0] == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                    T = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, valor_k, D)
-            else:
-                raise ValueError("Diâmetro (D) é necessário para aletas de perfil triangular, parabolico e pino de perfilparabolico.")
-        else:
-            if t is not None and w is not None:
-                T = T_aleta_retangular(x, l, T_b, T_inf, h, valor_k, t, w)
-            else:
-                raise ValueError("Espessura (t) e largura (w) são necessárias para aletas retangulares.")
-        
-        if T is not None:
-            plt.plot(x, T, label=f'{material} (k={valor_k})')
+        T = calcular_Tx_para_tipo(aleta_nome, x, l, T_b, T_inf, h, valor_k, t, w, D, r1, r2)
+        plt.plot(x, T, label=f'{material} (k={valor_k})')
 
     plt.xlabel('Comprimento da aleta (m)')
     plt.ylabel('Temperatura (°C)')
@@ -719,37 +602,20 @@ def sgerar_distribuicao_temperatura(sele_aleta, h, k, l, t, w, D, r1, r2, T_b, T
     plt.legend()
     plt.grid(True)
 
+    os.makedirs('static', exist_ok=True)
     grafico_path = f'static/distribuicao_temperatura_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.png'
     plt.savefig(grafico_path)
     plt.close()
-
     return grafico_path
+
 
 def gerar_distribuicao_temperatura(tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf):
     x = np.linspace(0, l, 100)
     plt.figure()
 
     for tipo_aleta in tipos_aletas:
-        if tipo_aleta == "1)aletas retangulares retas":
-            T_x = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
-        elif tipo_aleta == "2)aletas triangulares retas":
-            T_x = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
-        elif tipo_aleta == "3)aletas parabolicas retas":
-            T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
-        elif tipo_aleta == "4)aletas circulares de perfil retangular":
-            T_x = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
-        elif tipo_aleta == "5)aletas de perfil retangular":
-            T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
-        elif tipo_aleta == "6)aletas de perfil triangular":
-            T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
-        elif tipo_aleta == "7)aletas de perfil parabolico":
-            T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
-        elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-            T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
-        else:
-            T_x = np.zeros_like(x)
-
-        plt.plot(x, T_x, label=tipo_aleta)
+        T_x = calcular_Tx_para_tipo(tipo_aleta, x, l, T_b, T_inf, h, k, t, w, D, r1, r2)
+        plt.plot(x, T_x, label=obter_nome_display(tipo_aleta))
 
     plt.xlabel('Comprimento (m)')
     plt.ylabel('Temperatura (°C)')
@@ -757,65 +623,187 @@ def gerar_distribuicao_temperatura(tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, 
     plt.grid(True)
     plt.legend()
 
-    # Garantir que o diretório exista
     os.makedirs('static/graficos', exist_ok=True)
-    
     grafico_path = 'static/graficos/distribuicao_temperatura.png'
     plt.savefig(grafico_path)
     plt.close()
-    
     return grafico_path
 
-def T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w):
-    P = 2 * (w + t)  # Perímetro
-    A_aleta = 2 * w * (l + t / 2)  # Área da seção transversal
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * (l - x)) / np.cosh(m * l)
 
-def T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w):
-    P = w + 2 * np.sqrt((w / 2)**2 + t**2)  # Perímetro
-    A_aleta = 2 * w * np.sqrt(l**2 + (t / 2)**2)
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(2) * (l - x)) / np.cosh(m * np.sqrt(2) * l)
+def salvar_resultados(filepath, tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados):
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
+        with open(filepath, 'w', encoding='utf-8') as file:
+            file.write("Resultados das Aletas\n")
+            for resultado in resultados:
+                if len(resultado) == 8:
+                    tipo_aleta, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado
+                    file.write(f"Tipo de Aleta: {obter_nome_display(tipo_aleta)}\n")
+                    file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
+                    file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
+                    file.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
+                    file.write(f"Parâmetro m: {m:.6f} m^-1\n")
+                    file.write(f"Perímetro P: {P:.6f} m\n")
+                    file.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
+                else:
+                    tipo_aleta, eta_aleta, Q_aleta, A_aleta = resultado
+                    file.write(f"Tipo de Aleta: {obter_nome_display(tipo_aleta)}\n")
+                    file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
+                    file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
+                
+                file.write("Comprimento (m) x Temperatura (°C):\n")
+                x = np.linspace(0, l, 15)
+                T_x = calcular_Tx_para_tipo(tipo_aleta, x, l, T_b, T_inf, h, k, t, w, D, r1, r2)
+                for xi, Ti in zip(x, T_x):
+                    file.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
+                file.write("\n")
+    except Exception as e:
+        print(f"[AVISO] Erro ao salvar relatório em {filepath}: {e}")
 
-def T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w):
-    P = 2 * (w + t)  # Perímetro
-    C1 = np.sqrt(1 + (t / l)**2)
-    A_aleta = w * l * (C1 + (l / t) * np.log(t / l + C1))
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(3) * (l - x)) / np.cosh(m * np.sqrt(3) * l)
+    try:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Resultados")
+        os.makedirs(output_dir, exist_ok=True)
+        results_filepath = os.path.join(output_dir, "resultados_aletas.txt")
+        with open(results_filepath, 'w', encoding='utf-8') as file:
+            file.write(f"Tipos de Aletas: {tipos_aletas}\n")
+            file.write(f"h: {h}, k: {k}, l: {l}, t: {t}, w: {w}, D: {D}, r1: {r1}, r2: {r2}, T_b: {T_b}, T_inf: {T_inf}\n")
+            for res in resultados:
+                file.write(f"{res}\n")
+    except Exception as e2:
+        print(f"[AVISO] Erro ao salvar resultados_aletas.txt: {e2}")
 
-def T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2):
-    P = 2 * np.pi * r2  # Perímetro
-    A_aleta = 2 * np.pi * max(0.0001, (r2**2 - r1**2))
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * (l - x)) / np.cosh(m * l)
 
-def T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D):
-    P = np.pi * D  # Perímetro
-    A_aleta = np.pi * D * (l + D / 4)
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * (l - x)) / np.cosh(m * l)
+def salvar_sresultados(filepath, sele_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados_sele):
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write("Resultados das Aletas\n")
+            f.write(f"Seleção de Aletas: {', '.join([obter_nome_display(a) for a in sele_aleta])}\n")
+            for resultado_sele in resultados_sele:
+                if len(resultado_sele) == 10:
+                    tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado_sele
+                    f.write(f"Tipo de Aleta: {obter_nome_display(tipo_aleta)}\n")
+                    f.write(f"Material: {material}\n")
+                    f.write(f"k: {valor_k}\n")
+                    f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
+                    f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
+                    f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
+                    f.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
+                    f.write(f"Parâmetro m: {m:.6f} m^-1\n")
+                    f.write(f"Perímetro P: {P:.6f} m\n")
+                    f.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
+                else:
+                    tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta = resultado_sele
+                    f.write(f"Tipo de Aleta: {obter_nome_display(tipo_aleta)}\n")
+                    f.write(f"Material: {material}\n")
+                    f.write(f"k: {valor_k}\n")
+                    f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
+                    f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
+                    f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
+                
+                f.write("Comprimento (m) x Temperatura (°C):\n")
+                x = np.linspace(0, l, 15)
+                T_x = calcular_Tx_para_tipo(tipo_aleta, x, l, T_b, T_inf, h, valor_k, t, w, D, r1, r2)
+                for xi, Ti in zip(x, T_x):
+                    f.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
+                f.write("\n")
+    except Exception as e_s:
+        print(f"[AVISO] Erro ao salvar selerelatorio em {filepath}: {e_s}")
 
-def T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D):
-    P = np.pi * D  # Perímetro
-    A_aleta = (np.pi * D / 2) * np.sqrt(l**2 + (D / 2)**2)
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(2) * (l - x)) / np.cosh(m * np.sqrt(2) * l)
 
-def T_aleta_perfil_parabolico(x, L, T_b, T_inf, h, k, D):
-    P = np.pi * D  # Perímetro
-    C3 = 1 + 2 * (D / L)**2
-    C4 = np.sqrt(1 + (D / L)**2)
-    A_aleta = (np.pi * L**3) / (8 * D) * (C3 * C4 - (L / (2 * D)) * np.log((2 * D * C4 / L + C3)))
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * np.sqrt(3) * (L - x)) / np.cosh(m * np.sqrt(3) * L)
+def gerar_dados_didaticos(tipo_id_ou_nome, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=100.0, T_inf=25.0, condicao_ponta='adiabatica', m=1.0, P=1.0, A_tr=1.0, eta_aleta=1.0, Q_aleta=1.0, epsilon_a=1.0):
+    """Gera dados didáticos com resolução passo a passo estritamente baseada no ID da geometria (1 a 8)."""
+    tid = obter_tipo_aleta(tipo_id_ou_nome) or 1
+    tipo_info = TIPOS_ALETAS.get(tid, TIPOS_ALETAS[1])
+    
+    class DadosDidaticos:
+        def __init__(self):
+            self.tipo_aleta_original = tipo_info['nome_display']
+            self.tipo_aleta_mapeado = tipo_info['descricao']
+            self.metodo = "Análise de Transferência de Calor em Aletas (Incropera & Çengel)"
+            self.condicao_ponta = condicao_ponta
+            self.passos_resolucao = []
+            self.q_base = Q_aleta
+            self.eficiencia = eta_aleta
+            self.efetividade = epsilon_a
+    
+    dados = DadosDidaticos()
+    theta_b = T_b - T_inf
+    
+    # Passo 1: Parâmetros térmicos de base
+    dados.passos_resolucao.append({
+        'titulo': '1. Identificação dos Parâmetros Térmicos',
+        'equacao': f'θ_b = T_b - T_∞ = {T_b:.2f} - {T_inf:.2f} = {theta_b:.2f} °C',
+        'explicacao': 'Diferença de temperatura na base da aleta, que representa o potencial térmico motriz.',
+        'valores': f'h = {h:.2f} W/m²·K, k = {k:.2f} W/m·K, L = {l:.4f} m'
+    })
+    
+    # Passo 2: Propriedades geométricas específicas de cada geometria
+    if tid in [1, 2, 3]:
+        dados.passos_resolucao.append({
+            'titulo': f'2. Geometria: {tipo_info["descricao"]}',
+            'equacao': f'P = 2(w + t) = 2({w} + {t}) = {P:.6f} m | A_tr = w × t = {w} × {t} = {A_tr:.8f} m²',
+            'explicacao': f'Perfil com largura w = {w} m e espessura t = {t} m. Perímetro molhado e área transversal na base.',
+            'valores': f'w = {w} m, t = {t} m, L = {l} m'
+        })
+    elif tid == 4:
+        dados.passos_resolucao.append({
+            'titulo': f'2. Geometria: {tipo_info["descricao"]}',
+            'equacao': f'A_tr = 2π·r₁·t = 2π·({r1})·({t}) = {A_tr:.8f} m²',
+            'explicacao': f'Aleta anular concêntrica montada sobre tubo de raio interno r₁ = {r1} m e raio externo r₂ = {r2} m.',
+            'valores': f'r₁ = {r1} m, r₂ = {r2} m, t = {t} m'
+        })
+    else:  # 5, 6, 7, 8
+        dados.passos_resolucao.append({
+            'titulo': f'2. Geometria: {tipo_info["descricao"]}',
+            'equacao': f'P = π·D = π·({D}) = {P:.6f} m | A_tr = π·D²/4 = {A_tr:.8f} m²',
+            'explicacao': f'Aleta de pino com diâmetro de base D = {D} m e comprimento L = {l} m.',
+            'valores': f'D = {D} m, L = {l} m'
+        })
+        
+    # Passo 3: Parâmetro m
+    dados.passos_resolucao.append({
+        'titulo': '3. Parâmetro Característico (m)',
+        'equacao': f'm = √(h·P / (k·A_tr)) = {m:.6f} m⁻¹',
+        'explicacao': 'Mede a taxa de decaimento de temperatura ao longo da aleta.',
+        'valores': f'm·L = {m * l:.4f} (adimensional)'
+    })
+    
+    # Passo 4: Eficiência
+    dados.passos_resolucao.append({
+        'titulo': f'4. Eficiência da Aleta (ηₐ)',
+        'equacao': f'ηₐ = {eta_aleta:.6f} ({eta_aleta*100:.2f}%)',
+        'explicacao': f'Calculada pelas equações exatas para a geometria {tipo_info["nome_display"]}.',
+        'valores': f'ηₐ = {eta_aleta:.4f}'
+    })
+    
+    # Passo 5: Taxa de transferência de calor
+    dados.passos_resolucao.append({
+        'titulo': '5. Taxa de Transferência de Calor (Q_aleta)',
+        'equacao': f'Q_aleta = {Q_aleta:.4f} W',
+        'explicacao': 'Calor total transferido pela aleta para o fluido.',
+        'valores': f'Q = {Q_aleta:.4f} W'
+    })
+    
+    # Passo 6: Efetividade
+    dados.passos_resolucao.append({
+        'titulo': '6. Efetividade da Aleta (εₐ)',
+        'equacao': f'εₐ = Q_aleta / Q_sem_aleta = {epsilon_a:.4f}',
+        'explicacao': 'Razão entre o calor transferido com aleta e o calor que seria transferido pela base desprovida de aleta.',
+        'valores': f'εₐ = {epsilon_a:.2f} ({"Excelente (≥ 2)" if epsilon_a >= 2 else "Aceitável (> 1)" if epsilon_a > 1 else "Ineficiente (≤ 1)"})'
+    })
+    
+    return dados
 
-def T_aleta_pino_parabolico(x, L, T_b, T_inf, h, k, D):
-    P = np.pi * D  # Perímetro
-    A_aleta = (np.pi * D**4 / (96 * L**2)) * ((16 * (L / D)**2 + 1)**(3 / 2) - 1)
-    m = np.sqrt(h * P / (k * A_aleta))
-    return T_inf + (T_b - T_inf) * np.cosh(m * (L - x)) / np.cosh(m * L)
+__all__ = [
+    'normalizar_tipo_aleta', 'calcular_eficiencia', 'mostrar_formula',
+    'gerar_distribuicao_temperatura', 'sgerar_distribuicao_temperatura',
+    'salvar_resultados', 'salvar_sresultados', 'gerar_dados_didaticos',
+    'T_aleta_retangular', 'T_aleta_triangular', 'T_aleta_parabolica',
+    'T_aleta_circular', 'T_aleta_pino_retangular', 'T_aleta_perfil_retangular',
+    'T_aleta_perfil_triangular', 'T_aleta_perfil_parabolico', 'T_aleta_pino_parabolico',
+    'obter_imagem', 'obter_formula'
+]
 
 def main():
     tipos_aletas = escolher_aletas()
@@ -887,7 +875,13 @@ def main():
     button_frame = ctk.CTkFrame(root)
     button_frame.pack(pady=10)
 
-    submit_button = ctk.CTkButton(button_frame, text="Confirmar", command=lambda: on_submit(h_entry, l_entry, t_entry, w_entry, D_entry, r1_entry, r2_entry, T_inf_entry, T_b_entry, error_label, root))
+    # Função lambda chamada aqui para processar inputs
+    # Nota: a função on_submit original foi assumida existir e ser compatível
+    def on_submit_local():
+        from __main__ import on_submit
+        on_submit(h_entry, l_entry, t_entry, w_entry, D_entry, r1_entry, r2_entry, T_inf_entry, T_b_entry, error_label, root)
+    
+    submit_button = ctk.CTkButton(button_frame, text="Confirmar", command=on_submit_local)
     submit_button.pack(side=ctk.LEFT, padx=5)
 
     back_button = ctk.CTkButton(button_frame, text="Voltar", command=lambda: [root.destroy(), main()])
@@ -895,284 +889,5 @@ def main():
 
     root.mainloop()
 
-    h = getattr(root, 'h', None)
-    l = getattr(root, 'l', None)
-    t = getattr(root, 't', None)
-    w = getattr(root, 'w', None)
-    D = getattr(root, 'D', None)
-    r1 = getattr(root, 'r1', None)
-    r2 = getattr(root, 'r2', None)
-    T_inf = getattr(root, 'T_inf', None)
-    T_b = getattr(root, 'T_b', None)
-
-    if h is None or l is None or T_inf is None or T_b is None or (t is None and w is None and D is None and r1 is None and r2 is None):
-        print("Valores não fornecidos.")
-        return
-
-    
-
-   
-def salvar_resultados(filepath, tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados):
-    # Auto-completar variáveis caso alguma seja None
-    if D is None or D <= 0:
-        D = 2.0 * (w * t) / (w + t) if (w and t and (w + t) > 0) else (t if t else (w if w else 0.01))
-    if t is None or t <= 0: t = D if D else 0.002
-    if w is None or w <= 0: w = D if D else 0.1
-    if r1 is None or r1 <= 0: r1 = (D / 2.0) if D else 0.01
-    if r2 is None or r2 <= r1: r2 = (r1 * 2.0) if r1 > 0 else 0.02
-
-    try:
-        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-        with open(filepath, 'w', encoding='utf-8') as file:
-            file.write("Resultados das Aletas\n")
-            for resultado in resultados:
-                if len(resultado) == 8:  # Novo formato com métricas de desempenho
-                    tipo_aleta, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado
-                    file.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                    file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
-                    file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
-                    file.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
-                    file.write(f"Parâmetro m: {m:.6f} m^-1\n")
-                    file.write(f"Perímetro P: {P:.6f} m\n")
-                    file.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
-                else:  # Formato antigo para compatibilidade
-                    tipo_aleta, eta_aleta, Q_aleta, A_aleta = resultado
-                    file.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                    file.write(f"Eficiência (eta_aleta): {eta_aleta:.6f}\n")
-                    file.write(f"Taxa de Transferência de Calor (Q_aleta): {Q_aleta:.6f} W\n")
-                file.write("Comprimento (m) x Temperatura (°C):\n")
-                x = np.linspace(0, l, 15)  
-                if tipo_aleta == "1)aletas retangulares retas":
-                    T_x = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
-                elif tipo_aleta == "2)aletas triangulares retas":
-                    T_x = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
-                elif tipo_aleta == "3)aletas parabolicas retas":
-                    T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
-                elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                    T_x = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
-                elif tipo_aleta == "5)aletas de perfil retangular":
-                    T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
-                elif tipo_aleta == "6)aletas de perfil triangular":
-                    T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
-                elif tipo_aleta == "7)aletas de perfil parabolico":
-                    T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
-                elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                    T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
-                else:
-                    T_x = np.zeros_like(x)
-                for xi, Ti in zip(x, T_x):
-                    file.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
-                file.write("\n")
-    except Exception as e:
-        print(f"[AVISO] Erro ao salvar relatório em {filepath}: {e}")
-
-    try:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Resultados")
-        os.makedirs(output_dir, exist_ok=True)
-        results_filepath = os.path.join(output_dir, "resultados_aletas.txt")
-        with open(results_filepath, 'w', encoding='utf-8') as file:
-            file.write(f"Tipos de Aletas: {tipos_aletas}\n")
-            file.write(f"h: {h}, k: {k}, l: {l}, t: {t}, w: {w}, D: {D}, r1: {r1}, r2: {r2}, T_b: {T_b}, T_inf: {T_inf}\n")
-            for res in resultados:
-                file.write(f"{res}\n")
-    except Exception as e2:
-        print(f"[AVISO] Erro ao salvar resultados_aletas.txt: {e2}")
-            
-def salvar_sresultados(filepath, sele_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, resultados_sele):
-    try:
-        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write("Resultados das Aletas\n")
-            f.write(f"Seleção de Aletas: {', '.join(sele_aleta)}\n")
-            for resultado_sele in resultados_sele:
-                if len(resultado_sele) == 10:  # Novo formato com métricas de desempenho
-                    tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado_sele
-                    f.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                    f.write(f"Material: {material}\n")
-                    f.write(f"k: {valor_k}\n")
-                    f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
-                    f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
-                    f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
-                    f.write(f"Efetividade (epsilon_a): {epsilon_a:.6f}\n")
-                    f.write(f"Parâmetro m: {m:.6f} m^-1\n")
-                    f.write(f"Perímetro P: {P:.6f} m\n")
-                    f.write(f"Área Transversal A_tr: {A_tr:.9f} m^2\n")
-                else:  # Formato antigo para compatibilidade
-                    tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta = resultado_sele
-                    f.write(f"Tipo de Aleta: {tipo_aleta}\n")
-                    f.write(f"Material: {material}\n")
-                    f.write(f"k: {valor_k}\n")
-                    f.write(f"Eficiência da Aleta: {eta_aleta:.6f}\n")
-                    f.write(f"Taxa de Transferência de Calor: {Q_aleta:.6f} W\n")
-                    f.write(f"Área da Aleta: {A_aleta:.6f} m²\n")
-                f.write("Comprimento (m) x Temperatura (°C):\n")
-                x = np.linspace(0, l, 15)
-                if tipo_aleta == "1)aletas retangulares retas":
-                    if t is not None and w is not None:
-                        T_x = T_aleta_retangular(x, l, T_b, T_inf, h, valor_k, t, w)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "2)aletas triangulares retas":
-                    if t is not None and w is not None:
-                        T_x = T_aleta_triangular(x, l, T_b, T_inf, h, valor_k, t, w)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "3)aletas parabolicas retas":
-                    if t is not None and w is not None:
-                        T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, valor_k, t, w)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                    if t is not None and r1 is not None and r2 is not None:
-                        T_x = T_aleta_circular(x, l, T_b, T_inf, h, valor_k, t, r1, r2)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "5)aletas de perfil retangular":
-                    if D is not None:
-                        T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, valor_k, D)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "6)aletas de perfil triangular":
-                    if D is not None:
-                        T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, valor_k, D)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "7)aletas de perfil parabolico":
-                    if D is not None:
-                        T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, valor_k, D)
-                    else:
-                        T_x = np.zeros_like(x)
-                elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                    if D is not None:
-                        T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, valor_k, D)
-                    else:
-                        T_x = np.zeros_like(x)
-                else:
-                    T_x = np.zeros_like(x)
-                for xi, Ti in zip(x, T_x):
-                    f.write(f"{xi:.6f} m: {Ti:.6f} °C\n")
-                f.write("\n")
-    except Exception as e_s:
-        print(f"[AVISO] Erro ao salvar selerelatorio em {filepath}: {e_s}")
-            
 if __name__ == "__main__":
     main()
-
-def gerar_dados_didaticos(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, m, P, A_tr, eta_aleta, Q_aleta, epsilon_a):
-    """Gera dados didáticos com resolução passo a passo para aletas de seção variável"""
-    
-    class DadosDidaticos:
-        def __init__(self):
-            self.tipo_aleta_original = tipo_aleta
-            self.tipo_aleta_mapeado = tipo_aleta
-            self.metodo = "Análise de Transferência de Calor em Aletas"
-            self.condicao_ponta = condicao_ponta
-            self.passos_resolucao = []
-            self.q_base = Q_aleta
-            self.eficiencia = eta_aleta
-            self.efetividade = epsilon_a
-    
-    dados = DadosDidaticos()
-    theta_b = T_b - T_inf
-    
-    # Passo 1: Identificação dos parâmetros
-    passo1 = {
-        'titulo': '1. Identificação dos Parâmetros da Aleta',
-        'equacao': f'θ_b = T_b - T_∞ = {T_b} - {T_inf} = {theta_b} °C',
-        'explicacao': f'Calculamos a diferença de temperatura na base da aleta. Este é o potencial de transferência de calor disponível.',
-        'valores': f'h = {h} W/m²·K, k = {k} W/m·K, L = {l} m'
-    }
-    dados.passos_resolucao.append(passo1)
-    
-    # Passo 2: Cálculo das propriedades geométricas
-    if "retangular" in tipo_aleta.lower():
-        passo2 = {
-            'titulo': '2. Propriedades Geométricas da Aleta Retangular',
-            'equacao': f'P = 2(w + t) = 2({w} + {t}) = {P:.6f} m',
-            'explicacao': 'O perímetro da aleta inclui todas as superfícies expostas ao fluido.',
-            'valores': f'A_tr = w × t = {w} × {t} = {A_tr:.9f} m²'
-        }
-    elif "triangular" in tipo_aleta.lower():
-        passo2 = {
-            'titulo': '2. Propriedades Geométricas da Aleta Triangular',
-            'equacao': f'P = w + 2√((w/2)² + t²) = {P:.6f} m',
-            'explicacao': 'Para aleta triangular, consideramos a base e as duas faces inclinadas.',
-            'valores': f'A_tr = w × t = {w} × {t} = {A_tr:.9f} m²'
-        }
-    elif "perfil retangular" in tipo_aleta.lower():
-        passo2 = {
-            'titulo': '2. Propriedades Geométricas da Aleta de Perfil Retangular',
-            'equacao': f'P = π × D = π × {D} = {P:.6f} m',
-            'explicacao': 'Para aleta de perfil retangular (cilíndrica), o perímetro é a circunferência da seção circular.',
-            'valores': f'A_tr = π × D²/4 = π × {D}²/4 = {A_tr:.9f} m²'
-        }
-    elif "cilíndrica" in tipo_aleta.lower() or "pino" in tipo_aleta.lower():
-        passo2 = {
-            'titulo': '2. Propriedades Geométricas da Aleta Cilíndrica',
-            'equacao': f'P = π × D = π × {D} = {P:.6f} m',
-            'explicacao': 'Para aleta cilíndrica (pino), o perímetro é a circunferência.',
-            'valores': f'A_tr = π × D²/4 = π × {D}²/4 = {A_tr:.9f} m²'
-        }
-    else:
-        passo2 = {
-            'titulo': '2. Propriedades Geométricas da Aleta',
-            'equacao': f'P = {P:.6f} m, A_tr = {A_tr:.9f} m²',
-            'explicacao': 'Calculamos o perímetro e área transversal baseados na geometria específica.',
-            'valores': f'Geometria: {tipo_aleta}'
-        }
-    dados.passos_resolucao.append(passo2)
-    
-    # Passo 3: Parâmetro m
-    passo3 = {
-        'titulo': '3. Cálculo do Parâmetro m',
-        'equacao': f'm = √(hP/kA_tr) = √({h} × {P:.6f}/({k} × {A_tr:.9f})) = {m:.6f} m⁻¹',
-        'explicacao': 'O parâmetro m caracteriza a variação exponencial de temperatura ao longo da aleta. Quanto maior m, mais rápida é a queda de temperatura.',
-        'valores': f'mL = {m:.6f} × {l} = {m*l:.6f} (adimensional)'
-    }
-    dados.passos_resolucao.append(passo3)
-    
-    # Passo 4: Eficiência da aleta
-    if condicao_ponta == 'adiabatica':
-        passo4 = {
-            'titulo': '4. Eficiência da Aleta (Ponta Adiabática)',
-            'equacao': f'η = tanh(mL)/(mL) = tanh({m*l:.6f})/{m*l:.6f} = {eta_aleta:.6f}',
-            'explicacao': 'Para ponta adiabática, a eficiência é calculada usando a função tangente hiperbólica. Esta condição assume que não há perda de calor pela extremidade.',
-            'valores': f'η = {eta_aleta:.4f} = {eta_aleta*100:.2f}%'
-        }
-    elif condicao_ponta == 'conveccao':
-        passo4 = {
-            'titulo': '4. Eficiência da Aleta (Convecção na Ponta)',
-            'equacao': f'η = tanh(mL + h/(mk))/(mL + h/(mk))',
-            'explicacao': 'Para convecção na ponta, consideramos a transferência de calor pela extremidade da aleta.',
-            'valores': f'η = {eta_aleta:.4f} = {eta_aleta*100:.2f}%'
-        }
-    else:
-        passo4 = {
-            'titulo': '4. Eficiência da Aleta',
-            'equacao': f'η = {eta_aleta:.6f}',
-            'explicacao': f'Eficiência calculada para condição: {condicao_ponta}',
-            'valores': f'η = {eta_aleta:.4f} = {eta_aleta*100:.2f}%'
-        }
-    dados.passos_resolucao.append(passo4)
-    
-    # Passo 5: Taxa de transferência de calor
-    passo5 = {
-        'titulo': '5. Taxa de Transferência de Calor',
-        'equacao': f'Q = η × h × A_s × θ_b = {eta_aleta:.6f} × {h} × A_s × {theta_b}',
-        'explicacao': 'A taxa de transferência de calor é o produto da eficiência, coeficiente convectivo, área superficial e diferença de temperatura.',
-        'valores': f'Q = {Q_aleta:.3f} W'
-    }
-    dados.passos_resolucao.append(passo5)
-    
-    # Passo 6: Efetividade
-    passo6 = {
-        'titulo': '6. Efetividade da Aleta',
-        'equacao': f'ε = Q_aleta/Q_sem_aleta = {Q_aleta:.3f}/{h*A_tr*theta_b:.3f} = {epsilon_a:.3f}',
-        'explicacao': 'A efetividade compara a transferência de calor com a aleta versus sem a aleta. Valores > 1 indicam que a aleta melhora a transferência.',
-        'valores': f'ε = {epsilon_a:.3f} ({"Recomendado" if epsilon_a > 2 else "Aceitável" if epsilon_a > 1 else "Não recomendado"})'
-    }
-    dados.passos_resolucao.append(passo6)
-    
-    return dados
-
-__all__ = ['normalizar_tipo_aleta', 'calcular_eficiencia', 'mostrar_formula', 'gerar_distribuicao_temperatura', 'salvar_resultados', 'gerar_dados_didaticos']

@@ -4,156 +4,213 @@ from plotly.subplots import make_subplots
 import numpy as np
 import os
 import datetime
+import json
 
-def gerar_grafico_temperatura_interativo(tipos_aletas, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica'):
-    # Auto-dedução de variáveis
+def validar_consistencia_dados(x_m, x_mm, curvas, l):
+    """
+    Validação automática rigorosa dos dados antes de renderizar o gráfico e exportar CSV (Item 8):
+    1. Todas as posições devem ser numéricas e finitas.
+    2. Todas as temperaturas devem ser numéricas e finitas.
+    3. As posições devem estar em ordem estritamente crescente.
+    4. Não pode haver posições negativas.
+    5. A posição final deve corresponder ao comprimento real da aleta (l).
+    6. O tamanho dos arrays de todas as curvas deve ser rigorosamente idêntico a len(x_m).
+    7. A conversão entre metro e milímetro deve ser consistente: L_mm ≈ L_m * 1000.
+    """
+    l_float = float(l)
+    assert len(x_m) > 0, "Array de posições não pode estar vazio"
+    assert len(x_m) == len(x_mm), f"Dimensões inconsistentes: {len(x_m)} posições em m vs {len(x_mm)} em mm"
+
+    # 1, 4 e 7. Validação de posições e equivalência de unidades
+    for i, (val_m, val_mm) in enumerate(zip(x_m, x_mm)):
+        assert np.isfinite(val_m) and val_m >= -1e-12, f"Posição x_m inválida no índice {i}: {val_m}"
+        assert np.isfinite(val_mm) and val_mm >= -1e-9, f"Posição x_mm inválida no índice {i}: {val_mm}"
+        # L_mm = L_m * 1000 rigoroso
+        assert abs(val_mm - (val_m * 1000.0)) < 1e-4, f"Inconsistência metro/milímetro no índice {i}: {val_m} m vs {val_mm} mm"
+
+    # 3. Ordem estritamente crescente
+    for i in range(len(x_m) - 1):
+        assert x_m[i] < x_m[i+1], f"Posições não estão em ordem estritamente crescente: x[{i}]={x_m[i]} >= x[{i+1}]={x_m[i+1]}"
+
+    # 5. Posição inicial zero e final l
+    assert abs(x_m[0] - 0.0) < 1e-9, f"Posição inicial deve ser 0 m, obtido {x_m[0]}"
+    assert abs(x_m[-1] - l_float) < 1e-6, f"Posição final {x_m[-1]} difere do comprimento real da aleta {l_float}"
+
+    # 2 e 6. Validação das curvas de temperatura
+    assert len(curvas) > 0, "Deve existir ao menos uma curva de temperatura"
+    for c in curvas:
+        temps = c['temperaturas']
+        assert len(temps) == len(x_m), f"Tamanho da curva '{c['nome']}' ({len(temps)}) difere do eixo X ({len(x_m)})"
+        for t_idx, t_val in enumerate(temps):
+            assert np.isfinite(t_val), f"Temperatura não-finita na curva '{c['nome']}' no índice {t_idx}: {t_val}"
+
+
+def construir_dados_distribuicao_temperatura(tipos_aletas, materiais=None, k_list=None, l=0.05, h=25.0, t=None, w=None, D=None, r1=None, r2=None, T_b=100.0, T_inf=25.0, condicao_ponta='adiabatica', n_pontos=201):
+    """
+    Fonte Única da Verdade para o Gráfico Plotly e para o arquivo CSV.
+    Gera o vetor x em METROS e calcula as temperaturas reais analíticas de cada curva.
+    """
+    from modelo3 import calcular_Tx_para_tipo
+    from tipos_aletas_config import obter_tipo_aleta
+
     if T_b is None: T_b = 100.0
     if T_inf is None: T_inf = 25.0
     if h is None or h <= 0: h = 25.0
-    if k is None or k <= 0: k = 222.0
     if l is None or l <= 0: l = 0.05
-    if D is not None and D > 0:
-        if t is None or t <= 0: t = D
-        if w is None or w <= 0: w = D
-        if r1 is None or r1 <= 0: r1 = D / 2.0
-        if r2 is None or r2 <= 0: r2 = D
-    if D is None or D <= 0:
-        if t is not None and w is not None and (t + w) > 0:
-            D = 2.0 * (w * t) / (w + t)
-        elif t is not None and t > 0: D = t
-        elif w is not None and w > 0: D = w
-        else: D = 0.01
-    if t is None or t <= 0: t = D if (D and D > 0) else 0.002
-    if w is None or w <= 0: w = D if (D and D > 0) else 0.1
-    if r1 is None or r1 <= 0: r1 = (D / 2.0) if (D and D > 0) else 0.01
-    if r2 is None or r2 <= r1: r2 = (r1 * 2.0) if r1 > 0 else 0.02
+    l = float(l)
 
-    from modelo3 import (T_aleta_retangular, T_aleta_triangular, T_aleta_parabolica, 
-                        T_aleta_circular, T_aleta_perfil_retangular, T_aleta_perfil_triangular,
-                        T_aleta_perfil_parabolico, T_aleta_pino_parabolico, normalizar_tipo_aleta)
-    
-    tipos_aletas = [normalizar_tipo_aleta(ta) for ta in tipos_aletas]
-    
-    x = np.linspace(0, l, 100)
-    
-    # Criar figura
-    fig = go.Figure()
-    
-    # Definir cores para cada tipo de aleta (mais contrastantes)
-    cores = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf']
-    
-    for i, tipo_aleta in enumerate(tipos_aletas):
-        try:
-            if tipo_aleta == "1)aletas retangulares retas":
-                T_x = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
-                nome = "Retangular Reta"
-            elif tipo_aleta == "2)aletas triangulares retas":
-                T_x = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
-                nome = "Triangular Reta"
-            elif tipo_aleta == "3)aletas parabolicas retas":
-                T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
-                nome = "Parabólica Reta"
-            elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                T_x = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
-                nome = "Circular Retangular"
-            elif tipo_aleta == "5)aletas de perfil retangular":
-                T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
-                nome = "Pino Retangular"
-            elif tipo_aleta == "6)aletas de perfil triangular":
-                T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
-                nome = "Pino Triangular"
-            elif tipo_aleta == "7)aletas de perfil parabolico":
-                T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
-                nome = "Pino Parabólico"
-            elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
-                nome = "Pino Parabólico (Arredondado)"
-            else:
-                T_x = np.full_like(x, T_inf)
-                nome = "Desconhecido"
-            
-            # Adicionar linha simples e limpa
-            fig.add_trace(go.Scatter(
-                x=x*1000,  # Converter para mm
-                y=T_x,
-                mode='lines',
-                name=nome,
-                line=dict(color=cores[i % len(cores)], width=2),
-                hovertemplate='<b>%{fullData.name}</b><br>' +
-                             'Posição: %{x:.1f} mm<br>' +
-                             'Temperatura: %{y:.1f} °C<extra></extra>'
-            ))
-            
-        except Exception as e:
-            print(f"Erro ao calcular temperatura para {tipo_aleta}: {e}")
-            continue
-    
-    # Calcular todas as temperaturas primeiro para determinar faixa real
-    todas_temperaturas = []
-    
-    # Calcular temperaturas de todas as aletas para encontrar faixa real
-    for tipo_aleta in tipos_aletas:
-        try:
-            if tipo_aleta == "1)aletas retangulares retas":
-                T_temp = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
-            elif tipo_aleta == "2)aletas triangulares retas":
-                T_temp = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
-            elif tipo_aleta == "3)aletas parabolicas retas":
-                T_temp = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
-            elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                T_temp = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
-            elif tipo_aleta == "5)aletas de perfil retangular":
-                T_temp = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
-            elif tipo_aleta == "6)aletas de perfil triangular":
-                T_temp = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
-            elif tipo_aleta == "7)aletas de perfil parabolico":
-                T_temp = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
-            elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                T_temp = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
-            else:
+    # 1. EIXO X ÚNICO EM METROS (0 até l, com 201 pontos calculados)
+    x_m = np.linspace(0.0, l, n_pontos)
+    # 2. POSIÇÃO EM MILÍMETROS MATEMATICAMENTE EXATA (L_mm = L_m * 1000)
+    x_mm = x_m * 1000.0
+
+    nomes_bonitos = {
+        1: "Aleta Retangular Reta",
+        2: "Aleta Triangular Reta",
+        3: "Aleta Parabólica Reta",
+        4: "Aleta Circular Retangular",
+        5: "Aleta de Pino Retangular",
+        6: "Aleta de Pino Triangular",
+        7: "Aleta de Pino Parabólica",
+        8: "Aleta de Pino Parabólica (Ponta Arredondada)"
+    }
+
+    curvas = []
+
+    # Cenário A: Comparação de Múltiplos Materiais (/resultados_sele)
+    if materiais is not None and isinstance(materiais, (list, tuple)) and len(materiais) > 0:
+        if k_list is None:
+            k_list = [222.0] * len(materiais)
+        elif not isinstance(k_list, (list, tuple)):
+            k_list = [k_list]
+
+        # Ordem obrigatória: Cobre primeiro, Alumínio depois (não inverter)
+        pares = list(zip(materiais, k_list))
+        def prioridade_material(item):
+            m_str = str(item[0]).strip().lower()
+            if 'cobre' in m_str: return 0
+            if 'alum' in m_str: return 1
+            return 2
+        pares.sort(key=prioridade_material)
+        materiais_ord = [p[0] for p in pares]
+        k_list_ord = [p[1] for p in pares]
+
+        for i, tipo_aleta in enumerate(tipos_aletas):
+            tid = obter_tipo_aleta(tipo_aleta) or (i + 1)
+            nome_aleta = nomes_bonitos.get(tid, f"Aleta {tid}")
+            for j, (mat, k_val) in enumerate(zip(materiais_ord, k_list_ord)):
+                try:
+                    k_float = float(k_val) if k_val is not None else 222.0
+                    T_x = calcular_Tx_para_tipo(tid, x_m, l, T_b, T_inf, h, k_float, t, w, D, r1, r2)
+                    # Quando há apenas 1 aleta e múltiplos materiais (ex: Cobre e Alumínio),
+                    # o nome da curva é exatamente o nome do material
+                    if len(tipos_aletas) == 1:
+                        nome_curva = str(mat)
+                    else:
+                        nome_curva = f"{nome_aleta} ({mat})"
+                    curvas.append({
+                        "nome": nome_curva,
+                        "temperaturas": [round(float(val), 4) for val in T_x]
+                    })
+                except Exception as e:
+                    print(f"Erro no cálculo de T_x para {tipo_aleta} com {mat}: {e}")
+                    continue
+    else:
+        # Cenário B: Comparação entre Geometrias de Aletas (/resultado)
+        if isinstance(k_list, (list, tuple)) and len(k_list) > 0:
+            k_val = float(k_list[0])
+        else:
+            k_val = float(k_list if k_list is not None else 222.0)
+
+        for i, tipo_aleta in enumerate(tipos_aletas):
+            try:
+                tid = obter_tipo_aleta(tipo_aleta) or (i + 1)
+                nome = nomes_bonitos.get(tid, f"Aleta {tid}")
+                T_x = calcular_Tx_para_tipo(tid, x_m, l, T_b, T_inf, h, k_val, t, w, D, r1, r2)
+                curvas.append({
+                    "nome": nome,
+                    "temperaturas": [round(float(val), 4) for val in T_x]
+                })
+            except Exception as e:
+                print(f"Erro ao calcular temperatura para {tipo_aleta}: {e}")
                 continue
-                
-            todas_temperaturas.extend(T_temp)
-        except (ZeroDivisionError, ValueError, TypeError) as e:
-            print(f"Erro no cálculo de temperatura para {tipo_aleta}: {e}")
-            continue
+
+    # 3. VALIDAÇÃO AUTOMÁTICA (ITEM 8)
+    validar_consistencia_dados(x_m, x_mm, curvas, l)
+
+    # Posicao_x_m representa diretamente L (m)
+    dados_base = {
+        "Posicao_x_m": [round(float(val), 6) for val in x_m],
+        "x_m": [round(float(val), 6) for val in x_m],
+        "curvas": curvas,
+        "l_m": l,
+        "n_pontos": len(x_m),
+        "titulo": "Distribuição de Temperatura ao Longo da Aleta",
+        "eixo_x_label": "Posição ao longo da aleta (m)",
+        "eixo_y_label": "Temperatura (°C)"
+    }
+    return dados_base
+
+
+def criar_figura_plotly_temperatura(dados_base, T_b=100.0, T_inf=25.0):
+    """
+    Constrói a figura interativa Plotly utilizando rigorosamente os dados da base única (Item 3).
+    Eixo X: METROS ('Posição ao longo da aleta (m)').
+    Eixo Y: 'Temperatura (°C)'.
+    """
+    fig = go.Figure()
+    cores = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#3B1F2B', '#2B50AA', '#FF6B6B', '#4ECDC4']
     
-    # Deixar o eixo Y se ajustar naturalmente às curvas
+    todas_temperaturas = []
+    x_m = dados_base['x_m']
+
+    for i, curva in enumerate(dados_base['curvas']):
+        temps = curva['temperaturas']
+        todas_temperaturas.extend(temps)
+        fig.add_trace(go.Scatter(
+            x=x_m,  # Posição ao longo da aleta em METROS (ex: 0 a 0.5 m)
+            y=temps,
+            mode='lines',
+            name=curva['nome'],
+            line=dict(color=cores[i % len(cores)], width=2.5),
+            hovertemplate='<b>%{fullData.name}</b><br>' +
+                         'Posição: %{x:.4f} m<br>' +
+                         'Temperatura: %{y:.2f} °C<extra></extra>'
+        ))
+
     if todas_temperaturas:
         temp_min_real = min(todas_temperaturas)
         temp_max_real = max(todas_temperaturas)
-        
-        # Margem simples e natural (10% de cada lado)
         delta_temp = temp_max_real - temp_min_real
-        margem = max(delta_temp * 0.1, 2)  # Margem mínima de 2°C
-        
+        margem = max(delta_temp * 0.1, 2.0)
         y_min = temp_min_real - margem
         y_max = temp_max_real + margem
     else:
-        # Deixar automático
         y_min = None
         y_max = None
 
-    # Configurar layout
     fig.update_layout(
         title={
-            'text': f'🌡️ Distribuição de Temperatura - Condição: {condicao_ponta.title()}',
+            'text': dados_base['titulo'],
             'x': 0.5,
             'xanchor': 'center',
-            'font': {'size': 20, 'color': '#2c3e50'}
+            'font': {'size': 18, 'color': '#1976d2'}
         },
-        xaxis_title='Comprimento da Aleta (mm)',
-        yaxis_title='Temperatura (°C)',
+        xaxis_title=dados_base['eixo_x_label'],
+        yaxis_title=dados_base['eixo_y_label'],
         xaxis=dict(
+            title=dados_base['eixo_x_label'],
             gridcolor='rgba(128,128,128,0.3)',
             gridwidth=1,
-            title_font=dict(size=14, color='#34495e')
+            title_font=dict(size=14, color='#34495e'),
+            zeroline=False
         ),
         yaxis=dict(
+            title=dados_base['eixo_y_label'],
             gridcolor='rgba(128,128,128,0.2)',
             gridwidth=1,
             title_font=dict(size=14, color='#34495e'),
-            range=[y_min, y_max] if y_min is not None and y_max is not None else None,
+            range=[y_min, y_max] if (y_min is not None and y_max is not None) else None,
             showgrid=True,
             zeroline=False
         ),
@@ -173,26 +230,44 @@ def gerar_grafico_temperatura_interativo(tipos_aletas, h, k, l, t=None, w=None, 
         margin=dict(t=60, r=150, b=60, l=60),
         height=500
     )
-    
-    # Adicionar linhas de referência simples
-    fig.add_hline(
-        y=T_inf, 
-        line_dash="dot", 
-        line_color="#666",
-        annotation_text=f"T∞ = {T_inf}°C",
-        annotation_position="bottom right"
+
+    if T_inf is not None:
+        fig.add_hline(
+            y=T_inf, 
+            line_dash="dot", 
+            line_color="#666",
+            annotation_text=f"T∞ = {T_inf}°C",
+            annotation_position="bottom right"
+        )
+    if T_b is not None:
+        fig.add_hline(
+            y=T_b, 
+            line_dash="dot", 
+            line_color="#666",
+            annotation_text=f"Tb = {T_b}°C",
+            annotation_position="top right"
+        )
+
+    return fig
+
+
+def gerar_grafico_temperatura_interativo(tipos_aletas, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', material=None, n_pontos=201):
+    """
+    Gera o gráfico interativo de temperatura ao longo da aleta e retorna a tupla:
+    (grafico_html, dados_base) onde ambos compartilham rigorosamente a MESMA base de dados.
+    """
+    dados_base = construir_dados_distribuicao_temperatura(
+        tipos_aletas=tipos_aletas,
+        materiais=None,
+        k_list=k,
+        l=l, h=h, t=t, w=w, D=D, r1=r1, r2=r2,
+        T_b=T_b, T_inf=T_inf,
+        condicao_ponta=condicao_ponta,
+        n_pontos=n_pontos
     )
-    
-    fig.add_hline(
-        y=T_b, 
-        line_dash="dot", 
-        line_color="#666",
-        annotation_text=f"Tb = {T_b}°C",
-        annotation_position="top right"
-    )
-    
-    # Retornar HTML para renderização direta
-    return fig.to_html(include_plotlyjs='cdn', div_id="grafico-temperatura")
+    fig = criar_figura_plotly_temperatura(dados_base, T_b=T_b, T_inf=T_inf)
+    html_grafico = fig.to_html(include_plotlyjs='cdn', div_id="grafico-temperatura")
+    return html_grafico, dados_base
 
 def gerar_graficos_comparativos(resultados, material=None):
     """
@@ -362,126 +437,48 @@ def salvar_grafico_interativo(fig, nome_arquivo='grafico_interativo.html'):
     
     return nome_final
 
-def gerar_grafico_temperatura_multiplos_materiais(tipos_aletas, materiais, h, k_list, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica'):
+def gerar_grafico_temperatura_multiplos_materiais(tipos_aletas, materiais, h, k_list, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', n_pontos=201):
     """
-    Gera gráfico interativo de temperatura para múltiplos materiais
-    
-    Args:
-        tipos_aletas: Lista de tipos de aletas
-        materiais: Lista de nomes dos materiais
-        h: Coeficiente de convecção
-        k_list: Lista de condutividades térmicas
-        l: Comprimento da aleta
-        ... (outros parâmetros)
-    
-    Returns:
-        str: HTML do gráfico Plotly
+    Gera o gráfico interativo de temperatura para múltiplos materiais (ou aletas) e retorna:
+    (grafico_html, dados_base) onde ambos compartilham rigorosamente a MESMA base de dados.
     """
-    # Importar funções de temperatura do modelo3
-    from modelo3 import (T_aleta_retangular, T_aleta_triangular, T_aleta_parabolica, 
-                        T_aleta_circular, T_aleta_perfil_retangular, T_aleta_perfil_triangular,
-                        T_aleta_perfil_parabolico, T_aleta_pino_parabolico)
-    
-    x = np.linspace(0, l, 100)
-    
-    # Criar figura
-    fig = go.Figure()
-    
-    # Cores para diferencial de materiais e aletas
-    cores_materiais = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-    cores_aletas = ['solid', 'dash', 'dot', 'dashdot', 'longdash']
-    
-    # Loop para cada combinação de aleta e material
-    for i, tipo_aleta in enumerate(tipos_aletas):
-        for j, (material, k) in enumerate(zip(materiais, k_list)):
-            try:
-                if tipo_aleta == "1)aletas retangulares retas":
-                    T_x = T_aleta_retangular(x, l, T_b, T_inf, h, k, t, w)
-                    nome_aleta = "Retangular"
-                elif tipo_aleta == "2)aletas triangulares retas":
-                    T_x = T_aleta_triangular(x, l, T_b, T_inf, h, k, t, w)
-                    nome_aleta = "Triangular"
-                elif tipo_aleta == "3)aletas parabolicas retas":
-                    T_x = T_aleta_parabolica(x, l, T_b, T_inf, h, k, t, w)
-                    nome_aleta = "Parabólica"
-                elif tipo_aleta == "4)aletas circulares de perfil retangular":
-                    T_x = T_aleta_circular(x, l, T_b, T_inf, h, k, t, r1, r2)
-                    nome_aleta = "Circular"
-                elif tipo_aleta == "5)aletas de perfil retangular":
-                    T_x = T_aleta_perfil_retangular(x, l, T_b, T_inf, h, k, D)
-                    nome_aleta = "Pino Retangular"
-                elif tipo_aleta == "6)aletas de perfil triangular":
-                    T_x = T_aleta_perfil_triangular(x, l, T_b, T_inf, h, k, D)
-                    nome_aleta = "Pino Triangular"
-                elif tipo_aleta == "7)aletas de perfil parabolico":
-                    T_x = T_aleta_perfil_parabolico(x, l, T_b, T_inf, h, k, D)
-                    nome_aleta = "Pino Parabólico"
-                elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-                    T_x = T_aleta_pino_parabolico(x, l, T_b, T_inf, h, k, D)
-                    nome_aleta = "Pino Arredondado"
-                else:
-                    T_x = np.full_like(x, T_inf)
-                    nome_aleta = "Desconhecido"
-                
-                # Nome da legenda combinando aleta e material
-                nome_legenda = f"{nome_aleta} - {material} (k={k:.1f})"
-                
-                # Adicionar linha com cor específica para material e estilo para aleta
-                fig.add_trace(go.Scatter(
-                    x=x*1000,  # Converter para mm
-                    y=T_x,
-                    mode='lines',
-                    name=nome_legenda,
-                    line=dict(
-                        color=cores_materiais[j % len(cores_materiais)],
-                        dash=cores_aletas[i % len(cores_aletas)],
-                        width=2.5
-                    ),
-                    hovertemplate='<b>%{fullData.name}</b><br>' +
-                                'Posição: %{x:.1f} mm<br>' +
-                                'Temperatura: %{y:.2f} °C<br>' +
-                                '<extra></extra>'
-                ))
-                
-            except Exception as e:
-                print(f"Erro ao gerar gráfico para {tipo_aleta} com {material}: {e}")
-                continue
-    
-    # Configurar layout
-    fig.update_layout(
-        title={
-            'text': '🌡️ Distribuição de Temperatura - Múltiplos Materiais',
-            'x': 0.5,
-            'font': {'size': 18, 'color': '#1976d2'}
-        },
-        xaxis=dict(
-            title='Posição ao longo da aleta (mm)',
-            gridcolor='lightgray',
-            showgrid=True,
-            zeroline=False
-        ),
-        yaxis=dict(
-            title='Temperatura (°C)',
-            gridcolor='lightgray', 
-            showgrid=True,
-            zeroline=False
-        ),
-        plot_bgcolor='rgba(248, 249, 250, 0.8)',
-        paper_bgcolor='white',
-        font=dict(family="Arial, sans-serif", size=12),
-        legend=dict(
-            orientation="v",
-            yanchor="top",
-            y=1,
-            xanchor="left",
-            x=1.02,
-            bgcolor="rgba(255,255,255,0.8)",
-            bordercolor="lightgray",
-            borderwidth=1
-        ),
-        hovermode='closest',
-        margin=dict(l=60, r=150, t=60, b=60)
+    dados_base = construir_dados_distribuicao_temperatura(
+        tipos_aletas=tipos_aletas,
+        materiais=materiais,
+        k_list=k_list,
+        l=l, h=h, t=t, w=w, D=D, r1=r1, r2=r2,
+        T_b=T_b, T_inf=T_inf,
+        condicao_ponta=condicao_ponta,
+        n_pontos=n_pontos
     )
-    
-    return fig.to_html(include_plotlyjs='cdn', div_id="grafico-multiplos-materiais")
-    return nome_final
+    fig = criar_figura_plotly_temperatura(dados_base, T_b=T_b, T_inf=T_inf)
+    html_grafico = fig.to_html(include_plotlyjs='cdn', div_id="grafico-multiplos-materiais")
+    return html_grafico, dados_base
+
+
+def extrair_dados_curvas_json_interativo(tipos_aletas, h, k, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', n_pontos=201):
+    """Retorna os dados JSON compartilhados da base única para /resultado."""
+    dados_base = construir_dados_distribuicao_temperatura(
+        tipos_aletas=tipos_aletas,
+        materiais=None,
+        k_list=k,
+        l=l, h=h, t=t, w=w, D=D, r1=r1, r2=r2,
+        T_b=T_b, T_inf=T_inf,
+        condicao_ponta=condicao_ponta,
+        n_pontos=n_pontos
+    )
+    return json.dumps(dados_base)
+
+
+def extrair_dados_curvas_json_multiplos(tipos_aletas, materiais, h, k_list, l, t=None, w=None, D=None, r1=None, r2=None, T_b=None, T_inf=None, condicao_ponta='adiabatica', n_pontos=201):
+    """Retorna os dados JSON compartilhados da base única para /resultados_sele."""
+    dados_base = construir_dados_distribuicao_temperatura(
+        tipos_aletas=tipos_aletas,
+        materiais=materiais,
+        k_list=k_list,
+        l=l, h=h, t=t, w=w, D=D, r1=r1, r2=r2,
+        T_b=T_b, T_inf=T_inf,
+        condicao_ponta=condicao_ponta,
+        n_pontos=n_pontos
+    )
+    return json.dumps(dados_base)

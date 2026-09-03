@@ -252,10 +252,10 @@
                     <img src="{{ url_for('static', filename='aletas/4.png') }}" alt="Aleta Circular de Perfil Retangular">
                     <div class="aleta-name">Aletas Circulares de Perfil Retangular</div>
                 </label>
-                <label class="aleta-card" data-value="5)aletas de perfil retangular">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="5)aletas de perfil retangular">
-                    <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aleta de Perfil Retangular">
-                    <div class="aleta-name">Aletas de Perfil Retangular</div>
+                <label class="aleta-card" data-value="5)aletas de pino de perfil retangular">
+                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="5)aletas de pino de perfil retangular">
+                    <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aletas de Pino de Perfil Retangular">
+                    <div class="aleta-name">Aletas de Pino de Perfil Retangular</div>
                 </label>
                 <label class="aleta-card" data-value="6)aletas de perfil triangular">
                     <input type="radio" class="aleta-checkbox" name="sele_aleta" value="6)aletas de perfil triangular">
@@ -331,6 +331,7 @@
                 "3)aletas parabolicas retas": "{{ url_for('static', filename='aletas/3.png') }}",
                 "4)aletas circulares de perfil retangular": "{{ url_for('static', filename='aletas/4.png') }}",
                 "5)aletas de perfil retangular": "{{ url_for('static', filename='aletas/5.png') }}",
+                "5)aletas de pino de perfil retangular": "{{ url_for('static', filename='aletas/5.png') }}",
                 "6)aletas de perfil triangular": "{{ url_for('static', filename='aletas/6.png') }}",
                 "7)aletas de perfil parabolico": "{{ url_for('static', filename='aletas/7.png') }}",
                 "8)aletas de pino de perfilparabolico (ponta arredondada)": "{{ url_for('static', filename='aletas/8.png') }}"
@@ -341,11 +342,12 @@
                 "3)aletas parabolicas retas": "{{ url_for('static', filename='formulas/3.png') }}",
                 "4)aletas circulares de perfil retangular": "{{ url_for('static', filename='formulas/4.png') }}",
                 "5)aletas de perfil retangular": "{{ url_for('static', filename='formulas/5.png') }}",
+                "5)aletas de pino de perfil retangular": "{{ url_for('static', filename='formulas/5.png') }}",
                 "6)aletas de perfil triangular": "{{ url_for('static', filename='formulas/6.png') }}",
                 "7)aletas de perfil parabolico": "{{ url_for('static', filename='formulas/7.png') }}",
                 "8)aletas de pino de perfilparabolico (ponta arredondada)": "{{ url_for('static', filename='formulas/8.png') }}"
             };
-            if (tipoAleta) {
+            if (tipoAleta && aletaImages[tipoAleta]) {
                 preview.style.display = "flex";
                 aletaImage.src = aletaImages[tipoAleta];
                 formulaImage.src = formulaImages[tipoAleta];
