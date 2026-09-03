@@ -731,9 +731,9 @@
                         <i class="fas fa-file-image"></i>
                         Exportar Gráfico (PNG)
                     </button>
-                    <button type="button" class="btn-action-secondary btn-sm" onclick="exportarHistoricoCSV()" title="Baixar planilha CSV com todos os dados do ensaio">
+                    <button type="button" class="btn-action-secondary btn-sm" onclick="exportarHistoricoCSV()" title="Salvar planilha CSV com todos os dados do ensaio">
                         <i class="fas fa-file-csv text-success"></i>
-                        Exportar CSV
+                        Salvar CSV
                     </button>
                     <button type="button" class="btn-action-secondary btn-sm" onclick="limparHistoricoGrafico()">
                         <i class="fas fa-trash-can text-danger"></i>
@@ -876,20 +876,19 @@
             if (btn) btn.className = 'btn btn-sm btn-outline-success font-weight-bold py-0 px-2';
         }
 
+        // =====================================================================
+        // FONTE ÚNICA DA VERDADE — HISTÓRICO DE DADOS DE MONITORAMENTO
+        // =====================================================================
+        // Um único array armazena o histórico completo com todos os sensores,
+        // o tempo decorrido em segundos e o horário exato da medição.
+        // O gráfico e o CSV consomem rigorosamente esta mesma base de dados.
+        const dadosTemperatura = [];
+
         let monitoringInterval = null;
         let isPaused = false;
         let temperaturaChart = null;
-        const MAX_POINTS = 25;
-
-        const temperatureHistory = {
-            labels: [],
-            t1: [],
-            t2: [],
-            t3: [],
-            t4: [],
-            t5: [],
-            t6: []
-        };
+        let inicioColetaTimestamp = null;
+        let totalPontosColetados = 0;
 
         function inicializarGrafico() {
             const ctx = document.getElementById('temperaturaChart').getContext('2d');
@@ -901,11 +900,11 @@
             temperaturaChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: temperatureHistory.labels,
+                    labels: [],
                     datasets: [
                         {
-                            label: 'T1: Início Placa',
-                            data: temperatureHistory.t1,
+                            label: 'T1 - Início',
+                            data: [],
                             borderColor: '#f43f5e',
                             backgroundColor: gradientT1,
                             borderWidth: 2.5,
@@ -916,8 +915,8 @@
                             pointBackgroundColor: '#f43f5e'
                         },
                         {
-                            label: 'T2: Centro Placa',
-                            data: temperatureHistory.t2,
+                            label: 'T2 - Meio',
+                            data: [],
                             borderColor: '#f59e0b',
                             backgroundColor: 'transparent',
                             borderWidth: 2.5,
@@ -928,8 +927,8 @@
                             pointBackgroundColor: '#f59e0b'
                         },
                         {
-                            label: 'T3: Fim Placa',
-                            data: temperatureHistory.t3,
+                            label: 'T3 - Fim',
+                            data: [],
                             borderColor: '#ea580c',
                             backgroundColor: 'transparent',
                             borderWidth: 2.5,
@@ -940,8 +939,8 @@
                             pointBackgroundColor: '#ea580c'
                         },
                         {
-                            label: 'T4: Ambiente',
-                            data: temperatureHistory.t4,
+                            label: 'T4 - Ambiente',
+                            data: [],
                             borderColor: '#0ea5e9',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
@@ -953,8 +952,8 @@
                             pointBackgroundColor: '#0ea5e9'
                         },
                         {
-                            label: 'T5: Base / Água',
-                            data: temperatureHistory.t5,
+                            label: 'T5 - Base',
+                            data: [],
                             borderColor: '#6366f1',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
@@ -965,8 +964,8 @@
                             pointBackgroundColor: '#6366f1'
                         },
                         {
-                            label: 'T6: Base / Água',
-                            data: temperatureHistory.t6,
+                            label: 'T6 - Base',
+                            data: [],
                             borderColor: '#8b5cf6',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
@@ -1003,15 +1002,23 @@
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
                             titleFont: { family: 'Inter', size: 13, weight: '700' },
                             bodyFont: { family: 'JetBrains Mono', size: 12 },
                             padding: 12,
                             cornerRadius: 8,
                             boxPadding: 6,
                             callbacks: {
+                                title: function(items) {
+                                    if (!items || items.length === 0) return '';
+                                    const idx = items[0].dataIndex;
+                                    const reg = dadosTemperatura[idx];
+                                    const hor = reg ? reg.horario : '--:--:--';
+                                    const seg = reg ? reg.tempo_s : items[0].label;
+                                    return `Tempo: ${seg} s  |  Horário: ${hor}`;
+                                },
                                 label: function(context) {
-                                    return ' ' + context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' °C';
+                                    return ' ' + context.dataset.label + ': ' + Number(context.parsed.y).toFixed(4) + ' °C';
                                 }
                             }
                         }
@@ -1031,14 +1038,14 @@
                                 font: { family: 'JetBrains Mono', size: 11 },
                                 color: '#64748b',
                                 callback: function(value) {
-                                    return value.toFixed(1) + '°C';
+                                    return Number(value).toFixed(1) + '°C';
                                 }
                             }
                         },
                         x: {
                             title: {
                                 display: true,
-                                text: 'Horário de Coleta',
+                                text: 'Tempo (s)',
                                 font: { family: 'Inter', size: 12, weight: '600' },
                                 color: '#64748b'
                             },
@@ -1047,7 +1054,11 @@
                             },
                             ticks: {
                                 font: { family: 'JetBrains Mono', size: 10 },
-                                color: '#94a3b8'
+                                color: '#94a3b8',
+                                callback: function(val) {
+                                    const lbl = this.getLabelForValue(val);
+                                    return (lbl !== undefined ? lbl : val) + ' s';
+                                }
                             }
                         }
                     }
@@ -1055,8 +1066,25 @@
             });
         }
 
-        let totalPontosColetados = 0;
-        let inicioColetaTimestamp = null;
+        // Validação rigorosa dos dados antes de registrar e exportar (Item 11)
+        function validarRegistroTemperatura(registro) {
+            if (typeof registro.tempo_s !== 'number' || isNaN(registro.tempo_s) || registro.tempo_s < 0) {
+                console.error('[Validação] Tempo (s) inválido:', registro.tempo_s);
+                return false;
+            }
+            if (!registro.horario || typeof registro.horario !== 'string') {
+                console.error('[Validação] Horário ausente ou inválido:', registro.horario);
+                return false;
+            }
+            const sensores = ['t1', 't2', 't3', 't4', 't5', 't6'];
+            for (const s of sensores) {
+                if (typeof registro[s] !== 'number' || isNaN(registro[s])) {
+                    console.error(`[Validação] Sensor ${s} com valor não numérico:`, registro[s]);
+                    return false;
+                }
+            }
+            return true;
+        }
 
         function adicionarPontoGrafico(t1, t2, t3, t4, t5, t6) {
             if (isPaused) return;
@@ -1067,43 +1095,56 @@
                 agora.getMinutes().toString().padStart(2, '0') + ':' + 
                 agora.getSeconds().toString().padStart(2, '0');
 
-            if (!inicioColetaTimestamp) {
+            let tempo_s = 0;
+            if (dadosTemperatura.length === 0) {
                 inicioColetaTimestamp = agora.getTime();
+                tempo_s = 0;
+            } else {
+                const segCalc = Math.round((agora.getTime() - inicioColetaTimestamp) / 1000);
+                const ultimoTempo = dadosTemperatura[dadosTemperatura.length - 1].tempo_s;
+                tempo_s = segCalc > ultimoTempo ? segCalc : (ultimoTempo + 2);
             }
 
+            const novoRegistro = {
+                horario: timeLabel,
+                tempo_s: tempo_s,
+                t1: Number(t1),
+                t2: Number(t2),
+                t3: Number(t3),
+                t4: Number(t4),
+                t5: Number(t5),
+                t6: Number(t6)
+            };
+
+            if (!validarRegistroTemperatura(novoRegistro)) {
+                return;
+            }
+
+            // 1. Armazena na BASE ÚNICA DE DADOS
+            dadosTemperatura.push(novoRegistro);
             totalPontosColetados++;
 
-            if (temperatureHistory.labels.length >= MAX_POINTS) {
-                temperatureHistory.labels.shift();
-                temperatureHistory.t1.shift();
-                temperatureHistory.t2.shift();
-                temperatureHistory.t3.shift();
-                temperatureHistory.t4.shift();
-                temperatureHistory.t5.shift();
-                temperatureHistory.t6.shift();
+            // 2. Atualiza os dados do gráfico a partir dessa MESMA base de dados
+            if (temperaturaChart) {
+                temperaturaChart.data.labels.push(tempo_s);
+                temperaturaChart.data.datasets[0].data.push(novoRegistro.t1);
+                temperaturaChart.data.datasets[1].data.push(novoRegistro.t2);
+                temperaturaChart.data.datasets[2].data.push(novoRegistro.t3);
+                temperaturaChart.data.datasets[3].data.push(novoRegistro.t4);
+                temperaturaChart.data.datasets[4].data.push(novoRegistro.t5);
+                temperaturaChart.data.datasets[5].data.push(novoRegistro.t6);
+                temperaturaChart.update('none');
             }
 
-            temperatureHistory.labels.push(timeLabel);
-            temperatureHistory.t1.push(t1);
-            temperatureHistory.t2.push(t2);
-            temperatureHistory.t3.push(t3);
-            temperatureHistory.t4.push(t4);
-            temperatureHistory.t5.push(t5);
-            temperatureHistory.t6.push(t6);
-
-            const segDecorridos = Math.floor((agora.getTime() - inicioColetaTimestamp) / 1000);
+            // 3. Atualiza os indicadores de rodapé
             const elTempo = document.getElementById('chart-tempo-decorrido');
-            if (elTempo) elTempo.textContent = formatarTempo(segDecorridos);
+            if (elTempo) elTempo.textContent = formatarTempo(tempo_s);
             
             const elPontos = document.getElementById('chart-total-pontos');
             if (elPontos) elPontos.textContent = totalPontosColetados;
             
             const elAmostra = document.getElementById('chart-ultima-amostra');
             if (elAmostra) elAmostra.textContent = timeLabel;
-
-            if (temperaturaChart) {
-                temperaturaChart.update('none');
-            }
         }
 
         function exportarGraficoPNG() {
@@ -1126,7 +1167,7 @@
             ctx.font = '11px Inter, sans-serif';
             const agoraStr = new Date().toLocaleString('pt-BR');
             const duracaoStr = document.getElementById('chart-tempo-decorrido') ? document.getElementById('chart-tempo-decorrido').textContent : '00:00:00';
-            ctx.fillText('Exportado em: ' + agoraStr + ' | Duração: ' + duracaoStr + ' | Pontos: ' + temperatureHistory.labels.length + ' | Taxa: 2.0s', 30, 58);
+            ctx.fillText('Exportado em: ' + agoraStr + ' | Duração: ' + duracaoStr + ' | Pontos: ' + dadosTemperatura.length + ' | Eixo X: Tempo (s)', 30, 58);
 
             ctx.drawImage(origCanvas, 30, 75);
 
@@ -1136,39 +1177,72 @@
             link.click();
         }
 
+        // Função de Exportação para CSV consumindo EXATAMENTE a mesma base de dados do gráfico (Item 5 e Item 14)
         function exportarHistoricoCSV() {
-            if (temperatureHistory.labels.length === 0) {
-                alert('Nenhum dado registrado no gráfico para exportar.');
+            if (!dadosTemperatura || dadosTemperatura.length === 0) {
+                alert('Nenhum dado registrado no ensaio térmico para exportar.');
                 return;
             }
-            let csv = 'Horário,Tempo (s),T1 - Inicio (°C),T2 - Meio (°C),T3 - Fim (°C),T4 - Ambiente (°C),T5 - Base (°C),T6 - Base (°C)\r\n';
-            for (let i = 0; i < temperatureHistory.labels.length; i++) {
-                const tempoSeg = i * 2;
-                csv += temperatureHistory.labels[i] + ',' + tempoSeg + ',' + temperatureHistory.t1[i] + ',' + temperatureHistory.t2[i] + ',' + temperatureHistory.t3[i] + ',' + temperatureHistory.t4[i] + ',' + temperatureHistory.t5[i] + ',' + temperatureHistory.t6[i] + '\r\n';
+
+            // Validação de alinhamento e consistência temporal (Item 11)
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const reg = dadosTemperatura[i];
+                if (!validarRegistroTemperatura(reg)) {
+                    alert(`Inconsistência detectada no registro ${i + 1}. Verifique o console.`);
+                    return;
+                }
+                if (i > 0 && reg.tempo_s <= dadosTemperatura[i - 1].tempo_s) {
+                    console.warn(`[CSV] Ajustando tempo para garantir ordem estritamente crescente: registro ${i}`);
+                    reg.tempo_s = dadosTemperatura[i - 1].tempo_s + 1;
+                }
             }
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+            // Estrutura exata do CSV conforme Item 14:
+            // Horário,Tempo_s,T1_Inicio_C,T2_Meio_C,T3_Fim_C,T4_Ambiente_C,T5_Base_C,T6_Base_C
+            const cabecalho = 'Horário,Tempo_s,T1_Inicio_C,T2_Meio_C,T3_Fim_C,T4_Ambiente_C,T5_Base_C,T6_Base_C';
+            const linhas = [cabecalho];
+
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const d = dadosTemperatura[i];
+                const linha = [
+                    d.horario,
+                    d.tempo_s,
+                    Number(d.t1).toFixed(4),
+                    Number(d.t2).toFixed(4),
+                    Number(d.t3).toFixed(4),
+                    Number(d.t4).toFixed(4),
+                    Number(d.t5).toFixed(4),
+                    Number(d.t6).toFixed(4)
+                ].join(',');
+                linhas.push(linha);
+            }
+
+            const csvConteudo = '\uFEFF' + linhas.join('\r\n');
+            const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'ensaio_termico_dados_' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '_') + '.csv';
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_');
+            link.download = `ensaio_termico_dados_${timestamp}.csv`;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
         }
 
         function limparHistoricoGrafico() {
-            temperatureHistory.labels.length = 0;
-            temperatureHistory.t1.length = 0;
-            temperatureHistory.t2.length = 0;
-            temperatureHistory.t3.length = 0;
-            temperatureHistory.t4.length = 0;
-            temperatureHistory.t5.length = 0;
-            temperatureHistory.t6.length = 0;
+            dadosTemperatura.length = 0;
             totalPontosColetados = 0;
             inicioColetaTimestamp = null;
+
+            if (temperaturaChart) {
+                temperaturaChart.data.labels = [];
+                temperaturaChart.data.datasets.forEach(ds => { ds.data = []; });
+                temperaturaChart.update();
+            }
 
             if (document.getElementById('chart-tempo-decorrido')) document.getElementById('chart-tempo-decorrido').textContent = '00:00:00';
             if (document.getElementById('chart-total-pontos')) document.getElementById('chart-total-pontos').textContent = '0';
             if (document.getElementById('chart-ultima-amostra')) document.getElementById('chart-ultima-amostra').textContent = '--:--:--';
-
-            if (temperaturaChart) temperaturaChart.update();
         }
 
         function togglePauseMonitoramento() {

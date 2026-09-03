@@ -175,36 +175,31 @@
                 <label for="T_inf">Temperatura do meio (T_inf):</label>
                 <input type="text" class="form-control" id="T_inf" name="T_inf" required placeholder="Ex: 25°C">
             </div>
+            {% if precisa_L is not defined or precisa_L %}
             <div class="form-group">
-                <label for="l">Comprimento (L):</label>
+                <label for="l">Comprimento (L) [m]:</label>
                 <input type="text" class="form-control" id="l" name="l" required placeholder="Ex: 0.05 m">
             </div>
-
-            {% set tipos_str = tipos_aletas|join(' ')|lower %}
-            {% set has_rect = "1)aletas retangulares retas" in tipos_aletas or "retangular" in tipos_str %}
-            {% set has_triang = "2)aletas triangulares retas" in tipos_aletas or "triangular" in tipos_str %}
-            {% set has_parab = "3)aletas parabolicas retas" in tipos_aletas or "parabolica" in tipos_str %}
-            {% set has_circ = "4)aletas circulares de perfil retangular" in tipos_aletas or "circular" in tipos_str %}
-            {% set has_perf_ret = "5)aletas de perfil retangular" in tipos_aletas or "perfil retangular" in tipos_str %}
-            {% set has_perf_tri = "6)aletas de perfil triangular" in tipos_aletas or "perfil triangular" in tipos_str %}
-            {% set has_perf_par = "7)aletas de perfil parabolico" in tipos_aletas or "perfil parabolico" in tipos_str %}
-            {% set has_pino = "8)aletas de pino de perfilparabolico (ponta arredondada)" in tipos_aletas or "pino" in tipos_str or "arredondada" in tipos_str %}
-
-            {% if precisa_t or has_rect or has_triang or has_parab or has_circ %}
-                <div class="form-group">
-                    <label for="t">Espessura (t) [m]:</label>
-                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
-                </div>
+            {% else %}
+            <!-- Para aleta anular única (Tipo 4), L = r2 - r1 é calculado automaticamente -->
+            <input type="hidden" id="l" name="l" value="">
             {% endif %}
 
-            {% if precisa_w or has_rect or has_triang or has_parab %}
+            {% if precisa_w %}
                 <div class="form-group">
                     <label for="w">Largura (w) [m]:</label>
                     <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
                 </div>
             {% endif %}
 
-            {% if precisa_raios or has_circ %}
+            {% if precisa_t %}
+                <div class="form-group">
+                    <label for="t">Espessura (t) [m]:</label>
+                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
+                </div>
+            {% endif %}
+
+            {% if precisa_r1_r2 %}
                 <div class="form-group">
                     <label for="r1">Raio Interno (r1) [m]:</label>
                     <input type="text" class="form-control" id="r1" name="r1" required placeholder="Ex: 0.01 m">
@@ -215,7 +210,7 @@
                 </div>
             {% endif %}
 
-            {% if precisa_D or has_perf_ret or has_perf_tri or has_perf_par or has_pino %}
+            {% if precisa_D %}
                 <div class="form-group">
                     <label for="D">Diâmetro (D) [m]:</label>
                     <input type="text" class="form-control" id="D" name="D" required placeholder="Ex: 0.01 m">

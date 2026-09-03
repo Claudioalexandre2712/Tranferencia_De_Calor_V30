@@ -1,110 +1,56 @@
 Resultados das Aletas
-Seleção de Aletas: 1)aletas retangulares retas, 2)aletas triangulares retas
-Tipo de Aleta: 1)aletas retangulares retas
-Material: aluminio
-k: 222.0
-Eficiência da Aleta: 0.923862
-Taxa de Transferência de Calor: 41.241204 W
-Área da Aleta: 0.014400 m²
-Efetividade (epsilon_a): 28.639725
-Parâmetro m: 8.355826 m^-1
-Perímetro P: 0.248000 m
-Área Transversal A_tr: 0.000480000 m^2
+Seleção de Aletas: 5)aletas de pino de perfil retangular
+Tipo de Aleta: 5)aletas de pino de perfil retangular
+Material: Alumínio
+k: 240.0
+Eficiência da Aleta: 0.473647
+Taxa de Transferência de Calor: 11.550652 W
+Área da Aleta: 0.023562 m²
+Efetividade (epsilon_a): 63.152965
+Parâmetro m: 4.082483 m^-1
+Perímetro P: 0.047124 m
+Área Transversal A_tr: 0.000176715 m^2
 Comprimento (m) x Temperatura (°C):
-0.000000 m: 120.000000 °C
-0.004286 m: 119.944309 °C
-0.008571 m: 119.892752 °C
-0.012857 m: 119.845328 °C
-0.017143 m: 119.802035 °C
-0.021429 m: 119.762869 °C
-0.025714 m: 119.727831 °C
-0.030000 m: 119.696919 °C
-0.034286 m: 119.670130 °C
-0.038571 m: 119.647465 °C
-0.042857 m: 119.628922 °C
-0.047143 m: 119.614501 °C
-0.051429 m: 119.604200 °C
-0.055714 m: 119.598020 °C
-0.060000 m: 119.595960 °C
+0.000000 m: 98.000000 °C
+0.035714 m: 88.973535 °C
+0.071429 m: 81.224278 °C
+0.107143 m: 74.587199 °C
+0.142857 m: 68.920954 °C
+0.178571 m: 64.104873 °C
+0.214286 m: 60.036392 °C
+0.250000 m: 56.628868 °C
+0.285714 m: 53.809733 °C
+0.321429 m: 51.518951 °C
+0.357143 m: 49.707738 °C
+0.392857 m: 48.337520 °C
+0.428571 m: 47.379117 °C
+0.464286 m: 46.812120 °C
+0.500000 m: 46.624453 °C
 
-Tipo de Aleta: 1)aletas retangulares retas
-Material: cobre
-k: 398.0
-Eficiência da Aleta: 0.955746
-Taxa de Transferência de Calor: 42.664521 W
-Área da Aleta: 0.014400 m²
-Efetividade (epsilon_a): 29.628140
-Parâmetro m: 6.240571 m^-1
-Perímetro P: 0.248000 m
-Área Transversal A_tr: 0.000480000 m^2
+Tipo de Aleta: 5)aletas de pino de perfil retangular
+Material: Cobre
+k: 386.0
+Eficiência da Aleta: 0.573508
+Taxa de Transferência de Calor: 13.985929 W
+Área da Aleta: 0.023562 m²
+Efetividade (epsilon_a): 76.467795
+Parâmetro m: 3.219114 m^-1
+Perímetro P: 0.047124 m
+Área Transversal A_tr: 0.000176715 m^2
 Comprimento (m) x Temperatura (°C):
-0.000000 m: 120.000000 °C
-0.004286 m: 119.968898 °C
-0.008571 m: 119.940102 °C
-0.012857 m: 119.913613 °C
-0.017143 m: 119.889429 °C
-0.021429 m: 119.867550 °C
-0.025714 m: 119.847976 °C
-0.030000 m: 119.830705 °C
-0.034286 m: 119.815738 °C
-0.038571 m: 119.803074 °C
-0.042857 m: 119.792713 °C
-0.047143 m: 119.784655 °C
-0.051429 m: 119.778899 °C
-0.055714 m: 119.775446 °C
-0.060000 m: 119.774295 °C
-
-Tipo de Aleta: 2)aletas triangulares retas
-Material: aluminio
-k: 222.0
-Eficiência da Aleta: 0.485373
-Taxa de Transferência de Calor: 40.048728 W
-Área da Aleta: 0.014408 m²
-Efetividade (epsilon_a): 27.811617
-Parâmetro m: 8.224510 m^-1
-Perímetro P: 0.240266 m
-Área Transversal A_tr: 0.000480000 m^2
-Comprimento (m) x Temperatura (°C):
-0.000000 m: 120.000000 °C
-0.004286 m: 119.888866 °C
-0.008571 m: 119.786001 °C
-0.012857 m: 119.691396 °C
-0.017143 m: 119.605045 °C
-0.021429 m: 119.526938 °C
-0.025714 m: 119.457071 °C
-0.030000 m: 119.395437 °C
-0.034286 m: 119.342031 °C
-0.038571 m: 119.296849 °C
-0.042857 m: 119.259887 °C
-0.047143 m: 119.231142 °C
-0.051429 m: 119.210612 °C
-0.055714 m: 119.198294 °C
-0.060000 m: 119.194188 °C
-
-Tipo de Aleta: 2)aletas triangulares retas
-Material: cobre
-k: 398.0
-Eficiência da Aleta: 0.491698
-Taxa de Transferência de Calor: 41.390682 W
-Área da Aleta: 0.014408 m²
-Efetividade (epsilon_a): 28.743529
-Parâmetro m: 6.142497 m^-1
-Perímetro P: 0.240266 m
-Área Transversal A_tr: 0.000480000 m^2
-Comprimento (m) x Temperatura (°C):
-0.000000 m: 120.000000 °C
-0.004286 m: 119.937858 °C
-0.008571 m: 119.880331 °C
-0.012857 m: 119.827415 °C
-0.017143 m: 119.779109 °C
-0.021429 m: 119.735411 °C
-0.025714 m: 119.696317 °C
-0.030000 m: 119.661827 °C
-0.034286 m: 119.631939 °C
-0.038571 m: 119.606652 °C
-0.042857 m: 119.585964 °C
-0.047143 m: 119.569874 °C
-0.051429 m: 119.558382 °C
-0.055714 m: 119.551487 °C
-0.060000 m: 119.549188 °C
+0.000000 m: 98.000000 °C
+0.035714 m: 91.117632 °C
+0.071429 m: 85.057223 °C
+0.107143 m: 79.738579 °C
+0.142857 m: 75.091322 °C
+0.178571 m: 71.053959 °C
+0.214286 m: 67.573066 °C
+0.250000 m: 64.602583 °C
+0.285714 m: 62.103204 °C
+0.321429 m: 60.041855 °C
+0.357143 m: 58.391262 °C
+0.392857 m: 57.129582 °C
+0.428571 m: 56.240121 °C
+0.464286 m: 55.711109 °C
+0.500000 m: 55.535546 °C
 

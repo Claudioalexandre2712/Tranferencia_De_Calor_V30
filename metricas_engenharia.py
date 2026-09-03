@@ -91,120 +91,112 @@ DICIONARIO_MATERIAIS_ID = {
     for nome, dados in MATERIAIS_DB.items()
 }
 
+from tipos_aletas_config import obter_tipo_aleta
+
 def calcular_volume_aleta(tipo_aleta, l, t=None, w=None, D=None, r1=None, r2=None):
     """
-    Calcula o volume da aleta baseado na geometria
+    Calcula o volume da aleta baseado na geometria identificada pelo ID único (1 a 8).
     
     Returns:
         float: Volume em m³
     """
+    tid = obter_tipo_aleta(tipo_aleta) or 1
     
-    if tipo_aleta in ["1)aletas retangulares retas", "2)aletas triangulares retas"]:
-        if not (t and w):
-            return 0
-        if tipo_aleta == "1)aletas retangulares retas":
-            volume = l * t * w  # V = L × t × w
-        else:  # triangular
-            volume = 0.5 * l * t * w  # V = 0.5 × L × t × w
-            
-    elif tipo_aleta == "3)aletas parabolicas retas":
-        if not (t and w):
-            return 0
-        volume = (2/3) * l * t * w  # Aproximação parabólica
+    if tid == 1:  # Retangular Reta (w, L, t)
+        if not (t and w and l): return 0
+        return float(l) * float(t) * float(w)
         
-    elif tipo_aleta == "4)aletas circulares de perfil retangular":
-        if not (r1 and r2 and t):
-            return 0
-        # Volume da seção anular
-        volume = math.pi * (r2**2 - r1**2) * t
+    elif tid == 2:  # Triangular Reta (w, L, t)
+        if not (t and w and l): return 0
+        return 0.5 * float(l) * float(t) * float(w)
         
-    elif tipo_aleta == "5)aletas de perfil retangular":
-        if not D:
-            return 0
-        # Pino cilíndrico
-        volume = math.pi * (D/2)**2 * l
+    elif tid == 3:  # Parabólica Reta (w, L, t)
+        if not (t and w and l): return 0
+        return (2.0 / 3.0) * float(l) * float(t) * float(w)
         
-    elif tipo_aleta in ["6)aletas de perfil triangular", "7)aletas de perfil parabolico"]:
-        if not D:
-            return 0
-        if tipo_aleta == "6)aletas de perfil triangular":
-            volume = (1/3) * math.pi * (D/2)**2 * l  # Cone
-        else:  # parabólico
-            volume = (1/2) * math.pi * (D/2)**2 * l  # Aproximação
-            
-    elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-        if not D:
-            return 0
-        # Cilindro + semiesfera
-        volume_cilindro = math.pi * (D/2)**2 * l
-        volume_esfera = (2/3) * math.pi * (D/2)**3
-        volume = volume_cilindro + volume_esfera
+    elif tid == 4:  # Circular de Perfil Retangular (r1, r2, t)
+        if not (r1 and r2 and t): return 0
+        r1_v, r2_v, t_v = float(r1), float(r2), float(t)
+        return math.pi * max(0.0, (r2_v**2 - r1_v**2)) * t_v
         
-    else:
-        volume = 0
-    
-    return volume
+    elif tid == 5:  # Pino de Perfil Retangular / Cilíndrico Uniforme (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        return math.pi * (D_v / 2.0)**2 * l_v
+        
+    elif tid == 6:  # Pino Triangular / Cônica (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        return (1.0 / 3.0) * math.pi * (D_v / 2.0)**2 * l_v
+        
+    elif tid == 7:  # Pino Parabólico (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        return (1.0 / 5.0) * math.pi * (D_v / 2.0)**2 * l_v
+        
+    elif tid == 8:  # Pino Parabólico Ponta Arredondada (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        return 0.5 * math.pi * (D_v / 2.0)**2 * l_v
+        
+    return 0
 
 def calcular_area_superficial(tipo_aleta, l, t=None, w=None, D=None, r1=None, r2=None):
     """
-    Calcula a área superficial total da aleta (incluindo base)
+    Calcula a área superficial total da aleta baseada na geometria identificada pelo ID único (1 a 8).
     
     Returns:
         float: Área superficial em m²
     """
+    tid = obter_tipo_aleta(tipo_aleta) or 1
     
-    if tipo_aleta == "1)aletas retangulares retas":
-        if not (t and w):
-            return 0
-        # 2 faces principais + 2 laterais + ponta
-        area = 2 * l * w + 2 * l * t + t * w
+    if tid == 1:  # Retangular Reta (w, L, t)
+        if not (t and w and l): return 0
+        l_v, t_v, w_v = float(l), float(t), float(w)
+        Lc = l_v + t_v / 2.0
+        return 2.0 * w_v * Lc + 2.0 * t_v * l_v
         
-    elif tipo_aleta == "2)aletas triangulares retas":
-        if not (t and w):
-            return 0
-        # Aproximação para aleta triangular
-        area = 2 * math.sqrt((l**2) + (w/2)**2) * w + l * t
+    elif tid == 2:  # Triangular Reta (w, L, t)
+        if not (t and w and l): return 0
+        l_v, t_v, w_v = float(l), float(t), float(w)
+        return 2.0 * w_v * math.sqrt(l_v**2 + (t_v / 2.0)**2) + w_v * t_v
         
-    elif tipo_aleta == "3)aletas parabolicas retas":
-        if not (t and w):
-            return 0
-        # Aproximação parabólica
-        area = 2.1 * l * w + 2 * l * t + 0.5 * t * w
+    elif tid == 3:  # Parabólica Reta (w, L, t)
+        if not (t and w and l): return 0
+        l_v, t_v, w_v = float(l), float(t), float(w)
+        C1 = math.sqrt(1.0 + (t_v / l_v)**2)
+        return w_v * l_v * (C1 + (l_v / t_v) * math.log(t_v / l_v + C1))
         
-    elif tipo_aleta == "4)aletas circulares de perfil retangular":
-        if not (r1 and r2 and t):
-            return 0
-        # Superfícies cilíndricas interna e externa + face anular
-        area = 2 * math.pi * r2 * t + 2 * math.pi * r1 * t + math.pi * (r2**2 - r1**2)
+    elif tid == 4:  # Circular de Perfil Retangular (r1, r2, t)
+        if not (r1 and r2 and t): return 0
+        r1_v, r2_v, t_v = float(r1), float(r2), float(t)
+        r2c = r2_v + t_v / 2.0
+        return 2.0 * math.pi * max(0.0, (r2c**2 - r1_v**2))
         
-    elif tipo_aleta == "5)aletas de perfil retangular":
-        if not D:
-            return 0
-        # Superfície cilíndrica + base circular
-        area = math.pi * D * l + math.pi * (D/2)**2
+    elif tid == 5:  # Pino Retangular / Cilíndrico Uniforme (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        Lc = l_v + D_v / 4.0
+        return math.pi * D_v * Lc
         
-    elif tipo_aleta == "6)aletas de perfil triangular":
-        if not D:
-            return 0
-        # Superfície cônica + base
-        area = math.pi * (D/2) * math.sqrt(l**2 + (D/2)**2) + math.pi * (D/2)**2
+    elif tid == 6:  # Pino Triangular / Cônica (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        return (math.pi * D_v / 2.0) * math.sqrt(l_v**2 + (D_v / 2.0)**2)
         
-    elif tipo_aleta == "7)aletas de perfil parabolico":
-        if not D:
-            return 0
-        # Aproximação parabólica
-        area = 1.1 * math.pi * D * l + math.pi * (D/2)**2
+    elif tid == 7:  # Pino Parabólico (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        C3 = 1.0 + 2.0 * (D_v / l_v)**2
+        C4 = math.sqrt(1.0 + (D_v / l_v)**2)
+        return (math.pi * l_v**3) / (8.0 * D_v) * (C3 * C4 - (l_v / (2.0 * D_v)) * math.log((2.0 * D_v * C4 / l_v + C3)))
         
-    elif tipo_aleta == "8)aletas de pino de perfilparabolico (ponta arredondada)":
-        if not D:
-            return 0
-        # Cilindro + superfície esférica
-        area = math.pi * D * l + 2 * math.pi * (D/2)**2
+    elif tid == 8:  # Pino Parabólico Ponta Arredondada (D, L)
+        if not (D and l): return 0
+        D_v, l_v = float(D), float(l)
+        return (math.pi * D_v**4 / (96.0 * l_v**2)) * ((16.0 * (l_v / D_v)**2 + 1.0)**(1.5) - 1.0)
         
-    else:
-        area = 0
-    
-    return area
+    return 0
 
 def calcular_metricas_engenharia(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, 
                                 Q_aleta, A_aleta, eta_aleta, epsilon_a, material_nome="Alumínio"):

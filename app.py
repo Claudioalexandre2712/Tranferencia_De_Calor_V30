@@ -1,14 +1,23 @@
 import os
+import json
 os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from modelo3 import calcular_eficiencia, mostrar_formula, salvar_resultados, salvar_sresultados, normalizar_tipo_aleta
-from visualizacao_plotly import gerar_grafico_temperatura_interativo, gerar_grafico_temperatura_multiplos_materiais
+from visualizacao_plotly import (
+    gerar_grafico_temperatura_interativo, 
+    gerar_grafico_temperatura_multiplos_materiais,
+    extrair_dados_curvas_json_interativo,
+    extrair_dados_curvas_json_multiplos
+)
 from metricas_engenharia import calcular_metricas_engenharia, interpretar_metricas, MATERIAIS_DB, DICIONARIO_MATERIAIS_ID
 from mudanca_fase_calculadora import calcular_mudanca_fase
 from arranjos_tubos_calculadora import calcular_arranjo_tubos
 from escoamento_interno import escoamento_interno_tubo_circular
 from escoamento_dutos import escoamento_interno_duto
+from tipos_aletas_config import (obter_tipo_aleta, validar_campos_obrigatorios, 
+                                 obter_campos_formulario, obter_info_tipo, TIPOS_ALETAS, LISTA_TIPOS_ORDENADA,
+                                 determinar_campos_para_multiplas_aletas, obter_nome_display)
 import numpy as np
 import scipy.special as sp
 import time
@@ -37,6 +46,10 @@ app = handler = Flask(
     static_url_path='/static'
 )
 app.secret_key = 'transferencia-calor-laboratorio-flask-2025'
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
 
 @app.errorhandler(Exception)
 def handle_all_exceptions(e):
@@ -111,10 +124,16 @@ def validar_parametros_fisicos(h, k, T_b, T_inf, l, t=None, w=None, r1=None, r2=
         errors.append("Temperatura da base deve ser diferente da temperatura ambiente")
     
     # Validação do comprimento
-    if l <= 0:
-        errors.append("Comprimento da aleta (L) deve ser positivo")
-    elif l > 10:
-        errors.append("Comprimento da aleta (L) muito grande (máx. 10 m)")
+    if l is not None:
+        if l <= 0:
+            errors.append("Comprimento da aleta (L) deve ser positivo")
+        elif l > 10:
+            errors.append("Comprimento da aleta (L) muito grande (máx. 10 m)")
+    elif r1 is not None and r2 is not None:
+        if r2 <= r1:
+            errors.append("Raio externo (r2) deve ser maior que o raio interno (r1)")
+    else:
+        errors.append("Comprimento da aleta (L) deve ser fornecido")
     
     # Validações específicas por geometria
     if t is not None:
@@ -205,16 +224,23 @@ def sele_materiais():
 
 @app.route('/inserir_seledados/<sele_aleta>/<smateriais>/<k>', methods=['GET', 'POST'])
 def inserir_seledados(sele_aleta, smateriais, k):
-    smateriais = smateriais.split(',')
-    k = k.split(',')
-    materiais_selecionados = [{"nome": nome, "k": float(valor_k)} for nome, valor_k in zip(smateriais, k)]
-    tipo_sele_aleta = sele_aleta  # Considerando apenas uma aleta selecionada
+    smateriais_lista = smateriais.split(',')
+    k_lista = k.split(',')
+    materiais_selecionados = [{"nome": nome, "k": float(valor_k)} for nome, valor_k in zip(smateriais_lista, k_lista)]
+    
+    tipo_aleta_id = obter_tipo_aleta(sele_aleta)
+    if tipo_aleta_id is None:
+        return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                             error="Tipo de aleta inválido ou não encontrado.")
+    
+    tipo_info = obter_info_tipo(tipo_aleta_id)
+    campos_obrigatorios, campos_opcacionais = obter_campos_formulario(tipo_aleta_id)
 
     if request.method == 'POST':
         h = request.form.get('h')
         T_b = request.form.get('T_b')
         T_inf = request.form.get('T_inf')
-        l = request.form.get('l')
+        l_form = request.form.get('l')
         t = request.form.get('t')
         w = request.form.get('w')
         r1 = request.form.get('r1')
@@ -223,105 +249,131 @@ def inserir_seledados(sele_aleta, smateriais, k):
         condicao_ponta = request.form.get('condicao_ponta', 'adiabatica')
         T_L = request.form.get('T_L')
 
-        # Verificação dos campos obrigatórios
-        if not h or not T_b or not T_inf or not l:
-            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, error="Por favor, preencha todos os campos obrigatórios.")
-        
+        # Verificação dos campos térmicos comuns
+        if not h or not T_b or not T_inf:
+            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                                 materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id,
+                                 campos_obrigatorios=campos_obrigatorios,
+                                 error="Por favor, preencha todos os campos térmicos obrigatórios (h, T_b, T_inf).")
+
+        try:
+            h = float(h)
+            T_b = float(T_b)
+            T_inf = float(T_inf)
+            t = float(t) if (t and t.strip()) else None
+            w = float(w) if (w and w.strip()) else None
+            r1 = float(r1) if (r1 and r1.strip()) else None
+            r2 = float(r2) if (r2 and r2.strip()) else None
+            D = float(D) if (D and D.strip()) else None
+            T_L = float(T_L) if (T_L and T_L.strip()) else None
+
+            # Para tipo 4: L = r2 - r1
+            if tipo_aleta_id == 4:
+                if r1 is not None and r2 is not None and r2 > r1:
+                    l = r2 - r1
+                else:
+                    l = float(l_form) if (l_form and l_form.strip()) else 0.01
+            else:
+                if not l_form or not l_form.strip():
+                    return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                                         materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id,
+                                         campos_obrigatorios=campos_obrigatorios,
+                                         error="Por favor, preencha o comprimento (L).")
+                l = float(l_form)
+        except ValueError:
+            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                                 materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id,
+                                 campos_obrigatorios=campos_obrigatorios,
+                                 error="Por favor, preencha os campos com valores numéricos válidos.")
+
         # Verificar se T_L é necessário para condição de temperatura especificada
         if condicao_ponta == 'temp_especificada' and not T_L:
-            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, error="Por favor, especifique a temperatura na ponta T_L para esta condição de contorno.")
+            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                                 materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id,
+                                 campos_obrigatorios=campos_obrigatorios,
+                                 error="Por favor, especifique a temperatura na ponta T_L para esta condição de contorno.")
 
-        h = float(h)
-        T_b = float(T_b)
-        T_inf = float(T_inf)
-        l = float(l)
-        t = float(t) if t else None
-        w = float(w) if w else None
-        r1 = float(r1) if r1 else None
-        r2 = float(r2) if r2 else None
-        D = float(D) if D else None
-        T_L = float(T_L) if T_L else None
-        
         # Validar parâmetros físicos
-        k_material = float(materiais_selecionados[0]['k'])  # Usar k do primeiro material para validação
+        k_material = float(materiais_selecionados[0]['k'])
         is_valid, validation_errors = validar_parametros_fisicos(h, k_material, T_b, T_inf, l, t, w, r1, r2, D, T_L)
         if not is_valid:
             error_msg = "Parâmetros inválidos:\n• " + "\n• ".join(validation_errors)
-            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, error=error_msg)
+            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                                 materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id,
+                                 campos_obrigatorios=campos_obrigatorios, error=error_msg)
 
-        if tipo_sele_aleta in ["1)aletas retangulares retas", "2)aletas triangulares retas", "3)aletas parabolicas retas"]:
-            if not t or not w:
-                return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, error="Por favor, preencha todos os campos obrigatórios para aletas retangulares, triangulares ou parabolicas.")
-
-        if tipo_sele_aleta == "4)aletas circulares de perfil retangular":
-            if not r1 or not r2 or not t:
-                return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, error="Por favor, preencha todos os campos obrigatórios para aletas circulares de perfil retangular.")
-
-        if tipo_sele_aleta in ["5)aletas de perfil retangular", "6)aletas de perfil triangular", "7)aletas de perfil parabolico", "8)aletas de pino de perfilparabolico (ponta arredondada)"]:
-            if not D:
-                return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, error="Por favor, preencha todos os campos obrigatórios para aletas de perfil retangular, triangular, parabolico ou de pino de perfilparabolico.")
+        # Validar campos obrigatórios específicos do tipo de aleta
+        campos_validos, erros_campos = validar_campos_obrigatorios(tipo_aleta_id, t=t, w=w, r1=r1, r2=r2, D=D, L=l)
+        if not campos_validos:
+            error_msg = tipo_info['descricao'] + ":\n• " + "\n• ".join(erros_campos)
+            return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                                 materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id,
+                                 campos_obrigatorios=campos_obrigatorios, error=error_msg)
 
         # Processar os dados e redirecionar para a página de resultados
-        return redirect(url_for('resultados_sele', sele_aleta=sele_aleta, smateriais=','.join([m['nome'] for m in materiais_selecionados]), h=h, k=','.join(k), l=l, t=t, w=w, r1=r1, r2=r2, D=D, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, T_L=T_L))
+        return redirect(url_for('resultados_sele', sele_aleta=sele_aleta, smateriais=','.join([m['nome'] for m in materiais_selecionados]), 
+                              h=h, k=','.join(k_lista), l=l, t=t, w=w, r1=r1, r2=r2, D=D, T_b=T_b, T_inf=T_inf, 
+                              condicao_ponta=condicao_ponta, T_L=T_L))
     
-    return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais, materiais_selecionados=materiais_selecionados)
+    return render_template('inserir_seledados.html', sele_aleta=sele_aleta, smateriais=smateriais_lista, 
+                         materiais_selecionados=materiais_selecionados, tipo_aleta_id=tipo_aleta_id, 
+                         campos_obrigatorios=campos_obrigatorios)
 
 @app.route('/resultados_sele')
 def resultados_sele():
-    sele_aleta = request.args.get('sele_aleta')
-    smateriais = request.args.get('smateriais')
-    h = request.args.get('h')
-    k = request.args.get('k')
-    l = request.args.get('l')
-    T_b = request.args.get('T_b')
-    T_inf = request.args.get('T_inf')
+    sele_aleta_param = request.args.get('sele_aleta')
+    smateriais_param = request.args.get('smateriais')
+    h_param = request.args.get('h')
+    k_param = request.args.get('k')
+    T_b_param = request.args.get('T_b')
+    T_inf_param = request.args.get('T_inf')
 
-    if not all([sele_aleta, smateriais, h, k, l, T_b, T_inf]):
+    if not all([sele_aleta_param, smateriais_param, h_param, k_param, T_b_param, T_inf_param]):
         return "Parâmetros insuficientes fornecidos", 400
 
-    sele_aleta = [normalizar_tipo_aleta(t) for t in sele_aleta.split(',') if t.strip()] if sele_aleta else []
-    smateriais = smateriais.split(',') if smateriais else []
-    h = float(h) if h else 0.0
-    k = [float(valor_k) for valor_k in k.split(',')] if k else []
-    l = float(l) if l else 0.0
+    sele_aleta = [normalizar_tipo_aleta(t) for t in sele_aleta_param.split(',') if t.strip()] if sele_aleta_param else []
+    smateriais = smateriais_param.split(',') if smateriais_param else []
+    h = float(h_param)
+    k = [float(valor_k) for valor_k in k_param.split(',')] if k_param else []
+    
     t = request.args.get('t', type=float)
     w = request.args.get('w', type=float)
     r1 = request.args.get('r1', type=float)
     r2 = request.args.get('r2', type=float)
     D = request.args.get('D', type=float)
-    T_b = float(T_b) if T_b else 0.0
-    T_inf = float(T_inf) if T_inf else 0.0
+    
+    l_param = request.args.get('l', type=float)
+    if (l_param is None or l_param <= 0) and r1 is not None and r2 is not None and r2 > r1:
+        l = r2 - r1
+    else:
+        l = l_param if l_param and l_param > 0 else 0.05
+        
+    T_b = float(T_b_param)
+    T_inf = float(T_inf_param)
     condicao_ponta = request.args.get('condicao_ponta', 'adiabatica')
     T_L = request.args.get('T_L', type=float)
-    # Parâmetros recebidos
+
     resultados_sele = []
     metricas_sele_lista = []
     interpretacoes_sele_lista = []
-    dados_didaticos_sele_lista = []  # Lista para dados didáticos
+    dados_didaticos_sele_lista = []
     
     for tipo_aleta in sele_aleta:
+        tid = obter_tipo_aleta(tipo_aleta)
         for material, valor_k in zip(smateriais, k):
-            if tipo_aleta == "4)aletas circulares de perfil retangular":
-                if not r1 or not r2 or not t:
-                    return render_template('resultados_sele.html', error="Parâmetros insuficientes fornecidos para aletas circulares de perfil retangular. Certifique-se de que r1, r2 e t estão preenchidos.", sele_aleta=sele_aleta, smateriais=smateriais)
-                resultado_calc = calcular_eficiencia(tipo_aleta, h, valor_k, l, t, None, None, r1, r2, T_b, T_inf, condicao_ponta, T_L)
-            else:
-                resultado_calc = calcular_eficiencia(tipo_aleta, h, valor_k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, T_L)
+            resultado_calc = calcular_eficiencia(tipo_aleta, h, valor_k, l, t=t, w=w, D=D, r1=r1, r2=r2, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, T_L=T_L)
             
-            # Extrair resultados (com ou sem dados didáticos)
-            if len(resultado_calc) == 8:  # Com dados didáticos
+            if len(resultado_calc) == 8:
                 eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos = resultado_calc
-            else:  # Sem dados didáticos
+            else:
                 eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado_calc
                 dados_didaticos = None
             
-            # Calcular métricas de engenharia
             metricas = calcular_metricas_engenharia(
                 tipo_aleta, h, valor_k, l, t, w, D, r1, r2, T_b, T_inf,
                 Q_aleta, A_aleta, eta_aleta, epsilon_a, material
             )
             
-            # Gerar interpretações
             interpretacoes = interpretar_metricas(metricas)
             
             resultados_sele.append((tipo_aleta, material, valor_k, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr))
@@ -329,14 +381,16 @@ def resultados_sele():
             interpretacoes_sele_lista.append(interpretacoes)
             dados_didaticos_sele_lista.append(dados_didaticos)
 
-    # Gerar gráfico interativo com Plotly - agora com todos os materiais
-    grafico_html = gerar_grafico_temperatura_multiplos_materiais(sele_aleta, smateriais, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta)
+    # Gráfico interativo Plotly e dados JSON compartilhados da MESMA fonte da verdade
+    grafico_html, dados_base = gerar_grafico_temperatura_multiplos_materiais(
+        sele_aleta, smateriais, h, k, l, t=t, w=w, D=D, r1=r1, r2=r2, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta
+    )
+    dados_grafico_json = json.dumps(dados_base)
 
-    # Salvar os resultados em um arquivo de forma segura
     os.makedirs(app.static_folder, exist_ok=True)
     filepath = os.path.join(app.static_folder, 'selerelatorio.txt')
     try:
-        salvar_sresultados(filepath, sele_aleta, h, k[0], l, t, w, D, r1, r2, T_b, T_inf, resultados_sele)
+        salvar_sresultados(filepath, sele_aleta, h, k[0] if k else 222.0, l, t, w, D, r1, r2, T_b, T_inf, resultados_sele)
     except Exception as e_salv:
         print(f"[AVISO] Falha ao gravar selerelatorio.txt: {e_salv}")
 
@@ -345,6 +399,7 @@ def resultados_sele():
                          materiais=smateriais, 
                          relatorio_path='selerelatorio.txt', 
                          grafico_html=grafico_html, 
+                         dados_grafico_json=dados_grafico_json,
                          condicao_ponta=condicao_ponta, 
                          T_L=T_L,
                          metricas_lista=metricas_sele_lista,
@@ -406,12 +461,14 @@ def tipos_materiais(tipos_aletas):
 
 @app.route('/inserir_dados/<tipos_aletas>/<material>/<k>', methods=['GET', 'POST'])
 def inserir_dados(tipos_aletas, material, k):
-    tipos_aletas = tipos_aletas.split(',')
+    tipos_aletas_lista = tipos_aletas.split(',')
+    flags_campos = determinar_campos_para_multiplas_aletas(tipos_aletas_lista)
+    
     if request.method == 'POST':
         h = request.form.get('h')
         T_b = request.form.get('T_b')
         T_inf = request.form.get('T_inf')
-        l = request.form.get('l')
+        l_form = request.form.get('l')
         t = request.form.get('t')
         w = request.form.get('w')
         r1 = request.form.get('r1')
@@ -420,46 +477,63 @@ def inserir_dados(tipos_aletas, material, k):
         condicao_ponta = request.form.get('condicao_ponta', 'adiabatica')
         T_L = request.form.get('T_L')
 
-        # Verificação dos campos obrigatórios
-        if not h or not T_b or not T_inf or not l:
-            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k, error="Por favor, preencha todos os campos obrigatórios.")
-        
+        # Verificação dos campos térmicos comuns
+        if not h or not T_b or not T_inf:
+            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, 
+                                 error="Por favor, preencha todos os campos térmicos obrigatórios (h, T_b, T_inf).", **flags_campos)
+
+        try:
+            h = float(h)
+            T_b = float(T_b)
+            T_inf = float(T_inf)
+            t = float(t) if (t and t.strip()) else None
+            w = float(w) if (w and w.strip()) else None
+            r1 = float(r1) if (r1 and r1.strip()) else None
+            r2 = float(r2) if (r2 and r2.strip()) else None
+            D = float(D) if (D and D.strip()) else None
+            T_L = float(T_L) if (T_L and T_L.strip()) else None
+
+            # Determinar L
+            if flags_campos.get('precisa_L', True):
+                if not l_form or not l_form.strip():
+                    return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, 
+                                         error="Por favor, preencha o comprimento (L).", **flags_campos)
+                l = float(l_form)
+            else:
+                # Caso de apenas aletas anulares
+                if r1 is not None and r2 is not None and r2 > r1:
+                    l = r2 - r1
+                else:
+                    l = float(l_form) if (l_form and l_form.strip()) else 0.01
+        except ValueError:
+            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, 
+                                 error="Por favor, preencha todos os campos com valores numéricos válidos.", **flags_campos)
+
         # Verificar se T_L é necessário para condição de temperatura especificada
         if condicao_ponta == 'temp_especificada' and not T_L:
-            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k, error="Por favor, especifique a temperatura na ponta T_L para esta condição de contorno.")
+            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, 
+                                 error="Por favor, especifique a temperatura na ponta T_L para esta condição de contorno.", **flags_campos)
 
-        h = float(h)
-        T_b = float(T_b)
-        T_inf = float(T_inf)
-        l = float(l)
-        t = float(t) if t else None
-        w = float(w) if w else None
-        r1 = float(r1) if r1 else None
-        r2 = float(r2) if r2 else None
-        D = float(D) if D else None
-        T_L = float(T_L) if T_L else None
-        
         # Validar parâmetros físicos
         k_value = float(k)
         is_valid, validation_errors = validar_parametros_fisicos(h, k_value, T_b, T_inf, l, t, w, r1, r2, D, T_L)
         if not is_valid:
             error_msg = "Parâmetros inválidos:\n• " + "\n• ".join(validation_errors)
-            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k, error=error_msg)
+            return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, error=error_msg, **flags_campos)
 
-        if any(tipo in tipos_aletas for tipo in ["1)aletas retangulares retas", "2)aletas triangulares retas", "3)aletas parabolicas retas"]):
-            if not t or not w:
-                return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k, error="Por favor, preencha todos os campos obrigatórios para aletas retangulares, triangulares ou parabolicas.")
+        # Validar cada geometria estritamente pelo seu tipo_id (sem checagem por texto!)
+        for ta in tipos_aletas_lista:
+            tid = obter_tipo_aleta(ta)
+            if tid:
+                valido, erros = validar_campos_obrigatorios(tid, t=t, w=w, r1=r1, r2=r2, D=D, L=l)
+                if not valido:
+                    desc = TIPOS_ALETAS[tid]['descricao']
+                    return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, 
+                                         error=f"{desc}: " + "; ".join(erros), **flags_campos)
 
-        if "4)aletas circulares de perfil retangular" in tipos_aletas:
-            if not r1 or not r2 or not w:
-                return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k, error="Por favor, preencha todos os campos obrigatórios para aletas circulares de perfil retangular.")
-
-        if any(tipo in tipos_aletas for tipo in ["5)aletas de perfil retangular", "6)aletas de perfil triangular", "7)aletas de perfil parabolico", "8)aletas de pino de perfilparabolico (ponta arredondada)"]):
-            if not D:
-                return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k, error="Por favor, preencha todos os campos obrigatórios para aletas de perfil retangular, triangular, parabolico ou de pino de perfilparabolico.")
-
-        return redirect(url_for('resultado', tipos_aletas=','.join(tipos_aletas), material=material, h=h, k=k, l=l, t=t, w=w, r1=r1, r2=r2, D=D, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, T_L=T_L))
-    return render_template('inserir_dados.html', tipos_aletas=tipos_aletas, material=material, k=k)
+        return redirect(url_for('resultado', tipos_aletas=','.join(tipos_aletas_lista), material=material, h=h, k=k, l=l, t=t, w=w, r1=r1, r2=r2, D=D, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, T_L=T_L))
+    
+    return render_template('inserir_dados.html', tipos_aletas=tipos_aletas_lista, material=material, k=k, **flags_campos)
 
 @app.route('/resultado')
 def resultado():
@@ -470,13 +544,20 @@ def resultado():
     h = float(h_str) if h_str else 0.0
     k_str = request.args.get('k')
     k = float(k_str) if k_str else 0.0
-    l_str = request.args.get('l')
-    l = float(l_str) if l_str else 0.0
+    
     t = request.args.get('t', type=float)
     w = request.args.get('w', type=float)
     r1 = request.args.get('r1', type=float)
     r2 = request.args.get('r2', type=float)
     D = request.args.get('D', type=float)
+    
+    l_str = request.args.get('l')
+    l = float(l_str) if l_str else 0.0
+    if l <= 0 and r1 is not None and r2 is not None and r2 > r1:
+        l = r2 - r1
+    if l <= 0:
+        l = 0.05
+        
     T_b_str = request.args.get('T_b')
     T_b = float(T_b_str) if T_b_str else 0.0
     T_inf_str = request.args.get('T_inf')
@@ -487,36 +568,34 @@ def resultado():
     resultados = []
     metricas_lista = []
     interpretacoes_lista = []
-    
-    dados_didaticos_lista = []  # Lista para armazenar dados didáticos de cada aleta
+    dados_didaticos_lista = []
     
     for tipo_aleta in tipos_aletas:
-        resultado_calc = calcular_eficiencia(tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta, T_L)
+        resultado_calc = calcular_eficiencia(tipo_aleta, h, k, l, t=t, w=w, D=D, r1=r1, r2=r2, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, T_L=T_L)
         
-        # Extrair resultados (com ou sem dados didáticos)
-        if len(resultado_calc) == 8:  # Com dados didáticos
+        if len(resultado_calc) == 8:
             eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr, dados_didaticos = resultado_calc
             dados_didaticos_lista.append(dados_didaticos)
-        else:  # Sem dados didáticos
+        else:
             eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr = resultado_calc
             dados_didaticos_lista.append(None)
         
-        # Calcular métricas de engenharia
         material_nome = material if material else "Desconhecido"
         metricas = calcular_metricas_engenharia(
             tipo_aleta, h, k, l, t, w, D, r1, r2, T_b, T_inf,
             Q_aleta, A_aleta, eta_aleta, epsilon_a, material_nome
         )
         
-        # Gerar interpretações
         interpretacoes = interpretar_metricas(metricas)
-        
         resultados.append((tipo_aleta, eta_aleta, Q_aleta, A_aleta, epsilon_a, m, P, A_tr))
         metricas_lista.append(metricas)
         interpretacoes_lista.append(interpretacoes)
 
-    # Gerar gráfico interativo com Plotly
-    grafico_html = gerar_grafico_temperatura_interativo(tipos_aletas, h, k, l, t, w, D, r1, r2, T_b, T_inf, condicao_ponta)
+    # Gerar gráfico interativo com Plotly e dados JSON compartilhados da MESMA fonte da verdade
+    grafico_html, dados_base = gerar_grafico_temperatura_interativo(
+        tipos_aletas, h, k, l, t=t, w=w, D=D, r1=r1, r2=r2, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, material=material
+    )
+    dados_grafico_json = json.dumps(dados_base)
 
     # Salvar os resultados em um arquivo de forma segura
     os.makedirs(app.static_folder, exist_ok=True)
@@ -531,6 +610,7 @@ def resultado():
                          material=material, 
                          relatorio_path='relatorio.txt', 
                          grafico_html=grafico_html, 
+                         dados_grafico_json=dados_grafico_json,
                          condicao_ponta=condicao_ponta, 
                          T_L=T_L,
                          metricas_lista=metricas_lista,

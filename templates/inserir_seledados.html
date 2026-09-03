@@ -132,7 +132,10 @@
         <h1 class="title">Inserir Dados para:</h1>
         <ul class="list-group mb-3">
             {% if sele_aleta %}
-                <li class="list-group-item">{{ sele_aleta }}</li>
+                <li class="list-group-item"><strong>Aleta:</strong> {{ sele_aleta }}</li>
+                {% if tipo_aleta_id %}
+                    <li class="list-group-item"><strong>Tipo ID:</strong> {{ tipo_aleta_id }}</li>
+                {% endif %}
             {% else %}
                 <li class="list-group-item">Nenhuma aleta selecionada</li>
             {% endif %}
@@ -179,36 +182,33 @@
                 <label for="T_inf">Temperatura do meio (T_inf):</label>
                 <input type="text" class="form-control" id="T_inf" name="T_inf" required placeholder="Ex: 25°C">
             </div>
+            {% if tipo_aleta_id != 4 %}
             <div class="form-group">
-                <label for="l">Comprimento (L):</label>
+                <label for="l">Comprimento (L) [m]:</label>
                 <input type="text" class="form-control" id="l" name="l" required placeholder="Ex: 0.05 m">
             </div>
+            {% else %}
+            <!-- Para aleta anular (Tipo 4), o comprimento radial L = r2 - r1 é calculado automaticamente -->
+            <input type="hidden" id="l" name="l" value="">
+            {% endif %}
 
-            {% set aleta_txt = sele_aleta|string|lower %}
-            {% set has_rect = "1)aletas retangulares retas" in sele_aleta or "retangular" in aleta_txt %}
-            {% set has_triang = "2)aletas triangulares retas" in sele_aleta or "triangular" in aleta_txt %}
-            {% set has_parab = "3)aletas parabolicas retas" in sele_aleta or "parabolica" in aleta_txt %}
-            {% set has_circ = "4)aletas circulares de perfil retangular" in sele_aleta or "circular" in aleta_txt %}
-            {% set has_perf_ret = "5)aletas de perfil retangular" in sele_aleta or "perfil retangular" in aleta_txt %}
-            {% set has_perf_tri = "6)aletas de perfil triangular" in sele_aleta or "perfil triangular" in aleta_txt %}
-            {% set has_perf_par = "7)aletas de perfil parabolico" in sele_aleta or "perfil parabolico" in aleta_txt %}
-            {% set has_pino = "8)aletas de pino de perfilparabolico (ponta arredondada)" in sele_aleta or "pino" in aleta_txt or "arredondada" in aleta_txt %}
 
-            {% if precisa_t or has_rect or has_triang or has_parab or has_circ %}
+            <!-- Campos de entrada específicos por tipo de aleta usando tipo_aleta_id -->
+            
+            <!-- TIPOS 1, 2, 3: w, L, t (Retas retangular, triangular, parabolica) -->
+            {% if tipo_aleta_id in [1, 2, 3] %}
+                <div class="form-group">
+                    <label for="w">Largura (w) [m]:</label>
+                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
+                </div>
                 <div class="form-group">
                     <label for="t">Espessura (t) [m]:</label>
                     <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
                 </div>
             {% endif %}
-
-            {% if precisa_w or has_rect or has_triang or has_parab %}
-                <div class="form-group">
-                    <label for="w">Largura (w) [m]:</label>
-                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
-                </div>
-            {% endif %}
-
-            {% if precisa_raios or has_circ %}
+            
+            <!-- TIPO 4: r1, r2, t (Circular retangular) -->
+            {% if tipo_aleta_id == 4 %}
                 <div class="form-group">
                     <label for="r1">Raio Interno (r1) [m]:</label>
                     <input type="text" class="form-control" id="r1" name="r1" required placeholder="Ex: 0.01 m">
@@ -217,15 +217,21 @@
                     <label for="r2">Raio Externo (r2) [m]:</label>
                     <input type="text" class="form-control" id="r2" name="r2" required placeholder="Ex: 0.02 m">
                 </div>
+                <div class="form-group">
+                    <label for="t">Espessura (t) [m]:</label>
+                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.005 m">
+                </div>
             {% endif %}
-
-            {% if precisa_D or has_perf_ret or has_perf_tri or has_perf_par or has_pino or "perfil" in aleta_txt %}
+            
+            <!-- TIPOS 5, 6, 7, 8: D, L (Pinos retangular, triangular, parabolico, parabolico arredondado) -->
+            {% if tipo_aleta_id in [5, 6, 7, 8] %}
                 <div class="form-group">
                     <label for="D">Diâmetro (D) [m]:</label>
                     <input type="text" class="form-control" id="D" name="D" required placeholder="Ex: 0.01 m">
                 </div>
             {% endif %}
             
+
             <div class="form-group mt-4">
                 <label style="font-weight: 600; color: #333; font-size: 1.1rem;">Condição de Contorno na Ponta:</label>
                 <div class="form-check">

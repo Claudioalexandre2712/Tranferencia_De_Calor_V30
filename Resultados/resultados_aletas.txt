@@ -1,3 +1,3 @@
-Tipos de Aletas: ['6)aletas de perfil triangular']
-h: 25.0, k: 90.0, l: 0.05, t: 0.02, w: 0.1, D: 0.02, r1: 0.01, r2: 0.02, T_b: 100.0, T_inf: 25.0
-('6)aletas de perfil triangular', np.float64(0.4915156988891408), np.float64(5.63212262817378), np.float64(0.0016019042244414096), np.float64(9.561388334651456), np.float64(7.4535599249993), 0.06283185307179587, 0.0003141592653589793)
+Tipos de Aletas: ['1)aletas retangulares retas']
+h: 25.0, k: 240.0, l: 0.2, t: 0.002, w: 0.1, D: None, r1: None, r2: None, T_b: 100.0, T_inf: 25.0
+('1)aletas retangulares retas', np.float64(0.4696109890677667), np.float64(35.92524066368416), 0.04000000000000001, np.float64(95.80064176982442), np.float64(10.307764064044152), 0.20400000000000001, 0.0002)
