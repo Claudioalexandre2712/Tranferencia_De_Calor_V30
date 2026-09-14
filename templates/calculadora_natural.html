@@ -343,6 +343,36 @@
                                             <i class="fas fa-download mr-2"></i>Importar para Cálculos
                                         </button>
 
+                                        <!-- Botão para Importar Dados Baixados (Planilha CSV) -->
+                                        <div class="mt-2">
+                                            <label class="btn btn-sm btn-outline-success btn-block font-weight-bold mb-0 d-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 0.82rem; padding: 7px 6px; cursor: pointer; border-width: 1.5px; transition: all 0.2s ease;" title="Carregar arquivo CSV de ensaio baixado anteriormente para preencher os dados">
+                                                <i class="fas fa-file-csv mr-2" style="font-size: 1.1rem;"></i>Carregar Dados Baixados (CSV)
+                                                <input type="file" id="input-csv-natural" accept=".csv" style="display: none;" onchange="carregarCSVNatural(event)">
+                                            </label>
+                                        </div>
+
+                                        <!-- Painel Informativo e Seletor do CSV Carregado -->
+                                        <div id="box-csv-info" class="mt-2 p-2 rounded" style="display: none; background: #f1f8e9; border: 1px solid #c8e6c9; font-size: 0.76rem;">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="font-weight-bold text-success"><i class="fas fa-check-circle mr-1"></i>CSV Ativo</span>
+                                                <button type="button" class="close text-muted" style="font-size: 1.1rem; line-height: 1; outline: none; border: none; background: transparent; cursor: pointer;" onclick="fecharCSVNatural()" title="Fechar arquivo e restaurar">&times;</button>
+                                            </div>
+                                            <div id="csv-arquivo-nome" class="text-truncate font-weight-bold text-dark mb-1" style="max-width: 100%;"></div>
+                                            <div id="csv-detalhes-pontos" class="text-muted mb-2"></div>
+                                            
+                                            <div class="form-group mb-1">
+                                                <label class="small font-weight-bold mb-1 text-dark d-block">Critério de Amostragem:</label>
+                                                <select class="form-control form-control-sm" id="select-modo-csv" onchange="aplicarModoCSV()" style="font-size: 0.74rem; height: calc(1.5em + 0.5rem + 2px); border-radius: 6px;">
+                                                    <option value="regime" selected>Regime Permanente (Últimos 15%)</option>
+                                                    <option value="ultimo">Última Leitura (Ponto Final)</option>
+                                                    <option value="media_total">Média Geral (Todo o Ensaio)</option>
+                                                </select>
+                                            </div>
+                                            <small class="text-success d-block mt-1 font-weight-bold" id="csv-feedback-status">
+                                                <i class="fas fa-bolt mr-1"></i>Dados inseridos nos cálculos!
+                                            </small>
+                                        </div>
+
                                         <div class="row mt-2 no-gutters">
                                             <div class="col-6 pr-1">
                                                 <button type="button" class="btn btn-sm btn-outline-primary btn-block font-weight-bold" id="btn-simular" onclick="injetarTelemetriaExemplo()" style="border-radius: 8px; font-size: 0.78rem; padding: 6px 4px;" title="Carrega leituras padrão de ensaio 80°C">
@@ -503,6 +533,8 @@
     <script>
         let intervalTelemetria = null;
         let modoSimulacao = false;
+        let dadosCSVNatural = null;
+        let nomeArquivoCSVNatural = '';
 
         function getSensorMapping() {
             try {
@@ -563,6 +595,7 @@
 
         function injetarTelemetriaExemplo() {
             modoSimulacao = true;
+            fecharCSVNatural();
             document.getElementById('temp-t1').textContent = '79.2500 °C';
             document.getElementById('temp-t2').textContent = '78.5000 °C';
             document.getElementById('temp-t3').textContent = '77.7500 °C';
@@ -578,6 +611,7 @@
 
         async function restaurarLeituraReal() {
             modoSimulacao = false;
+            fecharCSVNatural();
             
             const btnSim = document.getElementById('btn-simular');
             const btnReal = document.getElementById('btn-real');
@@ -609,6 +643,206 @@
             } catch (err) {
                 console.warn('Erro ao restaurar telemetria');
             }
+        }
+
+        // =====================================================================
+        // IMPORTAÇÃO DE DADOS DE ENSAIO SALVOS EM CSV (PAINEL DE CONV. NATURAL)
+        // =====================================================================
+        function carregarCSVNatural(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let texto = e.target.result;
+                    // Remover possível Byte Order Mark (UTF-8 BOM)
+                    if (texto.charCodeAt(0) === 0xFEFF) {
+                        texto = texto.slice(1);
+                    }
+
+                    const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                    if (linhas.length < 2) {
+                        alert('Arquivo CSV vazio ou com formato inválido.');
+                        return;
+                    }
+
+                    // Identificar delimitador (; , ou \t)
+                    const cabecalho = linhas[0];
+                    let sep = ';';
+                    const countPontoVirgula = (cabecalho.match(/;/g) || []).length;
+                    const countVirgula = (cabecalho.match(/,/g) || []).length;
+                    const countTab = (cabecalho.match(/\t/g) || []).length;
+                    if (countTab > countPontoVirgula && countTab > countVirgula) sep = '\t';
+                    else if (countVirgula > countPontoVirgula) sep = ',';
+
+                    // Parse e mapeamento flexível das colunas do cabeçalho
+                    const colunas = cabecalho.split(sep).map(c => c.replace(/["']/g, '').trim().toLowerCase());
+
+                    const idxHorario = colunas.findIndex(c => c.includes('hor'));
+                    const idxTempo   = colunas.findIndex(c => c.includes('temp') || c.includes('seg') || c === 's');
+                    const idxT1      = colunas.findIndex(c => c.includes('t1'));
+                    const idxT2      = colunas.findIndex(c => c.includes('t2'));
+                    const idxT3      = colunas.findIndex(c => c.includes('t3'));
+                    const idxT4      = colunas.findIndex(c => c.includes('t4'));
+                    const idxT5      = colunas.findIndex(c => c.includes('t5'));
+                    const idxT6      = colunas.findIndex(c => c.includes('t6'));
+
+                    const parseNum = (val) => {
+                        if (!val) return 0.0;
+                        val = val.replace(/["']/g, '').trim();
+                        return parseFloat(val.replace(',', '.')) || 0.0;
+                    };
+
+                    const registros = [];
+                    for (let i = 1; i < linhas.length; i++) {
+                        const partes = linhas[i].split(sep);
+                        if (partes.length < 3) continue;
+
+                        const t1 = idxT1 >= 0 && partes[idxT1] !== undefined ? parseNum(partes[idxT1]) : 0;
+                        const t2 = idxT2 >= 0 && partes[idxT2] !== undefined ? parseNum(partes[idxT2]) : 0;
+                        const t3 = idxT3 >= 0 && partes[idxT3] !== undefined ? parseNum(partes[idxT3]) : 0;
+                        const t4 = idxT4 >= 0 && partes[idxT4] !== undefined ? parseNum(partes[idxT4]) : 0;
+                        const t5 = idxT5 >= 0 && partes[idxT5] !== undefined ? parseNum(partes[idxT5]) : 0;
+                        const t6 = idxT6 >= 0 && partes[idxT6] !== undefined ? parseNum(partes[idxT6]) : 0;
+                        const tempo_s = idxTempo >= 0 && partes[idxTempo] !== undefined ? Math.round(parseNum(partes[idxTempo])) : (i - 1) * 2;
+                        const horario = idxHorario >= 0 && partes[idxHorario] !== undefined ? partes[idxHorario].replace(/["']/g, '').trim() : '';
+
+                        if (t1 > 0 || t2 > 0 || t3 > 0 || t4 > 0 || t5 > 0 || t6 > 0) {
+                            registros.push({ t1, t2, t3, t4, t5, t6, tempo_s, horario });
+                        }
+                    }
+
+                    if (registros.length === 0) {
+                        alert('Nenhum dado válido de temperatura encontrado no arquivo CSV.');
+                        return;
+                    }
+
+                    dadosCSVNatural = registros;
+                    nomeArquivoCSVNatural = file.name;
+                    modoSimulacao = true; // Mantém a tela com os dados importados, sem sobreposição periódica do ESP32
+
+                    // Exibir e atualizar card com dados do arquivo
+                    const box = document.getElementById('box-csv-info');
+                    if (box) box.style.display = 'block';
+
+                    const elNome = document.getElementById('csv-arquivo-nome');
+                    if (elNome) {
+                        elNome.textContent = file.name;
+                        elNome.title = file.name;
+                    }
+
+                    const elDetalhes = document.getElementById('csv-detalhes-pontos');
+                    if (elDetalhes) {
+                        const tMin = registros[0].tempo_s;
+                        const tMax = registros[registros.length - 1].tempo_s;
+                        elDetalhes.innerHTML = `<i class="fas fa-database mr-1"></i>${registros.length} pontos (${tMin}s a ${tMax}s)`;
+                    }
+
+                    const selModo = document.getElementById('select-modo-csv');
+                    if (selModo) selModo.value = 'regime';
+
+                    // Processa e preenche automaticamente a calculadora
+                    aplicarModoCSV();
+
+                    // Ajusta estado visual dos botões
+                    const btnSim = document.getElementById('btn-simular');
+                    const btnReal = document.getElementById('btn-real');
+                    if (btnSim) btnSim.className = 'btn btn-sm btn-outline-primary btn-block font-weight-bold';
+                    if (btnReal) btnReal.className = 'btn btn-sm btn-outline-secondary btn-block font-weight-bold';
+
+                } catch (err) {
+                    console.error('Erro ao processar CSV:', err);
+                    alert('Falha ao processar o arquivo CSV: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function aplicarModoCSV() {
+            if (!dadosCSVNatural || dadosCSVNatural.length === 0) return;
+
+            const modo = document.getElementById('select-modo-csv') ? document.getElementById('select-modo-csv').value : 'regime';
+            let amostras = [];
+
+            if (modo === 'ultimo') {
+                amostras = [dadosCSVNatural[dadosCSVNatural.length - 1]];
+            } else if (modo === 'media_total') {
+                amostras = dadosCSVNatural;
+            } else {
+                // 'regime' - Últimos 15% dos registros (estabilização térmica / regime permanente)
+                const corte = Math.max(0, Math.floor(dadosCSVNatural.length * 0.85));
+                amostras = dadosCSVNatural.slice(corte);
+                if (amostras.length === 0) amostras = [dadosCSVNatural[dadosCSVNatural.length - 1]];
+            }
+
+            const n = amostras.length;
+            let somaT1 = 0, somaT2 = 0, somaT3 = 0, somaT4 = 0, somaT5 = 0, somaT6 = 0;
+            for (let i = 0; i < n; i++) {
+                somaT1 += amostras[i].t1;
+                somaT2 += amostras[i].t2;
+                somaT3 += amostras[i].t3;
+                somaT4 += amostras[i].t4;
+                somaT5 += amostras[i].t5;
+                somaT6 += amostras[i].t6;
+            }
+
+            const medT1 = somaT1 / n;
+            const medT2 = somaT2 / n;
+            const medT3 = somaT3 / n;
+            const medT4 = somaT4 / n;
+            const medT5 = somaT5 / n;
+            const medT6 = somaT6 / n;
+
+            // Atualiza os cartões de sensores da barra lateral
+            document.getElementById('temp-t1').textContent = `${medT1.toFixed(4)} °C`;
+            document.getElementById('temp-t2').textContent = `${medT2.toFixed(4)} °C`;
+            document.getElementById('temp-t3').textContent = `${medT3.toFixed(4)} °C`;
+            document.getElementById('temp-t4').textContent = `${medT4.toFixed(4)} °C`;
+            document.getElementById('temp-t5').textContent = `${medT5.toFixed(4)} °C`;
+            document.getElementById('temp-t6').textContent = `${medT6.toFixed(4)} °C`;
+
+            // Calcular valores para os campos do formulário
+            const tMediaSup = (medT1 + medT2 + medT3) / 3.0;
+            const tBase = (medT5 > 0 || medT6 > 0) ? ((medT5 + medT6) / 2.0) : (medT5 || medT6 || 0);
+            const tAmb = medT4;
+
+            const elTs = document.getElementById('T_superficie');
+            const elTb = document.getElementById('T_base');
+            const elTf = document.getElementById('T_fluido');
+
+            if (elTs) elTs.value = tMediaSup.toFixed(4);
+            if (elTb && tBase > 0) elTb.value = tBase.toFixed(4);
+            if (elTf) elTf.value = tAmb.toFixed(4);
+
+            // Destaque visual suave nos campos preenchidos
+            [elTs, elTb, elTf].forEach(el => {
+                if (!el) return;
+                el.style.transition = 'background-color 0.4s ease, border-color 0.4s ease';
+                el.style.backgroundColor = '#e8f5e9';
+                el.style.borderColor = '#43a047';
+                setTimeout(() => {
+                    el.style.backgroundColor = '';
+                    el.style.borderColor = '';
+                }, 1600);
+            });
+
+            const fb = document.getElementById('csv-feedback-status');
+            if (fb) {
+                let descModo = 'Regime Permanente';
+                if (modo === 'ultimo') descModo = 'Última Amostra';
+                else if (modo === 'media_total') descModo = 'Média Geral';
+                fb.innerHTML = `<i class="fas fa-check-circle mr-1"></i>${descModo} (${n} pts) aplicado: Ts=${tMediaSup.toFixed(2)}°C | T∞=${tAmb.toFixed(2)}°C`;
+            }
+        }
+
+        function fecharCSVNatural() {
+            dadosCSVNatural = null;
+            nomeArquivoCSVNatural = '';
+            const box = document.getElementById('box-csv-info');
+            if (box) box.style.display = 'none';
+            const input = document.getElementById('input-csv-natural');
+            if (input) input.value = '';
         }
 
         function importarDadosESP32() {

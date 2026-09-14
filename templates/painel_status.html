@@ -25,12 +25,12 @@
             --brand-primary: #2563eb;
             --brand-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             
-            --color-t1: #f43f5e;
-            --color-t2: #f59e0b;
-            --color-t3: #ea580c;
-            --color-t4: #0ea5e9;
-            --color-t5: #6366f1;
-            --color-t6: #8b5cf6;
+            --color-t1: #D62728;
+            --color-t2: #9467BD;
+            --color-t3: #2CA02C;
+            --color-t4: #1F77B4;
+            --color-t5: #EAB308;
+            --color-t6: #8C564B;
             
             --success-color: #10b981;
             --warning-color: #f59e0b;
@@ -289,15 +289,22 @@
         }
 
         /* Sensor Custom Color Accents */
-        .card-t1::before { background: var(--color-t1); }
-        .card-t2::before { background: var(--color-t2); }
-        .card-t3::before { background: var(--color-t3); }
-        .card-t4::before { background: var(--color-t4); }
-        .card-t5::before { background: var(--color-t5); }
-        .card-t6::before { background: var(--color-t6); }
+        .card-t1::before { background: var(--color-t1) !important; }
+        .card-t2::before { background: var(--color-t2) !important; }
+        .card-t3::before { background: var(--color-t3) !important; }
+        .card-t4::before { background: var(--color-t4) !important; }
+        .card-t5::before { background: var(--color-t5) !important; }
+        .card-t6::before { background: var(--color-t6) !important; }
 
         .temp-card-cinza::before { background: var(--color-t4); }
         .temp-card-roxo::before { background: var(--color-t5); }
+
+        .icon-t1, .card-t1 .card-icon { color: var(--color-t1) !important; }
+        .icon-t2, .card-t2 .card-icon { color: var(--color-t2) !important; }
+        .icon-t3, .card-t3 .card-icon { color: var(--color-t3) !important; }
+        .icon-t4, .card-t4 .card-icon { color: var(--color-t4) !important; }
+        .icon-t5, .card-t5 .card-icon { color: var(--color-t5) !important; }
+        .icon-t6, .card-t6 .card-icon { color: var(--color-t6) !important; }
 
         .card-header-flex {
             display: flex;
@@ -381,7 +388,7 @@
         /* ── Chart Container ── */
         .chart-wrapper {
             position: relative;
-            height: 380px;
+            height: 520px;
             width: 100%;
         }
 
@@ -594,7 +601,7 @@
                         <div class="card-header-flex">
                             <label class="drag-handle">
                                 <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
-                                <i class="fas fa-fire mr-1 card-icon text-danger"></i>
+                                <i class="fas fa-fire mr-1 card-icon icon-t1" style="color: var(--color-t1);"></i>
                                 <span class="card-label">T1 — Início Chama</span>
                             </label>
                         </div>
@@ -612,7 +619,7 @@
                         <div class="card-header-flex">
                             <label class="drag-handle">
                                 <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
-                                <i class="fas fa-square mr-1 card-icon text-warning"></i>
+                                <i class="fas fa-square mr-1 card-icon icon-t2" style="color: var(--color-t2);"></i>
                                 <span class="card-label">T2 — Meio Chapa</span>
                             </label>
                         </div>
@@ -630,7 +637,7 @@
                         <div class="card-header-flex">
                             <label class="drag-handle">
                                 <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
-                                <i class="fas fa-fire-burner mr-1 card-icon text-danger"></i>
+                                <i class="fas fa-fire-burner mr-1 card-icon icon-t3" style="color: var(--color-t3);"></i>
                                 <span class="card-label">T3 — Fim Chama</span>
                             </label>
                         </div>
@@ -644,11 +651,11 @@
 
                 <!-- T4 -->
                 <div data-slot="3">
-                    <div class="temp-card card-t4 temp-card-cinza" data-sensor-key="t4" data-card-class="temp-card-cinza card-t4">
+                    <div class="temp-card card-t4" data-sensor-key="t4" data-card-class="card-t4">
                         <div class="card-header-flex">
                             <label class="drag-handle">
                                 <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
-                                <i class="fas fa-wind mr-1 card-icon text-info"></i>
+                                <i class="fas fa-wind mr-1 card-icon icon-t4" style="color: var(--color-t4);"></i>
                                 <span class="card-label">T4 — Ambiente</span>
                             </label>
                         </div>
@@ -662,11 +669,11 @@
 
                 <!-- T5 -->
                 <div data-slot="4">
-                    <div class="temp-card card-t5 temp-card-roxo" data-sensor-key="t5" data-card-class="temp-card-roxo card-t5">
+                    <div class="temp-card card-t5" data-sensor-key="t5" data-card-class="card-t5">
                         <div class="card-header-flex">
                             <label class="drag-handle">
                                 <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
-                                <i class="fas fa-layer-group mr-1 card-icon" style="color: var(--color-t5);"></i>
+                                <i class="fas fa-layer-group mr-1 card-icon icon-t5" style="color: var(--color-t5);"></i>
                                 <span class="card-label">T5 — Base Inferior</span>
                             </label>
                         </div>
@@ -680,11 +687,11 @@
 
                 <!-- T6 -->
                 <div data-slot="5">
-                    <div class="temp-card card-t6 temp-card-roxo" data-sensor-key="t6" data-card-class="temp-card-roxo card-t6">
+                    <div class="temp-card card-t6" data-sensor-key="t6" data-card-class="card-t6">
                         <div class="card-header-flex">
                             <label class="drag-handle">
                                 <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
-                                <i class="fas fa-layer-group mr-1 card-icon" style="color: var(--color-t6);"></i>
+                                <i class="fas fa-layer-group mr-1 card-icon icon-t6" style="color: var(--color-t6);"></i>
                                 <span class="card-label">T6 — Base Inferior</span>
                             </label>
                         </div>
@@ -735,6 +742,10 @@
                         <i class="fas fa-file-csv text-success"></i>
                         Salvar CSV
                     </button>
+                    <button type="button" class="btn-action-secondary btn-sm" id="btn-toggle-tratamento" onclick="togglePainelTratamento()" title="Remover curvas de erro do termostato W3002, recortar intervalos e estabilizar o gráfico">
+                        <i class="fas fa-wand-magic-sparkles text-warning"></i>
+                        Tratar / Recortar Dados
+                    </button>
                     <button type="button" class="btn-action-secondary btn-sm" onclick="limparHistoricoGrafico()">
                         <i class="fas fa-trash-can text-danger"></i>
                         Limpar
@@ -743,6 +754,113 @@
                         <i class="fas fa-pause"></i>
                         Pausar
                     </button>
+                </div>
+            </div>
+
+            <!-- ── Painel Expansível de Tratamento de Dados & Recorte de Curvas (W3002 / Ebulidor) ── -->
+            <div id="painel-tratamento-container" class="card border-warning mb-3 shadow-sm" style="display: none; background: #fffdfa; border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="fas fa-sliders text-warning"></i>
+                            Tratamento Térmico de Dados & Recorte de Curvas (Controle W3002 / Ebulidor)
+                        </h6>
+                        <button type="button" class="btn-close btn-sm" onclick="togglePainelTratamento()"></button>
+                    </div>
+
+                    <div class="row g-3 align-items-stretch">
+                        <!-- Opção 1: Remover Intervalo de Oscilação / Erro (Lombada) -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="p-2 border rounded bg-white h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <span class="small fw-bold text-danger d-block mb-1">
+                                        <i class="fas fa-scissors mr-1"></i> 1. Remover Trecho / Lombada
+                                    </span>
+                                    <span class="text-muted small d-block mb-2" style="font-size: 0.78rem;">
+                                        Exclui o reaquecimento indesejado do W3002 e une os pontos.
+                                    </span>
+                                    <div class="d-flex gap-2 align-items-center mb-2">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">De</span>
+                                            <input type="number" id="corte-de" class="form-control font-monospace" placeholder="Ex: 960" min="0">
+                                            <span class="input-group-text">s</span>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Até</span>
+                                            <input type="number" id="corte-ate" class="form-control font-monospace" placeholder="Ex: 1060" min="0">
+                                            <span class="input-group-text">s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100 fw-semibold" onclick="removerTrechoIndesejado()">
+                                    <i class="fas fa-trash-can mr-1"></i> Excluir Trecho e Unir
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Opção 2: Manter Apenas Intervalo de Regime (Recorte) -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="p-2 border rounded bg-white h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <span class="small fw-bold text-primary d-block mb-1">
+                                        <i class="fas fa-crop-simple mr-1"></i> 2. Manter Apenas Faixa de Tempo
+                                    </span>
+                                    <span class="text-muted small d-block mb-2" style="font-size: 0.78rem;">
+                                        Isola apenas o regime desejado (o tempo se reinicia em 0s).
+                                    </span>
+                                    <div class="d-flex gap-2 align-items-center mb-2">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Início</span>
+                                            <input type="number" id="manter-de" class="form-control font-monospace" placeholder="Ex: 550" min="0">
+                                            <span class="input-group-text">s</span>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Fim</span>
+                                            <input type="number" id="manter-ate" class="form-control font-monospace" placeholder="Ex: 960" min="0">
+                                            <span class="input-group-text">s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 fw-semibold" onclick="manterApenasFaixa()">
+                                    <i class="fas fa-check mr-1"></i> Isolar Esta Faixa
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Opção 3: Suavização / Estabilização Digital + Importar CSV -->
+                        <div class="col-lg-4 col-md-12">
+                            <div class="p-2 border rounded bg-white h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <span class="small fw-bold text-success d-block mb-1">
+                                        <i class="fas fa-filter mr-1"></i> 3. Filtros & Importação
+                                    </span>
+                                    <span class="text-muted small d-block mb-2" style="font-size: 0.78rem;">
+                                        Suavize ruídos térmicos ou carregue um arquivo CSV salvo.
+                                    </span>
+                                    <div class="d-flex gap-2 mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill fw-semibold" onclick="aplicarSuavizacaoMediaMovel()" title="Média móvel de 5 pontos para filtrar ruídos">
+                                            <i class="fas fa-wave-square mr-1"></i> Suavizar
+                                        </button>
+                                        <label class="btn btn-sm btn-outline-secondary flex-fill mb-0 fw-semibold" title="Carregar arquivo CSV gravado anteriormente para tratar">
+                                            <i class="fas fa-upload mr-1"></i> Carregar CSV
+                                            <input type="file" id="input-carregar-csv" accept=".csv" style="display: none;" onchange="carregarArquivoCSV(event)">
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-warning w-100 fw-bold" onclick="restaurarDadosOriginais()" id="btn-restaurar" title="Restaura os dados originais brutos da coleta" disabled>
+                                    <i class="fas fa-rotate-left mr-1"></i> Restaurar Original (<span id="count-pontos-backup">0</span> pts)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rodapé informativo do painel de tratamento -->
+                    <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 small text-muted">
+                        <span id="status-tratamento">
+                            <i class="fas fa-info-circle text-info mr-1"></i> Use <strong>Excluir Trecho</strong> para remover a onda do ebulidor ou <strong>Isolar Faixa</strong> para focar no regime estável.
+                        </span>
+                        <span id="badge-status-dados" class="badge bg-secondary">Dados Brutos Originais</span>
+                    </div>
                 </div>
             </div>
 
@@ -894,8 +1012,8 @@
             const ctx = document.getElementById('temperaturaChart').getContext('2d');
             
             const gradientT1 = ctx.createLinearGradient(0, 0, 0, 350);
-            gradientT1.addColorStop(0, 'rgba(244, 63, 94, 0.2)');
-            gradientT1.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+            gradientT1.addColorStop(0, 'rgba(214, 39, 40, 0.2)');
+            gradientT1.addColorStop(1, 'rgba(214, 39, 40, 0.0)');
 
             temperaturaChart = new Chart(ctx, {
                 type: 'line',
@@ -905,75 +1023,81 @@
                         {
                             label: 'T1 - Início',
                             data: [],
-                            borderColor: '#f43f5e',
+                            borderColor: '#D62728',
                             backgroundColor: gradientT1,
-                            borderWidth: 2.5,
+                            borderWidth: 2.2,
                             tension: 0.35,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 1.5,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#f43f5e'
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#D62728'
                         },
                         {
                             label: 'T2 - Meio',
                             data: [],
-                            borderColor: '#f59e0b',
+                            borderColor: '#9467BD',
                             backgroundColor: 'transparent',
-                            borderWidth: 2.5,
+                            borderWidth: 2.2,
                             tension: 0.35,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 1.5,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#f59e0b'
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#9467BD'
                         },
                         {
                             label: 'T3 - Fim',
                             data: [],
-                            borderColor: '#ea580c',
+                            borderColor: '#2CA02C',
                             backgroundColor: 'transparent',
-                            borderWidth: 2.5,
+                            borderWidth: 2.2,
                             tension: 0.35,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 1.5,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#ea580c'
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#2CA02C'
                         },
                         {
                             label: 'T4 - Ambiente',
                             data: [],
-                            borderColor: '#0ea5e9',
+                            borderColor: '#1F77B4',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             borderDash: [5, 5],
                             tension: 0.35,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 1.5,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#0ea5e9'
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#1F77B4'
                         },
                         {
                             label: 'T5 - Base',
                             data: [],
-                            borderColor: '#6366f1',
+                            borderColor: '#EAB308',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             tension: 0.35,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 1.5,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#6366f1'
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#EAB308'
                         },
                         {
                             label: 'T6 - Base',
                             data: [],
-                            borderColor: '#8b5cf6',
+                            borderColor: '#8C564B',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             tension: 0.35,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 1.5,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#8b5cf6'
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#8C564B'
                         }
                     ]
                 },
@@ -999,6 +1123,18 @@
                                     weight: '600'
                                 },
                                 color: '#475569'
+                            },
+                            onClick: function(e, legendItem, legend) {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                if (ci.isDatasetVisible(index)) {
+                                    ci.hide(index);
+                                    legendItem.hidden = true;
+                                } else {
+                                    ci.show(index);
+                                    legendItem.hidden = false;
+                                }
+                                ci.update();
                             }
                         },
                         tooltip: {
@@ -1037,9 +1173,24 @@
                             ticks: {
                                 font: { family: 'JetBrains Mono', size: 11 },
                                 color: '#64748b',
+                                stepSize: 2,
+                                autoSkip: false,
                                 callback: function(value) {
                                     return Number(value).toFixed(1) + '°C';
                                 }
+                            },
+                            afterDataLimits: function(axis) {
+                                if (!isFinite(axis.min) || !isFinite(axis.max)) return;
+                                let min = Math.floor(axis.min / 2) * 2;
+                                let max = Math.ceil(axis.max / 2) * 2 + 2;
+                                if (max - min < 4) {
+                                    max = min + 4;
+                                }
+                                if (axis.min >= 0 && min < 0) {
+                                    min = 0;
+                                }
+                                axis.min = min;
+                                axis.max = max;
                             }
                         },
                         x: {
@@ -1199,7 +1350,7 @@
 
             // Estrutura exata do CSV conforme Item 14:
             // Horário,Tempo_s,T1_Inicio_C,T2_Meio_C,T3_Fim_C,T4_Ambiente_C,T5_Base_C,T6_Base_C
-            const cabecalho = 'Horário,Tempo_s,T1_Inicio_C,T2_Meio_C,T3_Fim_C,T4_Ambiente_C,T5_Base_C,T6_Base_C';
+            const cabecalho = 'Horário;Tempo_s;T1_Inicio_C;T2_Meio_C;T3_Fim_C;T4_Ambiente_C;T5_Base_C;T6_Base_C';
             const linhas = [cabecalho];
 
             for (let i = 0; i < dadosTemperatura.length; i++) {
@@ -1207,13 +1358,13 @@
                 const linha = [
                     d.horario,
                     d.tempo_s,
-                    Number(d.t1).toFixed(4),
-                    Number(d.t2).toFixed(4),
-                    Number(d.t3).toFixed(4),
-                    Number(d.t4).toFixed(4),
-                    Number(d.t5).toFixed(4),
-                    Number(d.t6).toFixed(4)
-                ].join(',');
+                    Number(d.t1).toFixed(4).replace('.', ','),
+                    Number(d.t2).toFixed(4).replace('.', ','),
+                    Number(d.t3).toFixed(4).replace('.', ','),
+                    Number(d.t4).toFixed(4).replace('.', ','),
+                    Number(d.t5).toFixed(4).replace('.', ','),
+                    Number(d.t6).toFixed(4).replace('.', ',')
+                ].join(';');
                 linhas.push(linha);
             }
 
@@ -1233,6 +1384,7 @@
             dadosTemperatura.length = 0;
             totalPontosColetados = 0;
             inicioColetaTimestamp = null;
+            dadosOriginaisBackup = null;
 
             if (temperaturaChart) {
                 temperaturaChart.data.labels = [];
@@ -1243,6 +1395,16 @@
             if (document.getElementById('chart-tempo-decorrido')) document.getElementById('chart-tempo-decorrido').textContent = '00:00:00';
             if (document.getElementById('chart-total-pontos')) document.getElementById('chart-total-pontos').textContent = '0';
             if (document.getElementById('chart-ultima-amostra')) document.getElementById('chart-ultima-amostra').textContent = '--:--:--';
+
+            const btnRes = document.getElementById('btn-restaurar');
+            if (btnRes) btnRes.disabled = true;
+            const countBackup = document.getElementById('count-pontos-backup');
+            if (countBackup) countBackup.textContent = '0';
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = 'Dados Brutos Originais';
+            }
         }
 
         function togglePauseMonitoramento() {
@@ -1255,6 +1417,344 @@
                 btn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
                 btn.classList.replace('btn-action-primary', 'btn-action-secondary');
             }
+        }
+
+        // =====================================================================
+        // TRATAMENTO TÉRMICO DE DADOS & RECORTE DE CURVAS (W3002 / EBULIDOR)
+        // =====================================================================
+        let dadosOriginaisBackup = null;
+
+        function garantirBackup() {
+            if (!dadosOriginaisBackup && dadosTemperatura.length > 0) {
+                dadosOriginaisBackup = JSON.parse(JSON.stringify(dadosTemperatura));
+                const btnRes = document.getElementById('btn-restaurar');
+                if (btnRes) btnRes.disabled = false;
+                const countBackup = document.getElementById('count-pontos-backup');
+                if (countBackup) countBackup.textContent = dadosOriginaisBackup.length;
+            }
+        }
+
+        function togglePainelTratamento() {
+            const painel = document.getElementById('painel-tratamento-container');
+            if (!painel) return;
+            const estaVisivel = painel.style.display !== 'none';
+            painel.style.display = estaVisivel ? 'none' : 'block';
+
+            if (!estaVisivel && dadosTemperatura.length > 0) {
+                const tMin = dadosTemperatura[0].tempo_s;
+                const tMax = dadosTemperatura[dadosTemperatura.length - 1].tempo_s;
+
+                const inputManterDe = document.getElementById('manter-de');
+                const inputManterAte = document.getElementById('manter-ate');
+                if (inputManterDe && (!inputManterDe.value || inputManterDe.value == 0)) inputManterDe.value = tMin;
+                if (inputManterAte && (!inputManterAte.value || inputManterAte.value == 0)) inputManterAte.value = tMax;
+
+                const countBackup = document.getElementById('count-pontos-backup');
+                if (countBackup) countBackup.textContent = (dadosOriginaisBackup ? dadosOriginaisBackup.length : dadosTemperatura.length);
+            }
+        }
+
+        function redesenharGraficoCompleto() {
+            if (!temperaturaChart) return;
+
+            temperaturaChart.data.labels = dadosTemperatura.map(d => d.tempo_s);
+            temperaturaChart.data.datasets[0].data = dadosTemperatura.map(d => d.t1);
+            temperaturaChart.data.datasets[1].data = dadosTemperatura.map(d => d.t2);
+            temperaturaChart.data.datasets[2].data = dadosTemperatura.map(d => d.t3);
+            temperaturaChart.data.datasets[3].data = dadosTemperatura.map(d => d.t4);
+            temperaturaChart.data.datasets[4].data = dadosTemperatura.map(d => d.t5);
+            temperaturaChart.data.datasets[5].data = dadosTemperatura.map(d => d.t6);
+            temperaturaChart.update();
+
+            const total = dadosTemperatura.length;
+            totalPontosColetados = total;
+            if (document.getElementById('chart-total-pontos')) {
+                document.getElementById('chart-total-pontos').textContent = total;
+            }
+            if (total > 0) {
+                const ultimo = dadosTemperatura[total - 1];
+                if (document.getElementById('chart-tempo-decorrido')) {
+                    document.getElementById('chart-tempo-decorrido').textContent = formatarTempo(ultimo.tempo_s);
+                }
+                if (document.getElementById('chart-ultima-amostra')) {
+                    document.getElementById('chart-ultima-amostra').textContent = ultimo.horario;
+                }
+            }
+        }
+
+        // Opção 1: Excluir trecho de erro / oscilação (lombada do ebulidor)
+        function removerTrechoIndesejado() {
+            if (dadosTemperatura.length === 0) {
+                alert('Nenhum dado registrado para tratamento.');
+                return;
+            }
+            const deInput = document.getElementById('corte-de');
+            const ateInput = document.getElementById('corte-ate');
+            const tDe = parseFloat(deInput.value);
+            const tAte = parseFloat(ateInput.value);
+
+            if (isNaN(tDe) || isNaN(tAte) || tDe >= tAte) {
+                alert('Por favor, informe um intervalo de tempo válido (ex: De 960s Até 1060s).');
+                return;
+            }
+
+            garantirBackup();
+
+            const pontosAntes = dadosTemperatura.length;
+            const deltaTempo = tAte - tDe;
+            const novosDados = [];
+
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const reg = dadosTemperatura[i];
+                if (reg.tempo_s < tDe) {
+                    novosDados.push({ ...reg });
+                } else if (reg.tempo_s > tAte) {
+                    const regAjustado = { ...reg };
+                    regAjustado.tempo_s = Math.round(reg.tempo_s - deltaTempo);
+                    novosDados.push(regAjustado);
+                }
+            }
+
+            const pontosRemovidos = pontosAntes - novosDados.length;
+            if (pontosRemovidos === 0) {
+                alert(`Nenhum ponto encontrado no intervalo entre ${tDe}s e ${tAte}s.`);
+                return;
+            }
+
+            dadosTemperatura.length = 0;
+            dadosTemperatura.push(...novosDados);
+
+            redesenharGraficoCompleto();
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-warning text-dark';
+                badge.textContent = `Trecho Removido (-${pontosRemovidos} pts)`;
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Removida oscilação de <strong>${tDe}s</strong> até <strong>${tAte}s</strong> (${pontosRemovidos} pontos excluídos). Curva unida e tempo reajustado!`;
+            }
+        }
+
+        // Opção 2: Manter apenas a faixa de tempo desejada (Regime Permanente)
+        function manterApenasFaixa() {
+            if (dadosTemperatura.length === 0) {
+                alert('Nenhum dado registrado para tratamento.');
+                return;
+            }
+            const deInput = document.getElementById('manter-de');
+            const ateInput = document.getElementById('manter-ate');
+            const tDe = parseFloat(deInput.value);
+            const tAte = parseFloat(ateInput.value);
+
+            if (isNaN(tDe) || isNaN(tAte) || tDe >= tAte) {
+                alert('Por favor, informe uma faixa válida (ex: Início 550s e Fim 960s).');
+                return;
+            }
+
+            garantirBackup();
+
+            const novosDados = [];
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const reg = dadosTemperatura[i];
+                if (reg.tempo_s >= tDe && reg.tempo_s <= tAte) {
+                    const regAjustado = { ...reg };
+                    regAjustado.tempo_s = Math.round(reg.tempo_s - tDe);
+                    novosDados.push(regAjustado);
+                }
+            }
+
+            if (novosDados.length === 0) {
+                alert(`Nenhum ponto encontrado na faixa de ${tDe}s a ${tAte}s.`);
+                return;
+            }
+
+            const totalMantidos = novosDados.length;
+            dadosTemperatura.length = 0;
+            dadosTemperatura.push(...novosDados);
+
+            redesenharGraficoCompleto();
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-primary';
+                badge.textContent = `Faixa Isolada (${totalMantidos} pts)`;
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Faixa de <strong>${tDe}s a ${tAte}s</strong> isolada com sucesso! O tempo do ensaio agora se inicia em 0s (${totalMantidos} pontos mantidos).`;
+            }
+        }
+
+        // Opção 3: Suavização por Média Móvel
+        function aplicarSuavizacaoMediaMovel() {
+            if (dadosTemperatura.length < 5) {
+                alert('Pontos insuficientes para suavização (mínimo 5 pontos).');
+                return;
+            }
+
+            garantirBackup();
+
+            const janela = 5;
+            const metade = Math.floor(janela / 2);
+            const sensores = ['t1', 't2', 't3', 't4', 't5', 't6'];
+            const dadosBase = JSON.parse(JSON.stringify(dadosTemperatura));
+
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const ini = Math.max(0, i - metade);
+                const fim = Math.min(dadosTemperatura.length, i + metade + 1);
+                const count = fim - ini;
+
+                for (const s of sensores) {
+                    let soma = 0;
+                    for (let j = ini; j < fim; j++) {
+                        soma += dadosBase[j][s];
+                    }
+                    dadosTemperatura[i][s] = Number((soma / count).toFixed(4));
+                }
+            }
+
+            redesenharGraficoCompleto();
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Suavizado (Média Móvel)';
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Filtro de estabilização térmica (Média Móvel de 5 pontos) aplicado com sucesso! Ruídos atenuados.`;
+            }
+        }
+
+        // Restaurar dados originais brutos
+        function restaurarDadosOriginais() {
+            if (!dadosOriginaisBackup || dadosOriginaisBackup.length === 0) {
+                return;
+            }
+
+            dadosTemperatura.length = 0;
+            dadosTemperatura.push(...JSON.parse(JSON.stringify(dadosOriginaisBackup)));
+
+            redesenharGraficoCompleto();
+
+            const btnRes = document.getElementById('btn-restaurar');
+            if (btnRes) btnRes.disabled = true;
+            dadosOriginaisBackup = null;
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = 'Dados Brutos Originais';
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-rotate-left text-primary mr-1"></i> Dados originais restaurados com sucesso! Todos os cortes foram desfeitos.`;
+            }
+        }
+
+        // Carregar arquivo CSV gravado anteriormente
+        function carregarArquivoCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const texto = e.target.result;
+                const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                if (linhas.length < 2) {
+                    alert('Arquivo CSV vazio ou com formato inválido.');
+                    return;
+                }
+
+                const cabecalho = linhas[0];
+                const sep = cabecalho.includes(';') ? ';' : ',';
+                const colunas = cabecalho.split(sep).map(c => c.trim().toLowerCase());
+
+                const idxHorario = colunas.findIndex(c => c.includes('hor'));
+                const idxTempo = colunas.findIndex(c => c.includes('temp') || c.includes('seg') || c.includes('s'));
+                const idxT1 = colunas.findIndex(c => c.includes('t1'));
+                const idxT2 = colunas.findIndex(c => c.includes('t2'));
+                const idxT3 = colunas.findIndex(c => c.includes('t3'));
+                const idxT4 = colunas.findIndex(c => c.includes('t4'));
+                const idxT5 = colunas.findIndex(c => c.includes('t5'));
+                const idxT6 = colunas.findIndex(c => c.includes('t6'));
+
+                const parseNum = (val) => {
+                    if (!val) return 0.0;
+                    return parseFloat(val.replace(',', '.').trim()) || 0.0;
+                };
+
+                const novosDados = [];
+                for (let i = 1; i < linhas.length; i++) {
+                    const partes = linhas[i].split(sep);
+                    if (partes.length < 4) continue;
+
+                    const horario = idxHorario >= 0 ? partes[idxHorario].trim() : `--:--:${i}`;
+                    const tempo_s = idxTempo >= 0 ? Math.round(parseNum(partes[idxTempo])) : (i - 1) * 2;
+                    const t1 = idxT1 >= 0 ? parseNum(partes[idxT1]) : 0;
+                    const t2 = idxT2 >= 0 ? parseNum(partes[idxT2]) : 0;
+                    const t3 = idxT3 >= 0 ? parseNum(partes[idxT3]) : 0;
+                    const t4 = idxT4 >= 0 ? parseNum(partes[idxT4]) : 0;
+                    const t5 = idxT5 >= 0 ? parseNum(partes[idxT5]) : 0;
+                    const t6 = idxT6 >= 0 ? parseNum(partes[idxT6]) : 0;
+
+                    novosDados.push({
+                        horario: horario,
+                        tempo_s: tempo_s,
+                        t1: t1,
+                        t2: t2,
+                        t3: t3,
+                        t4: t4,
+                        t5: t5,
+                        t6: t6
+                    });
+                }
+
+                if (novosDados.length === 0) {
+                    alert('Nenhum dado válido de temperatura encontrado no CSV.');
+                    return;
+                }
+
+                if (!isPaused) {
+                    togglePauseMonitoramento();
+                }
+
+                dadosOriginaisBackup = JSON.parse(JSON.stringify(novosDados));
+                dadosTemperatura.length = 0;
+                dadosTemperatura.push(...novosDados);
+
+                redesenharGraficoCompleto();
+
+                const btnRes = document.getElementById('btn-restaurar');
+                if (btnRes) btnRes.disabled = false;
+                const countBackup = document.getElementById('count-pontos-backup');
+                if (countBackup) countBackup.textContent = dadosOriginaisBackup.length;
+
+                const tMin = dadosTemperatura[0].tempo_s;
+                const tMax = dadosTemperatura[dadosTemperatura.length - 1].tempo_s;
+                const inputManterDe = document.getElementById('manter-de');
+                const inputManterAte = document.getElementById('manter-ate');
+                if (inputManterDe) inputManterDe.value = tMin;
+                if (inputManterAte) inputManterAte.value = tMax;
+
+                const badge = document.getElementById('badge-status-dados');
+                if (badge) {
+                    badge.className = 'badge bg-info text-dark';
+                    badge.textContent = `CSV Carregado (${novosDados.length} pts)`;
+                }
+                const status = document.getElementById('status-tratamento');
+                if (status) {
+                    status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Arquivo <strong>${file.name}</strong> carregado (${novosDados.length} pontos). O monitoramento ao vivo foi pausado para edição.`;
+                }
+
+                const painel = document.getElementById('painel-tratamento-container');
+                if (painel) painel.style.display = 'block';
+
+                event.target.value = '';
+            };
+            reader.readAsText(file, 'UTF-8');
         }
 
         // ── Atualização dos Indicadores de KPI ao Vivo ─────────────────────────
@@ -1303,12 +1803,12 @@
 
         // ── Posições Fixas na Bancada Térmica ─────────────────────────────────
         const POSICOES_BANCADA = [
-            { id: 't1', label: 'T1 — Início da Placa', icon: 'fa-fire',        iconColor: 'text-danger',  cardClass: 'card-t1' },
-            { id: 't2', label: 'T2 — Centro da Placa', icon: 'fa-square',      iconColor: 'text-warning', cardClass: 'card-t2' },
-            { id: 't3', label: 'T3 — Fim da Placa',    icon: 'fa-fire-burner', iconColor: 'text-danger',  cardClass: 'card-t3' },
-            { id: 't4', label: 'T4 — Ambiente',        icon: 'fa-wind',        iconColor: 'text-info',    cardClass: 'card-t4 temp-card-cinza' },
-            { id: 't5', label: 'T5 — Base / Água',     icon: 'fa-layer-group', iconColor: 'text-primary', cardClass: 'card-t5 temp-card-roxo' },
-            { id: 't6', label: 'T6 — Base / Água',     icon: 'fa-layer-group', iconColor: 'text-primary', cardClass: 'card-t6 temp-card-roxo' }
+            { id: 't1', label: 'T1 — Início da Placa', icon: 'fa-fire',        iconColor: 'icon-t1', cardClass: 'card-t1' },
+            { id: 't2', label: 'T2 — Centro da Placa', icon: 'fa-square',      iconColor: 'icon-t2', cardClass: 'card-t2' },
+            { id: 't3', label: 'T3 — Fim da Placa',    icon: 'fa-fire-burner', iconColor: 'icon-t3', cardClass: 'card-t3' },
+            { id: 't4', label: 'T4 — Ambiente',        icon: 'fa-wind',        iconColor: 'icon-t4', cardClass: 'card-t4' },
+            { id: 't5', label: 'T5 — Base / Água',     icon: 'fa-layer-group', iconColor: 'icon-t5', cardClass: 'card-t5' },
+            { id: 't6', label: 'T6 — Base / Água',     icon: 'fa-layer-group', iconColor: 'icon-t6', cardClass: 'card-t6' }
         ];
 
         const INFO_SENSORES_FISICOS = {
