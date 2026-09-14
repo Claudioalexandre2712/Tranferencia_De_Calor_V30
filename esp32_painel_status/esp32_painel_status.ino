@@ -30,14 +30,22 @@
 #include <ArduinoJson.h>
 #include <DHT.h>
 #include <Preferences.h>
+#include <WiFiUdp.h>
+#include <ESPmDNS.h>
 
 // ── CONFIGURAÇÕES DE REDE E SERVIDOR ─────────────────────────────────────────
 #define WIFI_SSID "CLAUDIO 2.4Ghz"
 #define WIFI_PASSWORD "enjk8122"
 
-const char* SERVER_HOST = "10.247.140.204";
+const char* SERVER_HOST = "10.18.163.204"; // IP de Fallback caso a busca automática não responda
 const uint16_t SERVER_PORT = 5000;
 const char* SERVER_PATH = "/api/temperaturas";
+const uint16_t UDP_DISCOVERY_PORT = 5005;
+
+WiFiUDP udpDiscovery;
+String ipServidorAtivo = SERVER_HOST;
+int falhasConsecutivasHttp = 0;
+unsigned long ultimaBuscaServidor = 0;
 
 // ── PINAGEM DO HARDWARE ──────────────────────────────────────────────────────
 #define ONE_WIRE_PIN 4      // Barramento OneWire dos DS18B20 da Placa
@@ -167,6 +175,54 @@ void conectarWiFi() {
   } else {
     Serial.println("[WIFI] ✗ Falha na conexão Wi-Fi. Verifique SSID/Senha.");
   }
+}
+
+// ── FUNÇÃO: DESCOBERTA AUTOMÁTICA DO SERVIDOR FLASK NA REDE ─────────────────
+void buscarServidorAutomatico() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  Serial.println("\n[AUTO-DISCOVERY] Procurando servidor Flask na rede...");
+
+  // 1ª Tentativa: UDP Broadcast (Descobre qualquer PC rodando o Flask na rede)
+  udpDiscovery.begin(0);
+  IPAddress broadcastIp(255, 255, 255, 255);
+  udpDiscovery.beginPacket(broadcastIp, UDP_DISCOVERY_PORT);
+  udpDiscovery.write((const uint8_t*)"TCC_DISCOVER_SERVER", 19);
+  udpDiscovery.endPacket();
+
+  unsigned long inicio = millis();
+  while (millis() - inicio < 1500) {
+    int packetSize = udpDiscovery.parsePacket();
+    if (packetSize > 0) {
+      char reply[64] = {0};
+      udpDiscovery.read(reply, sizeof(reply) - 1);
+      if (strstr(reply, "TCC_SERVER_IP") != NULL) {
+        ipServidorAtivo = udpDiscovery.remoteIP().toString();
+        Serial.printf("[AUTO-DISCOVERY] ✓ Servidor Flask localizado via Broadcast UDP: %s:%d\n\n", 
+                      ipServidorAtivo.c_str(), SERVER_PORT);
+        udpDiscovery.stop();
+        falhasConsecutivasHttp = 0;
+        return;
+      }
+    }
+    delay(25);
+  }
+  udpDiscovery.stop();
+
+  // 2ª Tentativa: Hostname do Computador via mDNS / DNS
+  IPAddress hostIp;
+  if (WiFi.hostByName("GalaxyBook4Pro.local", hostIp) || WiFi.hostByName("GalaxyBook4Pro", hostIp)) {
+    ipServidorAtivo = hostIp.toString();
+    Serial.printf("[AUTO-DISCOVERY] ✓ Servidor localizado via Hostname/mDNS: %s:%d\n\n", 
+                  ipServidorAtivo.c_str(), SERVER_PORT);
+    falhasConsecutivasHttp = 0;
+    return;
+  }
+
+  // 3ª Tentativa: Fallback para o IP padrão configurado
+  ipServidorAtivo = SERVER_HOST;
+  Serial.printf("[AUTO-DISCOVERY] Usando IP de fallback configurado: %s:%d\n\n", 
+                ipServidorAtivo.c_str(), SERVER_PORT);
 }
 
 // ── FUNÇÃO: DESCOBRIR SENSORES DS18B20 ───────────────────────────────────────
@@ -450,7 +506,7 @@ void exibirStatusCompleto() {
   Serial.print(WiFi.RSSI());
   Serial.println(" dBm");
   Serial.print("Servidor Alvo: http://");
-  Serial.print(SERVER_HOST);
+  Serial.print(ipServidorAtivo);
   Serial.print(":");
   Serial.print(SERVER_PORT);
   Serial.println(SERVER_PATH);
@@ -491,7 +547,7 @@ void enviarDadosParaServidor() {
     if (!wifiConectado) return;
   }
 
-  String url = "http://" + String(SERVER_HOST) + ":" + String(SERVER_PORT) + SERVER_PATH;
+  String url = "http://" + ipServidorAtivo + ":" + String(SERVER_PORT) + SERVER_PATH;
   StaticJsonDocument<280> doc;
 
   if (leiturasValidas[0] || temperaturas[0] > 0.0) doc["t1"] = round(temperaturas[0] * 10000) / 10000.0;
@@ -520,19 +576,28 @@ void enviarDadosParaServidor() {
   int httpCode = http.POST(payload);
 
   if (httpCode == 200) {
+    falhasConsecutivasHttp = 0;
     Serial.print("[HTTP 200] Telemetria enviada: ");
     Serial.println(payload);
     acionarLedPulso(); // Pulso indicando envio com sucesso
   } else {
+    falhasConsecutivasHttp++;
     Serial.print("[HTTP ERRO] Código: ");
     Serial.print(httpCode);
     if (httpCode < 0) {
       Serial.print(" | ");
       Serial.print(http.errorToString(httpCode));
     }
-    Serial.println();
+    Serial.printf(" | Alvo: %s:%d | Dados lidos: %s\n", ipServidorAtivo.c_str(), SERVER_PORT, payload.c_str());
     piscarLed(2, 60); // 2 piscadas de aviso
     if (httpCode < 0) wifiConectado = (WiFi.status() == WL_CONNECTED);
+
+    // Se falhar 3 vezes consecutivas e já passou tempo mínimo, tenta redescobrir o servidor automaticamente
+    if (falhasConsecutivasHttp >= 3 && millis() - ultimaBuscaServidor >= 10000) {
+      ultimaBuscaServidor = millis();
+      Serial.println("[HTTP] Conexão falhou repetidamente. Redescobrindo IP do servidor automaticamente...");
+      buscarServidorAutomatico();
+    }
   }
 
   http.end();
@@ -549,7 +614,7 @@ void setup() {
   Serial.println("\n\n");
   Serial.println("╔════════════════════════════════════════════════════════════╗");
   Serial.println("║   ESP32 #01 - MONITOR DA PLACA E AMBIENTE (T1, T2, T3, T4) ║");
-  Serial.println("║   Firmware Otimizado: 12 bits Assíncrono + Anti-Spike      ║");
+  Serial.println("║   Auto-Discovery UDP + 12 bits Assíncrono + Anti-Spike     ║");
   Serial.println("╚════════════════════════════════════════════════════════════╝");
 
   pinMode(DHT_PIN, INPUT_PULLUP);
@@ -557,8 +622,10 @@ void setup() {
   carregarOffsetsCalibracao();
   conectarWiFi();
   descobrirSensores();
+  buscarServidorAutomatico();
 
   Serial.println("Comandos disponíveis via Serial Monitor:");
+  Serial.println("  'A' -> Buscar Servidor Flask na Rede (Auto-Discovery)");
   Serial.println("  'C' -> Calibrar Sensores 2 e 3 para ficarem IGUAIS ao Sensor 1");
   Serial.println("  'G' -> Iniciar Calibração em Banho de Gelo (0 °C)");
   Serial.println("  'R' -> Resetar Offsets de Calibração para 0.00 °C");
@@ -573,7 +640,8 @@ void loop() {
   // Leitura de Comandos do Serial Monitor
   if (Serial.available()) {
     char cmd = Serial.read();
-    if (cmd == 'C' || cmd == 'c') calibrarSensoresComSensor1();
+    if (cmd == 'A' || cmd == 'a') buscarServidorAutomatico();
+    else if (cmd == 'C' || cmd == 'c') calibrarSensoresComSensor1();
     else if (cmd == 'G' || cmd == 'g') calibrarSensoresGelo();
     else if (cmd == 'R' || cmd == 'r') zerarOffsetsCalibracao();
     else if (cmd == 'S' || cmd == 's') exibirStatusCompleto();

@@ -96,6 +96,45 @@ monitoring_cache = {
 }
 
 # =============================================================================
+# SERVIÇO DE DESCOBERTA AUTOMÁTICA (UDP BROADCAST) PARA ESP32
+# =============================================================================
+def _iniciar_auto_discovery_udp(porta_udp=5005, porta_flask=5000):
+    """
+    Ouvinte UDP Broadcast que responde às requisições dos ESP32s.
+    Quando um ESP32 envia 'TCC_DISCOVER_SERVER', este serviço responde
+    imediatamente com o endereço do servidor, dispensando a necessidade de IP fixo.
+    """
+    import socket
+
+    def _ouvinte():
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.bind(('', porta_udp))
+            print(f"[AUTO-DISCOVERY] Serviço UDP de auto-descoberta ativo na porta {porta_udp} (Flask porta {porta_flask})")
+            while True:
+                try:
+                    data, addr = sock.recvfrom(512)
+                    if b'TCC_DISCOVER_SERVER' in data:
+                        resposta = f"TCC_SERVER_IP:{porta_flask}".encode('utf-8')
+                        sock.sendto(resposta, addr)
+                except Exception:
+                    time.sleep(0.05)
+        except Exception as e:
+            print(f"[AUTO-DISCOVERY] Aviso ao iniciar UDP: {e}")
+
+    # Inicia a thread em modo daemon
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+        t = threading.Thread(target=_ouvinte, daemon=True, name="UDP-Discovery-Thread")
+        t.start()
+    elif not os.environ.get('WERKZEUG_RUN_MAIN'):
+        t = threading.Thread(target=_ouvinte, daemon=True, name="UDP-Discovery-Thread")
+        t.start()
+
+_iniciar_auto_discovery_udp()
+
+# =============================================================================
 # FUNÇÕES DE VALIDAÇÃO E UTILITÁRIOS
 # =============================================================================
 
