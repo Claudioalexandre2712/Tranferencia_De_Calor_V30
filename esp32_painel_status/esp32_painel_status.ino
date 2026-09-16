@@ -34,18 +34,9 @@
 #include <ESPmDNS.h>
 
 // ── CONFIGURAÇÕES DE REDE E SERVIDOR ─────────────────────────────────────────
-#define WIFI_SSID "CLAUDIO 2.4Ghz"
-#define WIFI_PASSWORD "enjk8122"
 
-const char* SERVER_HOST = "10.18.163.204"; // IP de Fallback caso a busca automática não responda
-const uint16_t SERVER_PORT = 5000;
-const char* SERVER_PATH = "/api/temperaturas";
-const uint16_t UDP_DISCOVERY_PORT = 5005;
 
-WiFiUDP udpDiscovery;
-String ipServidorAtivo = SERVER_HOST;
-int falhasConsecutivasHttp = 0;
-unsigned long ultimaBuscaServidor = 0;
+
 
 // ── PINAGEM DO HARDWARE ──────────────────────────────────────────────────────
 #define ONE_WIRE_PIN 4      // Barramento OneWire dos DS18B20 da Placa
