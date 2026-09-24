@@ -7,6 +7,9 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="/static/css/popover.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --phys-height: 520px;      
@@ -1570,6 +1573,239 @@
             .nested-parallel .n-layer-chip.fluid{background:#e3f2fd;border-color:#90caf9;color:#1565c0;}
             .nested-parallel .n-layer-chip.empty{background:#fff3e0;border-color:#ffcc80;color:#ef6c00;}
             .nested-parallel .n-empty{font-style:italic;color:#8d6e63;font-size:10px;}
+    </style>
+    <style id="v30-identity-layer">
+    /* ============================================================
+       V30 IDENTIDADE — CAMADA 1 (CHECKPOINT V30-UXUI-06)
+       Escopo: somente a interface EXTERNA do workspace (header,
+       seleção de geometria, painel de camadas, botões, inputs,
+       cards, popovers — acabamento).
+       NUNCA toca #circuit-display / o conteúdo interno de
+       .circuit-panel (SVG físico/térmico, cores laranja/azul,
+       patterns, cotas) — VISUALIZATION_PROTECTED_ZONE = TRUE.
+       Aditivo: reaproveita os tokens já existentes em :root
+       (definidos acima) e sobrepõe só por ordem de carga, sem
+       reescrever nenhuma regra antiga.
+       ============================================================ */
+
+    :root {
+        --clr-accent: #2e4fe0;
+        --clr-accent-alt: #3b5bfb;
+        --clr-accent-soft: #eef1fb;
+        --clr-border: #dde3ec;
+        --clr-text-strong: #16233c;
+        --radius-sm: 8px;
+        --radius: 14px;
+        --radius-lg: 20px;
+    }
+
+    body {
+        font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Arial, sans-serif;
+        background-color: #f3f5fa;
+        background-image:
+            linear-gradient(rgba(22,35,60,.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(22,35,60,.035) 1px, transparent 1px);
+        background-size: 28px 28px;
+    }
+
+    /* ---------- Tipografia técnica (valores/variáveis numéricas) ---------- */
+    .form-control, .boundary-temps-grid input, .sensor-row .s-val {
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+    .layers-panel, .layer-card, .prop-popover, .boundary-temps-box,
+    #aux-qref, #sensor-temp-popup, .pop-field {
+        font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Arial, sans-serif;
+    }
+
+    /* ---------- Header ---------- */
+    .header-section {
+        background: linear-gradient(135deg, #16233c 0%, #223569 55%, #2e4fe0 100%);
+        border-bottom-color: rgba(255,255,255,.10);
+        box-shadow: 0 4px 14px -6px rgba(22,35,60,.45);
+    }
+    .header-section:before, .header-section:after {
+        opacity: .10;
+        filter: blur(90px);
+        animation: none;
+    }
+    .main-title {
+        background: rgba(255,255,255,.07);
+        border-color: rgba(255,255,255,.16);
+        box-shadow: 0 6px 20px -10px rgba(0,0,0,.4);
+        font-weight: 600;
+    }
+    .main-title:before { display: none; }
+    .main-title i {
+        background: linear-gradient(135deg,#ffffff,#c9d4ff);
+        -webkit-background-clip: text; background-clip: text;
+    }
+    .main-subtitle { color: rgba(255,255,255,.82); font-weight: 400; text-shadow: none; }
+    .btn-voltar-mini { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+    .btn-voltar-mini:hover { background: rgba(255,255,255,.18); }
+
+    /* ---------- Títulos de seção/painel (inclui o título "Visualização do Circuito") ---------- */
+    .panel-title, .section-title {
+        color: var(--clr-text-strong);
+        text-shadow: none;
+        font-weight: 600;
+    }
+    .section-title i, .panel-title i { color: var(--clr-accent); filter: none; }
+
+    /* ---------- Cards externos: fundo claro, borda fina, sombra leve ----------
+       Inclui .circuit-panel de propósito — SOMENTE background/border/box-shadow
+       do container (nada de padding/width/height/overflow: aquilo continua vindo
+       das regras originais acima e não é tocado aqui). */
+    .section-card,
+    .layers-panel,
+    .circuit-panel {
+        background: #ffffff;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        border: 1px solid var(--clr-border);
+        box-shadow: 0 1px 2px rgba(22,35,60,.05), 0 10px 28px -20px rgba(22,35,60,.18);
+    }
+    .results-card {
+        background: #ffffff;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        border-top: 1px solid var(--clr-border);
+        border-right: 1px solid var(--clr-border);
+        border-bottom: 1px solid var(--clr-border);
+        box-shadow: 0 1px 2px rgba(22,35,60,.05), 0 10px 28px -20px rgba(22,35,60,.18);
+    }
+    .section-card::before, .layers-panel::before, .circuit-panel::before, .results-card::before {
+        background: none;
+    }
+    .section-card:hover, .layers-panel:hover, .circuit-panel:hover {
+        border-color: rgba(46,79,224,.28);
+        box-shadow: 0 4px 18px -8px rgba(46,79,224,.20), 0 2px 8px rgba(22,35,60,.08) !important;
+    }
+    .results-card:hover {
+        box-shadow: 0 4px 18px -8px rgba(22,35,60,.18), 0 2px 8px rgba(22,35,60,.08) !important;
+    }
+
+    /* ---------- Seleção de geometria ---------- */
+    .geometry-card {
+        background: #ffffff;
+        border: 1px solid var(--clr-border);
+        box-shadow: 0 1px 2px rgba(22,35,60,.04);
+    }
+    .geometry-card::before { display: none; }
+    .geometry-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 26px -12px rgba(46,79,224,.28);
+        border-color: rgba(46,79,224,.4);
+    }
+    .geometry-card:focus-visible {
+        box-shadow: 0 0 0 3px var(--clr-accent-soft), 0 0 0 1px var(--clr-accent) inset;
+        border-color: var(--clr-accent);
+    }
+    .geometry-card.active { border-color: var(--clr-accent); background: var(--clr-accent-soft); }
+    .geometry-card h3.geometry-title { color: var(--clr-text-strong); }
+    .geometry-icon { background: var(--clr-accent-alt); border-color: var(--clr-accent); }
+    .geometry-card.active .geometry-icon {
+        background: var(--clr-accent);
+        border-color: var(--clr-accent);
+        box-shadow: 0 0 0 3px rgba(46,79,224,.22), 0 10px 26px -8px rgba(46,79,224,.4);
+    }
+    .geometry-card[data-geometry="cylindrical"] .geometry-icon {
+        background: radial-gradient(circle at center, rgba(255,255,255,0.18) 0%, rgba(46,79,224,0.15) 22%, #3b5bfb 23%, #2e4fe0 74%, #23409f 100%);
+    }
+
+    /* ---------- Painel de camadas: botões ---------- */
+    .layer-btn {
+        background: #ffffff;
+        border: 1px solid var(--clr-border);
+        box-shadow: none;
+        color: var(--clr-text-strong);
+    }
+    .layer-btn:hover {
+        background: var(--clr-accent);
+        border-color: var(--clr-accent);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px -10px rgba(46,79,224,.45);
+    }
+    .layer-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--clr-accent-soft), 0 0 0 1px var(--clr-accent) inset;
+    }
+
+    /* ---------- Cards de camada (mantém a cor de identificação por tipo em border-left) ---------- */
+    .layer-card {
+        background: #ffffff;
+        border-color: var(--clr-border);
+        box-shadow: 0 1px 2px rgba(22,35,60,.05);
+    }
+    .layer-card:hover {
+        border-color: rgba(46,79,224,.35);
+        box-shadow: 0 6px 16px -10px rgba(22,35,60,.18);
+    }
+    .layer-card.selected {
+        background: var(--clr-accent-soft);
+        border-color: var(--clr-accent);
+    }
+    .layer-card.selected::after { background: none; }
+    .layer-card-name { color: var(--clr-text-strong); }
+
+    /* ---------- Botões de ação principais ---------- */
+    .btn-calculate {
+        background: var(--clr-accent);
+        box-shadow: 0 6px 16px -8px rgba(46,79,224,.45);
+    }
+    .btn-calculate:hover { background: var(--clr-accent-alt); }
+    .btn-calculate:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--clr-accent-soft), 0 0 0 1px var(--clr-accent) inset;
+    }
+    .btn-clear {
+        background: #b3261e;
+        box-shadow: 0 6px 16px -8px rgba(179,38,30,.35);
+    }
+    .btn-clear:hover { background: #8c1d17; box-shadow: 0 6px 20px rgba(179,38,30,.3); }
+    .btn-clear:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(179,38,30,.18), 0 0 0 1px #b3261e inset;
+    }
+    .btn-pop { border-radius: var(--radius-sm); }
+
+    /* ---------- Inputs ---------- */
+    .form-label { color: var(--clr-text-strong); font-weight: 600; }
+    .form-control {
+        border: 1px solid var(--clr-border);
+        background: #ffffff;
+        border-radius: var(--radius-sm);
+    }
+    .form-control:focus {
+        border-color: var(--clr-accent);
+        box-shadow: 0 0 0 3px var(--clr-accent-soft);
+    }
+    .boundary-temps-box, #aux-qref {
+        background: #fbfcfe;
+        border-color: var(--clr-border);
+    }
+    .boundary-temps-box h4, #aux-qref h4 { color: var(--clr-text-strong); }
+    .boundary-temps-grid input {
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-sm);
+        background: #fff;
+    }
+    .btn-ver-sensores {
+        background: var(--clr-accent);
+        box-shadow: 0 2px 8px rgba(46,79,224,.25);
+    }
+    .btn-ver-sensores:hover { box-shadow: 0 4px 12px rgba(46,79,224,.35); }
+    #sensor-temp-popup { border-color: var(--clr-accent-soft); box-shadow: 0 6px 24px rgba(22,35,60,.18); }
+    .sensor-popup-header span { color: var(--clr-accent); }
+    .sensor-row .s-val { color: var(--clr-accent); }
+
+    /* ---------- Popovers de propriedades: somente acabamento, nunca posição/tamanho ---------- */
+    .prop-popover {
+        border-color: var(--clr-border);
+        box-shadow: 0 12px 32px -8px rgba(22,35,60,.22);
+    }
+    .prop-popover h5 { color: var(--clr-text-strong); }
+    .btn-cancel { background: #eef0f3; color: var(--clr-text-strong); }
     </style>
     <div class="main-container">
         <!-- Header Section -->

@@ -1,229 +1,189 @@
 <!DOCTYPE html>
-<html lang="br">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tipos de Aletas</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(120deg, #e0eafc, #fff 100%);
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-        header {
-            width: 100%;
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-            padding: 18px 0 12px 0;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(25, 118, 210, 0.08);
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2.3rem;
-            letter-spacing: 1px;
-        }
+        html, body { margin: 0; }
+        .page-wrap { max-width: 1180px; margin: 0 auto; padding: 2.6rem 2.4rem 3.2rem; font-family: var(--font-sans); color: var(--ink); }
+
         .aletas-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 2.2rem;
-            justify-items: center;
-            margin-bottom: 2.5rem;
-            width: 100%;
-            max-width: 1100px;
-            margin-left: auto;
-            margin-right: auto;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: var(--sp-5);
+            margin-bottom: var(--sp-6);
         }
         .aleta-card {
-            background: #fff;
-            border-radius: 22px;
-            box-shadow: 0 4px 24px rgba(25, 118, 210, 0.13);
-            width: 210px;
-            padding: 28px 18px 22px 18px;
+            position: relative;
+            background: var(--panel);
+            padding: 1.8rem 1.3rem 1.7rem;
             text-align: center;
             cursor: pointer;
-            transition: box-shadow 0.25s, transform 0.22s, border 0.22s;
-            border: 2.5px solid transparent;
-            position: relative;
             user-select: none;
-            margin-bottom: 0;
+            display: block;
+            border: 1.5px solid var(--line-strong);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 1px 3px rgba(13, 20, 32, 0.06);
+            transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+                        transform var(--dur-fast) var(--ease);
+        }
+        .aleta-card::before, .aleta-card::after {
+            content: ''; position: absolute; width: 12px; height: 12px;
+            border-color: var(--accent); border-style: solid; border-width: 0;
+            opacity: 0; transition: opacity var(--dur-fast) var(--ease);
+            pointer-events: none;
+        }
+        .aleta-card::before { top: 6px; left: 6px; border-top-width: 2px; border-left-width: 2px; }
+        .aleta-card::after { bottom: 6px; right: 6px; border-bottom-width: 2px; border-right-width: 2px; }
+        .aleta-card:hover::before, .aleta-card:hover::after,
+        .aleta-card.selected::before, .aleta-card.selected::after { opacity: 0.85; }
+        .aleta-num {
+            position: absolute; bottom: 0.6rem; left: 0.7rem;
+            font-family: var(--font-mono); font-size: 0.64rem; color: var(--ink-faint); letter-spacing: 0.02em;
+        }
+        .aleta-check {
+            position: absolute; top: 0.6rem; right: 0.6rem;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--accent); color: #fff; font-size: 0.6rem;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.5);
+            transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+        }
+        .aleta-card.selected .aleta-check { opacity: 1; transform: scale(1); }
+        .aleta-card:hover {
+            border-color: var(--ink-faint);
+            box-shadow: 0 8px 24px rgba(13, 20, 32, 0.12);
+            transform: translateY(-2px);
         }
         .aleta-card.selected {
-            border: 2.5px solid #1976d2;
-            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.22);
-            transform: scale(1.06) translateY(-6px);
-            animation: pulse 0.5s;
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            box-shadow: 0 8px 24px rgba(46, 79, 224, 0.16);
+            transform: translateY(-2px);
+            animation: aleta-pick var(--dur-slow) var(--ease);
         }
-        .aleta-card:hover {
-            box-shadow: 0 12px 36px rgba(25, 118, 210, 0.18);
-            transform: scale(1.04) translateY(-2px);
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 #1976d2aa; }
-            70% { box-shadow: 0 0 0 12px #1976d220; }
-            100% { box-shadow: 0 8px 32px rgba(25, 118, 210, 0.22);}
+        @keyframes aleta-pick {
+            0% { transform: translateY(-2px) scale(1); }
+            40% { transform: translateY(-2px) scale(1.045); }
+            100% { transform: translateY(-2px) scale(1); }
         }
         .aleta-card img {
-            width: 130px;
-            height: 130px;
-            object-fit: contain;
-            margin-bottom: 18px;
-            filter: drop-shadow(0 2px 12px rgba(25, 118, 210, 0.13));
-            transition: filter 0.2s, transform 0.2s;
-            border-radius: 12px;
-            background: #f4f8ff;
+            width: 148px; height: 148px; object-fit: contain;
+            margin-bottom: 1.1rem; border-radius: var(--radius);
+            background: var(--panel-alt);
+            transition: transform var(--dur) var(--ease);
         }
-        .aleta-card.selected img,
-        .aleta-card:hover img {
-            filter: drop-shadow(0 8px 28px #1976d2bb) brightness(1.08);
-            transform: scale(1.08) rotate(-2deg);
-        }
+        .aleta-card.selected img, .aleta-card:hover img { transform: scale(1.05) translateY(-3px); }
         .aleta-name {
-            font-size: 1.18rem;
-            font-weight: 600;
-            color: #1976d2;
-            margin-bottom: 0;
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
+            font-size: 0.98rem; font-weight: 600; color: var(--ink);
+            min-height: 40px; display: flex; align-items: center; justify-content: center;
         }
-        .aleta-checkbox {
-            display: none;
-        }
+        .aleta-checkbox { display: none; }
+
         .btns-bottom {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 10px;
-            position: sticky;
-            bottom: 0;
-            background: linear-gradient(0deg, #e0eafc 80%, #fff0 100%);
-            z-index: 10;
-            padding-bottom: 1.2rem;
-            padding-top: 0.5rem;
+            display: flex; justify-content: flex-start; gap: 0.8rem;
+            position: sticky; bottom: 0; background: var(--bg-app);
+            padding: 1rem 0 0.2rem;
         }
-        .confirm-btn, .back-btn {
-            display: none;
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-            font-size: 1.25rem;
-            padding: 0.8rem 2.5rem;
-            border: none;
-            border-radius: 2rem;
-            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
+        .confirm-btn { display: none; }
+        .confirm-btn.show { display: inline-flex; animation: vx-rise-in var(--dur-slow) var(--ease) both; }
+        @media (prefers-reduced-motion: reduce) {
+            .aleta-card.selected { animation: none; }
+            .confirm-btn.show { animation: none; }
         }
-        .confirm-btn.show {
-            display: block;
-            animation: fadeInUp 1s;
-        }
-        .back-btn {
-            display: block;
-            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
-            color: #222;
-            font-size: 1.1rem;
-            padding: 0.7rem 2.2rem;
-            margin-right: 0;
-            margin-left: 0;
-            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
-        }
-        .confirm-btn:hover, .confirm-btn:focus {
-            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
-            transform: scale(1.08) translateY(-2px);
-            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.32), 0 1.5px 6px rgba(33,150,243,0.12);
-            filter: brightness(1.08) saturate(1.2);
-            outline: none;
-        }
-        .back-btn:hover, .back-btn:focus {
-            background: linear-gradient(90deg, #78909c 0%, #90caf9 100%);
-            color: #111;
-            transform: scale(1.05);
-            outline: none;
-        }
-        @keyframes fadeInUp {
-            from {opacity: 0; transform: translateY(40px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-        @media (max-width: 900px) {
-            .aletas-container { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; }
-            .aleta-card { width: 44vw; min-width: 140px; }
-        }
-        @media (max-width: 600px) {
-            .aletas-container { grid-template-columns: 1fr; }
-            .aleta-card { width: 90vw; min-width: 0; }
-            .aleta-card img { width: 90px; height: 90px; }
+
+        @media (max-width: 700px) {
+            .page-wrap { padding: 1.8rem 1.2rem 2.4rem; }
+            .aletas-container { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
+            .aleta-card img { width: 100px; height: 100px; }
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>Tipos de Aletas</h1>
-    </header>
-    <form method="POST" action="{{ url_for('tipos_aletas') }}">
-        <div class="aletas-container">
-            <!-- Cards de seleção de aletas -->
-            <label class="aleta-card" data-value="1)aletas retangulares retas">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="1)aletas retangulares retas">
-                <img src="{{ url_for('static', filename='aletas/1.png') }}" alt="Aleta Retangular Reta">
-                <div class="aleta-name">Aletas Retangulares Retas</div>
-            </label>
-            <label class="aleta-card" data-value="2)aletas triangulares retas">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="2)aletas triangulares retas">
-                <img src="{{ url_for('static', filename='aletas/2.png') }}" alt="Aleta Triangular Reta">
-                <div class="aleta-name">Aletas Triangulares Retas</div>
-            </label>
-            <label class="aleta-card" data-value="3)aletas parabolicas retas">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="3)aletas parabolicas retas">
-                <img src="{{ url_for('static', filename='aletas/3.png') }}" alt="Aleta Parabólica Reta">
-                <div class="aleta-name">Aletas Parabólicas Retas</div>
-            </label>
-            <label class="aleta-card" data-value="4)aletas circulares de perfil retangular">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="4)aletas circulares de perfil retangular">
-                <img src="{{ url_for('static', filename='aletas/4.png') }}" alt="Aleta Circular de Perfil Retangular">
-                <div class="aleta-name">Aletas Circulares de Perfil Retangular</div>
-            </label>
-            <label class="aleta-card" data-value="5)aletas de pino de perfil retangular">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="5)aletas de pino de perfil retangular">
-                <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aletas de Pino de Perfil Retangular">
-                <div class="aleta-name">Aletas de Pino de Perfil Retangular</div>
-            </label>
-            <label class="aleta-card" data-value="6)aletas de perfil triangular">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="6)aletas de perfil triangular">
-                <img src="{{ url_for('static', filename='aletas/6.png') }}" alt="Aleta de Perfil Triangular">
-                <div class="aleta-name">Aletas de Perfil Triangular</div>
-            </label>
-            <label class="aleta-card" data-value="7)aletas de perfil parabolico">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="7)aletas de perfil parabolico">
-                <img src="{{ url_for('static', filename='aletas/7.png') }}" alt="Aleta de Perfil Parabólico">
-                <div class="aleta-name">Aletas de Perfil Parabólico</div>
-            </label>
-            <label class="aleta-card" data-value="8)aletas de pino de perfilparabolico (ponta arredondada)">
-                <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="8)aletas de pino de perfilparabolico (ponta arredondada)">
-                <img src="{{ url_for('static', filename='aletas/8.png') }}" alt="Aleta de Pino de Perfil Parabólico">
-                <div class="aleta-name">Aletas de Pino de Perfil Parabólico<br>(Ponta Arredondada)</div>
-            </label>
+<body class="eng-scope-bg">
+    <div class="page-wrap">
+        <div class="page-head page-head--thermal">
+            <div class="page-kicker"><i class="fa-solid fa-shapes"></i> Aletas · 8 geometrias catalogadas</div>
+            <h1>Tipos de aleta</h1>
+            <p>Escolha uma ou mais geometrias para comparar fórmulas, eficiência e distribuição de temperatura.</p>
         </div>
-        <div class="btns-bottom">
-            <a href="{{ url_for('index') }}">
-                <button type="button" class="back-btn" style="display:block;">Voltar</button>
-            </a>
-            <button type="submit" class="confirm-btn" id="confirmBtn" style="display:none;">Próximo</button>
-        </div>
-    </form>
+        <div class="eng-scale-rule"></div>
+
+        <form method="POST" action="{{ url_for('tipos_aletas') }}">
+                <div class="aletas-container">
+                    <label class="aleta-card" data-value="1)aletas retangulares retas">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="1)aletas retangulares retas">
+                        <img src="{{ url_for('static', filename='aletas/1.png') }}" alt="Aleta Retangular Reta">
+                        <div class="aleta-name">Retangular reta</div>
+                        <span class="aleta-num">01</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="2)aletas triangulares retas">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="2)aletas triangulares retas">
+                        <img src="{{ url_for('static', filename='aletas/2.png') }}" alt="Aleta Triangular Reta">
+                        <div class="aleta-name">Triangular reta</div>
+                        <span class="aleta-num">02</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="3)aletas parabolicas retas">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="3)aletas parabolicas retas">
+                        <img src="{{ url_for('static', filename='aletas/3.png') }}" alt="Aleta Parabólica Reta">
+                        <div class="aleta-name">Parabólica reta</div>
+                        <span class="aleta-num">03</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="4)aletas circulares de perfil retangular">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="4)aletas circulares de perfil retangular">
+                        <img src="{{ url_for('static', filename='aletas/4.png') }}" alt="Aleta Circular de Perfil Retangular">
+                        <div class="aleta-name">Circular, perfil retangular</div>
+                        <span class="aleta-num">04</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="5)aletas de pino de perfil retangular">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="5)aletas de pino de perfil retangular">
+                        <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aletas de Pino de Perfil Retangular">
+                        <div class="aleta-name">Pino, perfil retangular</div>
+                        <span class="aleta-num">05</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="6)aletas de perfil triangular">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="6)aletas de perfil triangular">
+                        <img src="{{ url_for('static', filename='aletas/6.png') }}" alt="Aleta de Perfil Triangular">
+                        <div class="aleta-name">Pino, perfil triangular</div>
+                        <span class="aleta-num">06</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="7)aletas de perfil parabolico">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="7)aletas de perfil parabolico">
+                        <img src="{{ url_for('static', filename='aletas/7.png') }}" alt="Aleta de Perfil Parabólico">
+                        <div class="aleta-name">Pino, perfil parabólico</div>
+                        <span class="aleta-num">07</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                    <label class="aleta-card" data-value="8)aletas de pino de perfilparabolico (ponta arredondada)">
+                        <input type="checkbox" class="aleta-checkbox" name="tipo_aleta" value="8)aletas de pino de perfilparabolico (ponta arredondada)">
+                        <img src="{{ url_for('static', filename='aletas/8.png') }}" alt="Aleta de Pino de Perfil Parabólico">
+                        <div class="aleta-name">Pino parabólico, ponta arredondada</div>
+                        <span class="aleta-num">08</span>
+                        <span class="aleta-check"><i class="fa-solid fa-check"></i></span>
+                    </label>
+                </div>
+            <div class="btns-bottom">
+                <a href="{{ url_for('index') }}" class="vx-btn vx-btn-ghost">Voltar</a>
+                <button type="submit" class="vx-btn vx-btn-primary confirm-btn" id="confirmBtn">Próximo <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </form>
+    </div>
+
     <script>
-        // Seleção visual dos cards (funciona em desktop e mobile)
         document.querySelectorAll('.aleta-card').forEach(card => {
             card.addEventListener('click', function(e) {
-                // Evita seleção de texto ao clicar rápido
                 e.preventDefault();
-                // Não altera se o clique for no link do botão Voltar
                 if (e.target.closest('.back-btn')) return;
                 const checkbox = card.querySelector('input[type="checkbox"]');
                 checkbox.checked = !checkbox.checked;
@@ -235,13 +195,7 @@
         function updateConfirmBtn() {
             const anyChecked = document.querySelectorAll('.aleta-checkbox:checked').length > 0;
             const btn = document.getElementById('confirmBtn');
-            if (anyChecked) {
-                btn.classList.add('show');
-                btn.style.display = "block";
-            } else {
-                btn.classList.remove('show');
-                btn.style.display = "none";
-            }
+            btn.classList.toggle('show', anyChecked);
         }
         window.onload = function() {
             document.querySelectorAll('.aleta-card').forEach(card => {

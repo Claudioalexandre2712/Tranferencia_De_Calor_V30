@@ -1,296 +1,271 @@
 <!DOCTYPE html>
-<html lang="br">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escolha o Tipo de Aleta</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(120deg, #e0eafc, #fff 100%);
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-        header {
-            width: 100%;
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-            padding: 18px 0 12px 0;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(25, 118, 210, 0.08);
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2.3rem;
-            letter-spacing: 1px;
-        }
-        .main-flex {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 2.5rem;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
+        html, body { margin: 0; }
+        .page-wrap { max-width: 1180px; margin: 0 auto; padding: 2.6rem 2.4rem 3.2rem; font-family: var(--font-sans); color: var(--ink); }
+
         .aleta-preview {
+            position: relative;
+            overflow: hidden;
             width: 100%;
-            max-width: 100vw;
             display: flex;
             flex-direction: row;
             align-items: flex-start;
             justify-content: center;
-            margin: 0 auto 2.5rem auto;
-            background: none;
-            border-radius: 0;
-            box-shadow: none;
-            padding: 0;
-            min-height: 0;
-            gap: 3.2rem;
+            gap: var(--sp-8);
+            margin: 0 0 var(--sp-6);
+            background: var(--panel);
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 1px 3px rgba(13, 20, 32, 0.06);
+            padding: var(--sp-6) var(--sp-6) var(--sp-5);
         }
+        .aleta-preview::before {
+            content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+            background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: 22px 22px;
+            opacity: 0.5;
+            -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 40%, #000 50%, transparent 92%);
+                    mask-image: radial-gradient(ellipse 85% 85% at 50% 40%, #000 50%, transparent 92%);
+        }
+        .aleta-preview::after {
+            content: ''; position: absolute; top: 14%; bottom: 14%; left: 50%; width: 0;
+            border-left: 1.5px dashed var(--line-strong); opacity: 0.8; z-index: 1; pointer-events: none;
+        }
+        .tech-corner { position: absolute; width: 16px; height: 16px; border-color: var(--line-strong); border-style: solid; border-width: 0; z-index: 1; pointer-events: none; }
+        .tc-tl { top: 10px; left: 10px; border-top-width: 2px; border-left-width: 2px; }
+        .tc-tr { top: 10px; right: 10px; border-top-width: 2px; border-right-width: 2px; }
+        .tc-bl { bottom: 10px; left: 10px; border-bottom-width: 2px; border-left-width: 2px; }
+        .tc-br { bottom: 10px; right: 10px; border-bottom-width: 2px; border-right-width: 2px; }
         .aleta-preview-col {
+            position: relative; z-index: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
         }
         .aleta-preview h2 {
-            font-size: 1.18rem;
-            color: #1976d2;
-            margin-bottom: 0.7rem;
-            margin-top: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--ink-dim);
+            letter-spacing: 0.01em;
+            margin: 0 0 0.7rem;
         }
         .aleta-preview img#aleta_image {
             width: 320px;
             height: 320px;
             object-fit: contain;
             margin-bottom: 0.7rem;
-            border-radius: 18px;
-            background: #f4f8ff;
-            box-shadow: 0 4px 18px #1976d220;
-            transition: width 0.3s, height 0.3s;
+            border-radius: var(--radius);
+            background: var(--panel-alt);
+            border: 1px solid var(--line);
+            transition: width var(--dur) var(--ease), height var(--dur) var(--ease);
         }
         .aleta-preview img#formula_image {
-            width: 520px;
-            max-width: 48vw;
-            height: 320px;
+            width: 500px;
+            max-width: 44vw;
+            height: 300px;
             object-fit: contain;
             margin-bottom: 0.5rem;
-            border-radius: 14px;
-            background: #f4f8ff;
-            box-shadow: 0 2px 8px #1976d220;
+            border-radius: var(--radius);
+            background: var(--panel-alt);
+            border: 1px solid var(--line);
         }
         .aletas-container {
             display: flex;
             flex-wrap: wrap;
-            justify-content: center;
-            gap: 2.2rem;
-            margin-bottom: 2.5rem;
+            justify-content: flex-start;
+            gap: var(--sp-4);
+            margin-bottom: var(--sp-6);
             align-items: flex-start;
         }
         .aleta-card {
-            background: #fff;
-            border-radius: 22px;
-            box-shadow: 0 4px 24px rgba(25, 118, 210, 0.13);
-            width: 150px;
-            padding: 14px 6px 10px 6px;
+            background: var(--panel);
+            border-radius: var(--radius-lg);
+            width: 172px;
+            padding: 1.2rem 0.8rem 1rem;
             text-align: center;
             cursor: pointer;
-            transition: box-shadow 0.25s, transform 0.22s, border 0.22s;
-            border: 2.5px solid transparent;
-            position: relative;
             user-select: none;
-        }
-        .aleta-card.selected {
-            border: 2.5px solid #1976d2;
-            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.22);
-            transform: scale(1.06) translateY(-6px);
-            animation: pulse 0.5s;
+            position: relative;
+            border: 1.5px solid var(--line-strong);
+            box-shadow: 0 1px 3px rgba(13, 20, 32, 0.06);
+            transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+                        transform var(--dur-fast) var(--ease);
         }
         .aleta-card:hover {
-            box-shadow: 0 12px 36px rgba(25, 118, 210, 0.18);
-            transform: scale(1.04) translateY(-2px);
+            border-color: var(--ink-faint);
+            box-shadow: 0 8px 24px rgba(13, 20, 32, 0.12);
+            transform: translateY(-2px);
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 #1976d2aa; }
-            70% { box-shadow: 0 0 0 12px #1976d220; }
-            100% { box-shadow: 0 8px 32px rgba(25, 118, 210, 0.22);}
+        .aleta-card.selected {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            box-shadow: 0 8px 24px rgba(46, 79, 224, 0.16);
+            transform: translateY(-2px);
+            animation: aleta-pick var(--dur-slow) var(--ease);
+        }
+        .aleta-card::before, .aleta-card::after {
+            content: ''; position: absolute; width: 10px; height: 10px;
+            border-color: var(--accent); border-style: solid; border-width: 0;
+            opacity: 0; transition: opacity var(--dur-fast) var(--ease);
+            pointer-events: none;
+        }
+        .aleta-card::before { top: 5px; left: 5px; border-top-width: 2px; border-left-width: 2px; }
+        .aleta-card::after { bottom: 5px; right: 5px; border-bottom-width: 2px; border-right-width: 2px; }
+        .aleta-card:hover::before, .aleta-card:hover::after,
+        .aleta-card.selected::before, .aleta-card.selected::after { opacity: 0.85; }
+        @keyframes aleta-pick {
+            0% { transform: translateY(-2px) scale(1); }
+            40% { transform: translateY(-2px) scale(1.045); }
+            100% { transform: translateY(-2px) scale(1); }
         }
         .aleta-card img {
-            width: 55px;
-            height: 55px;
+            width: 68px;
+            height: 68px;
             object-fit: contain;
-            margin-bottom: 8px;
-            filter: drop-shadow(0 2px 12px rgba(25, 118, 210, 0.13));
-            transition: 
-                filter 0.2s, 
-                transform 0.2s, 
-                width 0.25s, 
-                height 0.25s;
-            border-radius: 10px;
-            background: #f4f8ff;
+            margin-bottom: 0.7rem;
+            border-radius: var(--radius-sm);
+            background: var(--panel-alt);
+            transition: transform var(--dur) var(--ease), width var(--dur) var(--ease), height var(--dur) var(--ease);
         }
         .aleta-card.selected img,
         .aleta-card:hover img {
-            filter: drop-shadow(0 8px 28px #1976d2bb) brightness(1.08);
-            transform: scale(1.18) rotate(-2deg);
-            width: 90px;
-            height: 90px;
+            transform: scale(1.12);
+            width: 84px;
+            height: 84px;
         }
         .aleta-name {
-            font-size: 1.02rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            color: #1976d2;
-            margin-bottom: 0;
+            color: var(--ink);
             min-height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
         }
-        .aleta-checkbox {
-            display: none;
-        }
+        .aleta-checkbox { display: none; }
         .btns-bottom {
             display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 10px;
+            justify-content: flex-start;
+            gap: 0.8rem;
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-app);
+            padding: 1rem 0 0.2rem;
         }
-        .confirm-btn, .back-btn {
-            display: none;
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-            font-size: 1.18rem;
-            padding: 0.8rem 2.5rem;
-            border: none;
-            border-radius: 2rem;
-            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
+        .confirm-btn { display: none; }
+        .confirm-btn.show { display: inline-flex; animation: vx-rise-in var(--dur-slow) var(--ease) both; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .aleta-card.selected { animation: none; }
+            .confirm-btn.show { animation: none; }
         }
-        .confirm-btn.show {
-            display: block;
-            animation: fadeInUp 1s;
-        }
-        .back-btn {
-            display: block;
-            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
-            color: #222;
-            font-size: 1.1rem;
-            padding: 0.7rem 2.2rem;
-            margin-right: 0;
-            margin-left: 0;
-            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
-        }
-        .confirm-btn:hover, .confirm-btn:focus {
-            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
-            transform: scale(1.08) translateY(-2px);
-            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.32), 0 1.5px 6px rgba(33,150,243,0.12);
-            filter: brightness(1.08) saturate(1.2);
-            outline: none;
-        }
-        .back-btn:hover, .back-btn:focus {
-            background: linear-gradient(90deg, #78909c 0%, #90caf9 100%);
-            color: #111;
-            transform: scale(1.05);
-            outline: none;
-        }
-        @keyframes fadeInUp {
-            from {opacity: 0; transform: translateY(40px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
+
         @media (max-width: 1100px) {
-            .main-flex { flex-direction: column; align-items: center; gap: 1.5rem; }
-            .aleta-preview { flex-direction: column; align-items: center; gap: 1.2rem; }
-            .aleta-preview img#aleta_image { width: 180px; height: 180px; }
-            .aleta-preview img#formula_image { width: 320px; height: 160px; }
+            .aleta-preview { flex-direction: column; align-items: center; gap: var(--sp-5); }
+            .aleta-preview::after { display: none; }
+            .aleta-preview img#aleta_image { width: 220px; height: 220px; }
+            .aleta-preview img#formula_image { width: 360px; max-width: 82vw; height: 180px; }
         }
-        @media (max-width: 900px) {
-            .aletas-container { gap: 1.2rem; }
-            .aleta-card { width: 44vw; min-width: 100px; }
-            .aleta-preview img#aleta_image { width: 120px; height: 120px; }
-            .aleta-preview img#formula_image { width: 120px; height: 60px; }
+        @media (max-width: 700px) {
+            .page-wrap { padding: 1.8rem 1.2rem 2.4rem; }
+            .aleta-card { width: 30vw; min-width: 108px; }
+            .aleta-preview { padding: var(--sp-4); }
+            .aleta-preview img#aleta_image { width: 150px; height: 150px; }
+            .aleta-preview img#formula_image { width: 150px; max-width: 82vw; height: 100px; }
         }
-        @media (max-width: 600px) {
-            .aleta-card { width: 90vw; min-width: 0; }
-            .aleta-card img { width: 40px; height: 40px; }
-            .aleta-preview img#aleta_image { width: 70px; height: 70px; }
-            .aleta-preview img#formula_image { width: 60px; height: 30px; }
-            .aleta-preview { padding: 0; }
+        @media (max-width: 460px) {
+            .aleta-card { width: 42vw; min-width: 0; }
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>Escolha o Tipo de Aleta</h1>
-    </header>
-    <form method="post" action="{{ url_for('sele_materiais') }}">
-        <div class="main-flex">
-            <div class="aletas-container">
-                <label class="aleta-card" data-value="1)aletas retangulares retas">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="1)aletas retangulares retas">
-                    <img src="{{ url_for('static', filename='aletas/1.png') }}" alt="Aleta Retangular Reta">
-                    <div class="aleta-name">Aletas Retangulares Retas</div>
-                </label>
-                <label class="aleta-card" data-value="2)aletas triangulares retas">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="2)aletas triangulares retas">
-                    <img src="{{ url_for('static', filename='aletas/2.png') }}" alt="Aleta Triangular Reta">
-                    <div class="aleta-name">Aletas Triangulares Retas</div>
-                </label>
-                <label class="aleta-card" data-value="3)aletas parabolicas retas">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="3)aletas parabolicas retas">
-                    <img src="{{ url_for('static', filename='aletas/3.png') }}" alt="Aleta Parabólica Reta">
-                    <div class="aleta-name">Aletas Parabólicas Retas</div>
-                </label>
-                <label class="aleta-card" data-value="4)aletas circulares de perfil retangular">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="4)aletas circulares de perfil retangular">
-                    <img src="{{ url_for('static', filename='aletas/4.png') }}" alt="Aleta Circular de Perfil Retangular">
-                    <div class="aleta-name">Aletas Circulares de Perfil Retangular</div>
-                </label>
-                <label class="aleta-card" data-value="5)aletas de pino de perfil retangular">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="5)aletas de pino de perfil retangular">
-                    <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aletas de Pino de Perfil Retangular">
-                    <div class="aleta-name">Aletas de Pino de Perfil Retangular</div>
-                </label>
-                <label class="aleta-card" data-value="6)aletas de perfil triangular">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="6)aletas de perfil triangular">
-                    <img src="{{ url_for('static', filename='aletas/6.png') }}" alt="Aleta de Perfil Triangular">
-                    <div class="aleta-name">Aletas de Perfil Triangular</div>
-                </label>
-                <label class="aleta-card" data-value="7)aletas de perfil parabolico">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="7)aletas de perfil parabolico">
-                    <img src="{{ url_for('static', filename='aletas/7.png') }}" alt="Aleta de Perfil Parabólico">
-                    <div class="aleta-name">Aletas de Perfil Parabólico</div>
-                </label>
-                <label class="aleta-card" data-value="8)aletas de pino de perfilparabolico (ponta arredondada)">
-                    <input type="radio" class="aleta-checkbox" name="sele_aleta" value="8)aletas de pino de perfilparabolico (ponta arredondada)">
-                    <img src="{{ url_for('static', filename='aletas/8.png') }}" alt="Aleta de Pino de Perfil Parabólico">
-                    <div class="aleta-name">Aletas de Pino de Perfil Parabólico<br>(Ponta Arredondada)</div>
-                </label>
-            </div>
+<body class="eng-scope-bg">
+    <div class="page-wrap">
+        <div class="page-head page-head--thermal">
+            <div class="page-kicker"><i class="fa-solid fa-drafting-compass"></i> Configuração · seleção da geometria</div>
+            <h1>Escolha o tipo de aleta</h1>
+            <p>Selecione a geometria usada nos cálculos. A pré-visualização da imagem e da fórmula aparece abaixo.</p>
         </div>
-        <div class="aleta-preview" id="aletaPreview" style="display:none;">
-            <div class="aleta-preview-col">
-                <h2>Imagem da Aleta</h2>
-                <img id="aleta_image" src="" alt="Imagem da Aleta">
+        <div class="eng-scale-rule"></div>
+
+        <form method="post" action="{{ url_for('sele_materiais') }}">
+                <div class="aletas-container">
+                    <label class="aleta-card" data-value="1)aletas retangulares retas">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="1)aletas retangulares retas">
+                        <img src="{{ url_for('static', filename='aletas/1.png') }}" alt="Aleta Retangular Reta">
+                        <div class="aleta-name">Retangular reta</div>
+                    </label>
+                    <label class="aleta-card" data-value="2)aletas triangulares retas">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="2)aletas triangulares retas">
+                        <img src="{{ url_for('static', filename='aletas/2.png') }}" alt="Aleta Triangular Reta">
+                        <div class="aleta-name">Triangular reta</div>
+                    </label>
+                    <label class="aleta-card" data-value="3)aletas parabolicas retas">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="3)aletas parabolicas retas">
+                        <img src="{{ url_for('static', filename='aletas/3.png') }}" alt="Aleta Parabólica Reta">
+                        <div class="aleta-name">Parabólica reta</div>
+                    </label>
+                    <label class="aleta-card" data-value="4)aletas circulares de perfil retangular">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="4)aletas circulares de perfil retangular">
+                        <img src="{{ url_for('static', filename='aletas/4.png') }}" alt="Aleta Circular de Perfil Retangular">
+                        <div class="aleta-name">Circular, perfil retangular</div>
+                    </label>
+                    <label class="aleta-card" data-value="5)aletas de pino de perfil retangular">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="5)aletas de pino de perfil retangular">
+                        <img src="{{ url_for('static', filename='aletas/5.png') }}" alt="Aletas de Pino de Perfil Retangular">
+                        <div class="aleta-name">Pino, perfil retangular</div>
+                    </label>
+                    <label class="aleta-card" data-value="6)aletas de perfil triangular">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="6)aletas de perfil triangular">
+                        <img src="{{ url_for('static', filename='aletas/6.png') }}" alt="Aleta de Perfil Triangular">
+                        <div class="aleta-name">Pino, perfil triangular</div>
+                    </label>
+                    <label class="aleta-card" data-value="7)aletas de perfil parabolico">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="7)aletas de perfil parabolico">
+                        <img src="{{ url_for('static', filename='aletas/7.png') }}" alt="Aleta de Perfil Parabólico">
+                        <div class="aleta-name">Pino, perfil parabólico</div>
+                    </label>
+                    <label class="aleta-card" data-value="8)aletas de pino de perfilparabolico (ponta arredondada)">
+                        <input type="radio" class="aleta-checkbox" name="sele_aleta" value="8)aletas de pino de perfilparabolico (ponta arredondada)">
+                        <img src="{{ url_for('static', filename='aletas/8.png') }}" alt="Aleta de Pino de Perfil Parabólico">
+                        <div class="aleta-name">Pino parabólico, ponta arredondada</div>
+                    </label>
+                </div>
+
+                <div class="aleta-preview" id="aletaPreview" style="display:none;">
+                    <span class="tech-corner tc-tl" aria-hidden="true"></span>
+                    <span class="tech-corner tc-tr" aria-hidden="true"></span>
+                    <span class="tech-corner tc-bl" aria-hidden="true"></span>
+                    <span class="tech-corner tc-br" aria-hidden="true"></span>
+                    <div class="aleta-preview-col">
+                        <h2>Imagem da aleta</h2>
+                        <img id="aleta_image" src="" alt="Imagem da Aleta">
+                    </div>
+                    <div class="aleta-preview-col">
+                        <h2>Fórmula da aleta</h2>
+                        <img id="formula_image" src="" alt="Fórmula da Aleta">
+                    </div>
+                </div>
+
+            <div class="btns-bottom">
+                <a href="{{ url_for('index') }}" class="vx-btn vx-btn-ghost">Voltar</a>
+                <button type="submit" class="vx-btn vx-btn-primary confirm-btn" id="confirmBtn">Próximo <i class="fa-solid fa-arrow-right"></i></button>
             </div>
-            <div class="aleta-preview-col">
-                <h2>Fórmula da Aleta</h2>
-                <img id="formula_image" src="" alt="Fórmula da Aleta">
-            </div>
-        </div>
-        <div class="btns-bottom">
-            <a href="{{ url_for('index') }}">
-                <button type="button" class="back-btn" style="display:block;">Voltar</button>
-            </a>
-            <button type="submit" class="confirm-btn" id="confirmBtn" style="display:none;">Próximo</button>
-        </div>
-    </form>
+        </form>
+    </div>
+
     <script>
         // Seleção visual dos cards (radio)
         document.querySelectorAll('.aleta-card').forEach(card => {
@@ -312,13 +287,7 @@
         function updateConfirmBtn() {
             const checked = document.querySelector('.aleta-checkbox:checked');
             const btn = document.getElementById('confirmBtn');
-            if (checked) {
-                btn.classList.add('show');
-                btn.style.display = "block";
-            } else {
-                btn.classList.remove('show');
-                btn.style.display = "none";
-            }
+            btn.classList.toggle('show', !!checked);
         }
 
         function updatePreview(tipoAleta) {
@@ -357,7 +326,6 @@
         }
 
         window.onload = function() {
-            // Se já houver seleção, marque visualmente
             const checked = document.querySelector('.aleta-checkbox:checked');
             if (checked) {
                 checked.closest('.aleta-card').classList.add('selected');

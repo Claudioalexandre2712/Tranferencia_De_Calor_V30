@@ -1,184 +1,120 @@
 <!DOCTYPE html>
-<html lang="br">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inserir Dados</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(120deg, #e0eafc, #fff 100%);
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+        html, body { margin: 0; }
+        .page-wrap { max-width: 680px; margin: 0 auto; padding: 2.6rem 1.6rem 3.2rem; font-family: var(--font-sans); color: var(--ink); }
+
+        .aleta-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: var(--sp-6); }
+        .aleta-chip {
+            font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-dim);
+            background: var(--panel); border: 1px solid var(--line-strong); border-radius: 999px;
+            padding: 0.35rem 0.85rem;
         }
-        .card {
-            padding: 32px 28px 28px 28px;
-            border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.13);
-            width: 100%;
-            max-width: 540px;
-            background: #fff;
+
+        .vx-field label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 0.4rem; }
+        .vx-field .vx-input { width: 100%; box-sizing: border-box; }
+
+        .h-input-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .h-input-row .vx-input { flex: 1; min-width: 140px; }
+        .h-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .h-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; font-size: 0.8rem; color: var(--ink-faint); }
+        .h-meta .is-success { color: var(--success); font-weight: 600; }
+        .h-badge {
+            font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; color: var(--success);
+            background: rgba(15, 157, 99, 0.1); border: 1px solid rgba(15, 157, 99, 0.3);
+            border-radius: 999px; padding: 0.2rem 0.6rem; cursor: pointer; display: none;
         }
-        .title {
-            font-size: 2rem;
-            margin-bottom: 18px;
-            color: #1976d2;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-align: center;
-        }
-        .list-group-item {
-            font-size: 1.13rem;
-            color: #1976d2;
-            background: #f4f8ff;
-            border: none;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 14px;
-            text-align: left;
-        }
-        .form-control {
-            padding: 10px;
-            font-size: 1.08rem;
-            border-radius: 8px;
-            border: 1.5px solid #b0bec5;
-            transition: border 0.2s;
-        }
-        .form-control:focus {
-            border: 1.5px solid #1976d2;
-            box-shadow: 0 0 0 2px #bbdefb55;
-        }
-        .btn-custom {
-            margin-top: 18px;
-            width: 100%;
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-            font-size: 1.13rem;
-            padding: 0.7rem 2.2rem;
-            border: none;
-            border-radius: 2rem;
-            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.18);
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .btn-custom:hover, .btn-custom:focus {
-            background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
-            transform: scale(1.04);
-            box-shadow: 0 8px 28px rgba(25, 118, 210, 0.22);
-            outline: none;
-            color: #fff;
-        }
-        .btn-link.btn-custom {
-            background: linear-gradient(90deg, #b0bec5 0%, #90caf9 100%);
-            color: #333;
-        }
-        .alert {
-            margin-bottom: 20px;
-            font-size: 1.08em;
-        }
-        .pulse-success {
-            animation: pulseGreen 1.8s infinite;
-        }
+        .pulse-success { animation: pulseGreen 1.8s infinite; }
         @keyframes pulseGreen {
-            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5); }
-            70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(15, 157, 99, 0.45); }
+            70% { box-shadow: 0 0 0 7px rgba(15, 157, 99, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(15, 157, 99, 0); }
         }
-        .input-group-append .btn {
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+
+        .cond-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; margin-bottom: var(--sp-4); }
+        .cond-row {
+            display: flex; align-items: center; gap: 0.7rem;
+            background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: var(--radius);
+            padding: 0.65rem 0.9rem;
+            transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
         }
-        @media (max-width: 600px) {
-            .card {
-                max-width: 98vw;
-                padding: 10px 2vw 10px 2vw;
-            }
-            .title {
-                font-size: 1.3rem;
-            }
-            .form-control {
-                font-size: 1em;
-            }
-            .input-group {
-                flex-wrap: wrap;
-            }
-            .input-group-append {
-                width: 100%;
-                margin-top: 6px;
-                margin-left: 0 !important;
-                display: flex;
-                gap: 5px;
-            }
-            .input-group-append .btn {
-                flex: 1;
-                font-size: 0.82rem;
-                padding: 8px 6px;
-                border-radius: 6px !important;
-            }
-        }
+        .cond-row:hover { border-color: var(--ink-faint); }
+        .cond-row:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+        .cond-row input[type="radio"] { width: 17px; height: 17px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+        .cond-row label { font-size: 0.88rem; color: var(--ink); cursor: pointer; margin: 0; }
+
+        .btns-bottom { display: flex; flex-direction: column; gap: 0.6rem; margin-top: var(--sp-5); }
+        .btns-bottom .vx-btn { width: 100%; }
     </style>
 </head>
-<body>
-    <div class="card">
-        <h1 class="title">Inserir Dados para:</h1>
-        <ul class="list-group mb-3">
+<body class="eng-scope-bg">
+    <div class="page-wrap">
+        <div class="page-head page-head--thermal">
+            <div class="page-kicker"><i class="fa-solid fa-sliders"></i> Configuração · dados de entrada</div>
+            <h1>Inserir dados</h1>
+            <p>Informe as condições de contorno e a geometria para gerar o gráfico de distribuição de temperatura.</p>
+        </div>
+        <div class="eng-scale-rule"></div>
+
+        <div class="aleta-chips">
             {% for aleta in tipos_aletas %}
-                <li class="list-group-item">{{ aleta }}</li>
+                <span class="aleta-chip">{{ aleta }}</span>
             {% endfor %}
-        </ul>
-        
+        </div>
+
         <form method="post">
-            <div class="form-group">
-                <label for="h" style="font-weight: 600;">Coeficiente de transferência de calor (h):</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="h" name="h" required placeholder="Ex: 25 W/m²·K">
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-success" id="btn-usar-h" onclick="usarHCalculado()" title="Usar valor de h calculado anteriormente">
-                            <i class="fas fa-magic mr-1"></i> Usar h Calculado
+            <div class="vx-field">
+                <label for="h">Coeficiente de transferência de calor (h)</label>
+                <div class="h-input-row">
+                    <input type="text" class="vx-input" id="h" name="h" required placeholder="Ex: 25 W/m²·K">
+                    <div class="h-actions">
+                        <button type="button" class="vx-btn vx-btn-ghost vx-btn-sm" id="btn-usar-h" onclick="usarHCalculado()" title="Usar valor de h calculado anteriormente">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Usar h calculado
                         </button>
-                        <button type="button" class="btn btn-info" onclick="abrirCalculadoraConvectivo()" title="Abrir calculadora de convecção">
-                            <i class="fas fa-calculator mr-1"></i> Calcular h
+                        <button type="button" class="vx-btn vx-btn-ghost vx-btn-sm" onclick="abrirCalculadoraConvectivo()" title="Abrir calculadora de convecção">
+                            <i class="fa-solid fa-calculator"></i> Calcular h
                         </button>
                     </div>
                 </div>
-                <div class="mt-1 d-flex justify-content-between align-items-center flex-wrap">
-                    <small class="form-text text-muted m-0">
-                        <span id="origem-h" style="display: none;" class="text-success font-weight-bold">
-                            <i class="fas fa-check-circle"></i> <span id="origem-h-texto">Valor obtido da calculadora de convecção</span>
+                <div class="h-meta">
+                    <span>
+                        <span id="origem-h" style="display: none;" class="is-success">
+                            <i class="fa-solid fa-circle-check"></i> <span id="origem-h-texto">Valor obtido da calculadora de convecção</span>
                         </span>
-                        <span id="dica-h-vazio" class="text-muted" style="display: inline;">
+                        <span id="dica-h-vazio" style="display: inline;">
                             Insira manualmente ou use a calculadora de convecção.
                         </span>
-                    </small>
-                    <span id="badge-h-disponivel" class="badge badge-success p-1" style="display: none; cursor: pointer;" onclick="usarHCalculado()" title="Clique para preencher o campo com este valor">
-                        <i class="fas fa-history"></i> <span id="badge-h-texto">h disponível</span>
+                    </span>
+                    <span id="badge-h-disponivel" class="h-badge" onclick="usarHCalculado()" title="Clique para preencher o campo com este valor">
+                        <i class="fa-solid fa-clock-rotate-left"></i> <span id="badge-h-texto">h disponível</span>
                     </span>
                 </div>
-                <div id="alerta-h" class="alert alert-warning py-1 px-2 mt-2" style="display: none; font-size: 0.9rem;">
-                    <i class="fas fa-exclamation-triangle mr-1"></i> <span id="alerta-h-texto"></span>
+                <div id="alerta-h" class="vx-alert vx-alert-warning" style="display: none; margin-top: 0.6rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <span id="alerta-h-texto"></span>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="T_b">Temperatura da base da aleta (T_b):</label>
-                <input type="text" class="form-control" id="T_b" name="T_b" required placeholder="Ex: 100°C">
+
+            <div class="vx-field">
+                <label for="T_b">Temperatura da base da aleta (T_b)</label>
+                <input type="text" class="vx-input" id="T_b" name="T_b" required placeholder="Ex: 100°C">
             </div>
-            <div class="form-group">
-                <label for="T_inf">Temperatura do meio (T_inf):</label>
-                <input type="text" class="form-control" id="T_inf" name="T_inf" required placeholder="Ex: 25°C">
+            <div class="vx-field">
+                <label for="T_inf">Temperatura do meio (T_inf)</label>
+                <input type="text" class="vx-input" id="T_inf" name="T_inf" required placeholder="Ex: 25°C">
             </div>
             {% if precisa_L is not defined or precisa_L %}
-            <div class="form-group">
-                <label for="l">Comprimento (L) [m]:</label>
-                <input type="text" class="form-control" id="l" name="l" required placeholder="Ex: 0.05 m">
+            <div class="vx-field">
+                <label for="l">Comprimento (L) [m]</label>
+                <input type="text" class="vx-input" id="l" name="l" required placeholder="Ex: 0.05 m">
             </div>
             {% else %}
             <!-- Para aleta anular única (Tipo 4), L = r2 - r1 é calculado automaticamente -->
@@ -186,71 +122,71 @@
             {% endif %}
 
             {% if precisa_w %}
-                <div class="form-group">
-                    <label for="w">Largura (w) [m]:</label>
-                    <input type="text" class="form-control" id="w" name="w" required placeholder="Ex: 0.1 m">
+                <div class="vx-field">
+                    <label for="w">Largura (w) [m]</label>
+                    <input type="text" class="vx-input" id="w" name="w" required placeholder="Ex: 0.1 m">
                 </div>
             {% endif %}
 
             {% if precisa_t %}
-                <div class="form-group">
-                    <label for="t">Espessura (t) [m]:</label>
-                    <input type="text" class="form-control" id="t" name="t" required placeholder="Ex: 0.002 m">
+                <div class="vx-field">
+                    <label for="t">Espessura (t) [m]</label>
+                    <input type="text" class="vx-input" id="t" name="t" required placeholder="Ex: 0.002 m">
                 </div>
             {% endif %}
 
             {% if precisa_r1_r2 %}
-                <div class="form-group">
-                    <label for="r1">Raio Interno (r1) [m]:</label>
-                    <input type="text" class="form-control" id="r1" name="r1" required placeholder="Ex: 0.01 m">
+                <div class="vx-field">
+                    <label for="r1">Raio interno (r1) [m]</label>
+                    <input type="text" class="vx-input" id="r1" name="r1" required placeholder="Ex: 0.01 m">
                 </div>
-                <div class="form-group">
-                    <label for="r2">Raio Externo (r2) [m]:</label>
-                    <input type="text" class="form-control" id="r2" name="r2" required placeholder="Ex: 0.02 m">
+                <div class="vx-field">
+                    <label for="r2">Raio externo (r2) [m]</label>
+                    <input type="text" class="vx-input" id="r2" name="r2" required placeholder="Ex: 0.02 m">
                 </div>
             {% endif %}
 
             {% if precisa_D %}
-                <div class="form-group">
-                    <label for="D">Diâmetro (D) [m]:</label>
-                    <input type="text" class="form-control" id="D" name="D" required placeholder="Ex: 0.01 m">
+                <div class="vx-field">
+                    <label for="D">Diâmetro (D) [m]</label>
+                    <input type="text" class="vx-input" id="D" name="D" required placeholder="Ex: 0.01 m">
                 </div>
             {% endif %}
-            
-            <div class="form-group mt-4">
-                <label style="font-weight: 600; color: #333; font-size: 1.1rem;">Condição de Contorno na Ponta:</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_adiabatica" value="adiabatica" checked onchange="toggleTempCampo()">
-                    <label class="form-check-label" for="cond_adiabatica">Ponta Adiabática (Padrão)</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_conveccao" value="conveccao" onchange="toggleTempCampo()">
-                    <label class="form-check-label" for="cond_conveccao">Convecção na Ponta</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_infinita" value="infinita" onchange="toggleTempCampo()">
-                    <label class="form-check-label" for="cond_infinita">Aleta Infinita</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="condicao_ponta" id="cond_temp_especificada" value="temp_especificada" onchange="toggleTempCampo()">
-                    <label class="form-check-label" for="cond_temp_especificada">Temperatura Especificada na Ponta</label>
+
+            <div class="vx-field">
+                <label style="font-size: 0.95rem; color: var(--ink);">Condição de contorno na ponta</label>
+                <div class="cond-list">
+                    <div class="cond-row">
+                        <input type="radio" name="condicao_ponta" id="cond_adiabatica" value="adiabatica" checked onchange="toggleTempCampo()">
+                        <label for="cond_adiabatica">Ponta adiabática (padrão)</label>
+                    </div>
+                    <div class="cond-row">
+                        <input type="radio" name="condicao_ponta" id="cond_conveccao" value="conveccao" onchange="toggleTempCampo()">
+                        <label for="cond_conveccao">Convecção na ponta</label>
+                    </div>
+                    <div class="cond-row">
+                        <input type="radio" name="condicao_ponta" id="cond_infinita" value="infinita" onchange="toggleTempCampo()">
+                        <label for="cond_infinita">Aleta infinita</label>
+                    </div>
+                    <div class="cond-row">
+                        <input type="radio" name="condicao_ponta" id="cond_temp_especificada" value="temp_especificada" onchange="toggleTempCampo()">
+                        <label for="cond_temp_especificada">Temperatura especificada na ponta</label>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-group" id="campo_T_L" style="display: none;">
-                <label for="T_L">Temperatura na Ponta (T_L) [°C]:</label>
-                <input type="text" class="form-control" id="T_L" name="T_L">
+            <div class="vx-field" id="campo_T_L" style="display: none;">
+                <label for="T_L">Temperatura na ponta (T_L) [°C]</label>
+                <input type="text" class="vx-input" id="T_L" name="T_L">
             </div>
-            
-            <button type="submit" class="btn btn-primary btn-custom">Gerar Gráfico</button>
+
+            <div class="btns-bottom">
+                <button type="submit" class="vx-btn vx-btn-primary">Gerar gráfico <i class="fa-solid fa-chart-line"></i></button>
+                <a href="/tipos_materiais/{{ tipos_aletas|join(',') }}" class="vx-btn vx-btn-ghost">Voltar</a>
+            </div>
         </form>
-        <a href="/tipos_materiais/{{ tipos_aletas|join(',') }}" class="btn btn-secondary btn-custom" style="margin-top:12px;">Voltar</a>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
     <script>
     function toggleTempCampo() {
         var campo_T_L = document.getElementById('campo_T_L');
@@ -263,18 +199,14 @@
             input_T_L.required = false;
         }
     }
-    
-    $(document).ready(function(){
-        $('[data-toggle="tooltip"]').tooltip();
-    });
-    
+
     function abrirCalculadoraConvectivo() {
         window.open('/calculadora_convectivo', '_blank');
     }
-    
+
     function obterHCalculado() {
-        return localStorage.getItem('coeficiente_convectivo') || 
-               localStorage.getItem('ultimo_h_calculado') || 
+        return localStorage.getItem('coeficiente_convectivo') ||
+               localStorage.getItem('ultimo_h_calculado') ||
                localStorage.getItem('h_calculado') || null;
     }
 
@@ -282,19 +214,19 @@
         const h = obterHCalculado();
         const alerta = document.getElementById('alerta-h');
         const alertaTexto = document.getElementById('alerta-h-texto');
-        
+
         if (h !== null && !isNaN(parseFloat(h)) && parseFloat(h) > 0) {
             const valNum = parseFloat(h);
             const val = valNum.toFixed(2);
             const campoH = document.getElementById('h');
             campoH.value = val;
-            
+
             // Efeito visual no campo
             campoH.style.transition = 'all 0.3s ease';
             campoH.style.backgroundColor = '#e8f5e8';
             campoH.style.border = '2px solid #28a745';
             campoH.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.35)';
-            
+
             // Indicador de origem
             const origemEl = document.getElementById('origem-h');
             const origemTexto = document.getElementById('origem-h-texto');
@@ -305,7 +237,7 @@
             }
             if (dicaVazio) dicaVazio.style.display = 'none';
             if (alerta) alerta.style.display = 'none';
-            
+
             // Manter no histórico como último calculado
             localStorage.setItem('ultimo_h_calculado', val);
             atualizarStatusHDisponivel();
@@ -319,13 +251,13 @@
             }
         }
     }
-    
+
     function atualizarStatusHDisponivel() {
         const h = obterHCalculado();
         const badge = document.getElementById('badge-h-disponivel');
         const badgeTexto = document.getElementById('badge-h-texto');
         const btnUsar = document.getElementById('btn-usar-h');
-        
+
         if (h !== null && !isNaN(parseFloat(h)) && parseFloat(h) > 0) {
             const val = parseFloat(h).toFixed(2);
             if (badge && badgeTexto) {
@@ -353,16 +285,16 @@
         }
         atualizarStatusHDisponivel();
     }
-    
+
     window.addEventListener('load', function() {
         toggleTempCampo();
         verificarCoeficienteCalculado();
     });
-    
+
     window.addEventListener('focus', function() {
         verificarCoeficienteCalculado();
     });
-    
+
     window.addEventListener('storage', function(e) {
         if (e.key === 'coeficiente_convectivo' || e.key === 'ultimo_h_calculado') {
             verificarCoeficienteCalculado();

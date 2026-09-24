@@ -1,56 +1,29 @@
 Resultados das Aletas
-Seleção de Aletas: 5)aletas de pino de perfil retangular
-Tipo de Aleta: 5)aletas de pino de perfil retangular
+Seleção de Aletas: 1)aletas retangulares retas
+Tipo de Aleta: 1)aletas retangulares retas
 Material: Alumínio
 k: 240.0
-Eficiência da Aleta: 0.473647
-Taxa de Transferência de Calor: 11.634352 W
-Área da Aleta: 0.023562 m²
-Efetividade (epsilon_a): 63.152965
-Parâmetro m: 4.082483 m^-1
-Perímetro P: 0.047124 m
-Área Transversal A_tr: 0.000176715 m^2
+Eficiência da Aleta: 0.919953
+Taxa de Transferência de Calor: 17.594096 W
+Área da Aleta: 0.010000 m²
+Efetividade (epsilon_a): 46.917589
+Parâmetro m: 10.307764 m^-1
+Perímetro P: 0.204000 m
+Área Transversal A_tr: 0.000200000 m^2
 Comprimento (m) x Temperatura (°C):
-0.000000 m: 98.500000 °C
-0.035714 m: 89.408126 °C
-0.071429 m: 81.602715 °C
-0.107143 m: 74.917541 °C
-0.142857 m: 69.210236 °C
-0.178571 m: 64.359256 °C
-0.214286 m: 60.261293 °C
-0.250000 m: 56.829077 °C
-0.285714 m: 53.989514 °C
-0.321429 m: 51.682132 °C
-0.357143 m: 49.857794 °C
-0.392857 m: 48.477647 °C
-0.428571 m: 47.512299 °C
-0.464286 m: 46.941194 °C
-0.500000 m: 46.752167 °C
-
-Tipo de Aleta: 5)aletas de pino de perfil retangular
-Material: Cobre
-k: 386.0
-Eficiência da Aleta: 0.573508
-Taxa de Transferência de Calor: 14.087276 W
-Área da Aleta: 0.023562 m²
-Efetividade (epsilon_a): 76.467795
-Parâmetro m: 3.219114 m^-1
-Perímetro P: 0.047124 m
-Área Transversal A_tr: 0.000176715 m^2
-Comprimento (m) x Temperatura (°C):
-0.000000 m: 98.500000 °C
-0.035714 m: 91.567760 °C
-0.071429 m: 85.463435 °C
-0.107143 m: 80.106249 °C
-0.142857 m: 75.425317 °C
-0.178571 m: 71.358698 °C
-0.214286 m: 67.852581 °C
-0.250000 m: 64.860573 °C
-0.285714 m: 62.343082 °C
-0.321429 m: 60.266796 °C
-0.357143 m: 58.604242 °C
-0.392857 m: 57.333419 °C
-0.428571 m: 56.437513 °C
-0.464286 m: 55.904667 °C
-0.500000 m: 55.727832 °C
+0.000000 m: 100.000000 °C
+0.003571 m: 98.741447 °C
+0.007143 m: 97.582841 °C
+0.010714 m: 96.522613 °C
+0.014286 m: 95.559326 °C
+0.017857 m: 94.691673 °C
+0.021429 m: 93.918479 °C
+0.025000 m: 93.238697 °C
+0.028571 m: 92.651403 °C
+0.032143 m: 92.155804 °C
+0.035714 m: 91.751226 °C
+0.039286 m: 91.437121 °C
+0.042857 m: 91.213065 °C
+0.046429 m: 91.078752 °C
+0.050000 m: 91.034001 °C
 
