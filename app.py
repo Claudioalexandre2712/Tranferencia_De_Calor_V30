@@ -95,6 +95,14 @@ monitoring_cache = {
     't6': 0.0
 }
 
+# Cache e controle para a Temperatura-Alvo do ensaio (referência do ensaio, não medição)
+temperatura_alvo_lock = threading.Lock()
+temperatura_alvo_data = {
+    'temperatura_alvo': None,
+    'definida': False,
+    'timestamp': None
+}
+
 # =============================================================================
 # SERVIÇO DE DESCOBERTA AUTOMÁTICA (UDP BROADCAST) PARA ESP32
 # =============================================================================
@@ -1577,9 +1585,13 @@ def api_monitoramento():
     elif request.method == 'GET':
         with monitoring_lock:
             dados_atuais = monitoring_cache.copy()
+        with temperatura_alvo_lock:
+            alvo_copia = temperatura_alvo_data.copy()
         return jsonify({
             'success': True,
-            'data': dados_atuais
+            'data': dados_atuais,
+            'temperatura_alvo': alvo_copia['temperatura_alvo'],
+            'temperatura_alvo_definida': alvo_copia['definida']
         }), 200
 
 @app.route('/painel_status')
@@ -1657,6 +1669,108 @@ def api_status():
         'servidor': 'Flask',
         'ip': request.remote_addr
     }), 200
+
+# =============================================================================
+# API DE TEMPERATURA-ALVO DO ENSAIO (REFERÊNCIA NÃO-MEDIDA)
+# =============================================================================
+
+@app.route('/api/temperatura-alvo', methods=['GET', 'POST'])
+@app.route('/temperatura-alvo', methods=['GET', 'POST'])
+def api_temperatura_alvo():
+    """
+    Endpoint para gerenciar a Temperatura-Alvo de referência do ensaio.
+    Tratada exclusivamente como valor de REFERÊNCIA; NÃO é uma temperatura medida,
+    NÃO altera leituras dos sensores, NÃO implementa PID/PWM e NÃO interfere
+    no controle térmico físico do XH-W3002.
+    
+    POST: Configura o valor de referência da temperatura-alvo (JSON ou form)
+    GET: Retorna o valor de referência atualmente configurado
+    """
+    global temperatura_alvo_data
+    
+    if request.method == 'POST':
+        try:
+            data = request.get_json(silent=True)
+            if not data and request.form:
+                data = request.form
+                
+            if not data or 'temperatura_alvo' not in data:
+                return jsonify({
+                    'success': False,
+                    'status': 'erro',
+                    'mensagem': 'Campo "temperatura_alvo" é obrigatório.'
+                }), 400
+                
+            raw_val = data.get('temperatura_alvo')
+            if raw_val is None or (isinstance(raw_val, str) and not raw_val.strip()):
+                return jsonify({
+                    'success': False,
+                    'status': 'erro',
+                    'mensagem': 'A temperatura-alvo não pode ser vazia.'
+                }), 400
+                
+            # Suporte a padrão brasileiro com vírgula decimal (ex: 50,0)
+            if isinstance(raw_val, str):
+                raw_val = raw_val.replace(',', '.').strip()
+                
+            try:
+                val_float = float(raw_val)
+            except (ValueError, TypeError):
+                return jsonify({
+                    'success': False,
+                    'status': 'erro',
+                    'mensagem': 'Valor inválido. Insira um número decimal válido (ex: 50.0 ou 50,0).'
+                }), 400
+                
+            if np.isnan(val_float) or np.isinf(val_float):
+                return jsonify({
+                    'success': False,
+                    'status': 'erro',
+                    'mensagem': 'Valor numérico não pode ser NaN ou Infinito.'
+                }), 400
+                
+            # Limites físicos aceitáveis para ensaios térmicos em banho de água (0.0 °C a 100.0 °C)
+            if val_float < 0.0 or val_float > 100.0:
+                return jsonify({
+                    'success': False,
+                    'status': 'erro',
+                    'mensagem': f'Temperatura fora da faixa do banho de água (0.0 °C a 100.0 °C). Valor informado: {val_float:.2f} °C.'
+                }), 400
+                
+            val_arredondado = round(val_float, 4)
+            with temperatura_alvo_lock:
+                temperatura_alvo_data['temperatura_alvo'] = val_arredondado
+                temperatura_alvo_data['definida'] = True
+                temperatura_alvo_data['timestamp'] = time.time()
+                
+            print(f"[ALVO] Temperatura-alvo de referência configurada: {val_arredondado:.4f} °C")
+            return jsonify({
+                'success': True,
+                'status': 'sucesso',
+                'mensagem': f'Temperatura-alvo definida com sucesso para {val_arredondado:.2f} °C.',
+                'temperatura_alvo': val_arredondado,
+                'definida': True
+            }), 200
+            
+        except Exception as e:
+            print(f"[ALVO ERRO] Falha ao processar temperatura-alvo: {e}")
+            return jsonify({
+                'success': False,
+                'status': 'erro',
+                'mensagem': f'Erro interno ao salvar temperatura-alvo: {str(e)}'
+            }), 500
+            
+    elif request.method == 'GET':
+        with temperatura_alvo_lock:
+            retorno = temperatura_alvo_data.copy()
+            
+        return jsonify({
+            'success': True,
+            'status': 'sucesso',
+            'temperatura_alvo': retorno['temperatura_alvo'],
+            'definida': retorno['definida'],
+            'timestamp': retorno['timestamp']
+        }), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', use_reloader=True, threaded=True)

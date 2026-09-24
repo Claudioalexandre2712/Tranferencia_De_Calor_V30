@@ -6,6 +6,9 @@
     <title>Calculadora - Arranjos de Tubos</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
@@ -18,30 +21,33 @@
     </script>
     <style>
         :root {
-            --primary-blue: #1976d2;
-            --light-blue: #64b5f6;
-            --lighter-blue: #bbdefb;
-            --light-bg: #f4f8ff;
+            --primary-blue: #2e4fe0;
+            --light-blue: #5b74e8;
+            --lighter-blue: #dde3ec;
+            --light-bg: #f6f8fb;
+            --ink: #0d1420;
         }
-        
+
         body {
-            background: linear-gradient(120deg, #e0eafc, #fff 100%);
+            background-color: #e7ebf1;
+            background-image: linear-gradient(#c1cadb 1px, transparent 1px), linear-gradient(90deg, #c1cadb 1px, transparent 1px);
+            background-size: 44px 44px;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'IBM Plex Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         .card {
             border: none;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(25, 118, 210, 0.1);
-            background: #f4f8ff;
+            background: #ffffff;
 
         }
         
 
         
         .btn-primary {
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            background: linear-gradient(90deg, #2e4fe0 0%, #5b74e8 100%);
             border: none;
             border-radius: 10px;
             padding: 12px 30px;
@@ -62,20 +68,24 @@
 
         
         .card-header {
-            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--light-blue) 100%);
-            color: white;
+            background: #ffffff;
+            color: var(--ink);
+            border-bottom: 2px solid var(--primary-blue);
             border-radius: 15px 15px 0 0 !important;
             text-align: center;
             font-weight: 600;
         }
-        
+        .card-header h1, .card-header h2, .card-header h3 {
+            color: var(--ink) !important;
+        }
+
         .icon-blue {
             color: var(--primary-blue);
         }
         
         .formula-box { 
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
-            border-left: 4px solid #1976d2; 
+            border-left: 4px solid #2e4fe0; 
             padding: 20px; 
             margin: 15px 0; 
             border-radius: 8px;
@@ -101,7 +111,7 @@
         }
         
         h1, h2, h3 {
-            color: var(--primary-blue);
+            color: var(--ink);
         }
         
         .diagram-container { 
@@ -120,8 +130,8 @@
             <div class="col-12 col-lg-10">
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="mb-0" style="color: white;">
-                            <i class="fas fa-industry mr-3" style="color: white;"></i>
+                        <h2 class="mb-0" style="color: var(--ink);">
+                            <i class="fas fa-industry mr-3" style="color: var(--primary-blue);"></i>
                             Calculadora - Arranjos de Tubos
                         </h2>
                     </div>
@@ -138,9 +148,9 @@
                                         <h6 class="text-primary mb-3">Linha</h6>
                                         <div class="text-center p-3" style="background: white; border: 1px solid #ddd; border-radius: 8px;">
                                             <div style="display: inline-block; font-size: 24px; line-height: 1.2;">
-                                                <span style="color: #1976d2;">● ● ●</span><br>
-                                                <span style="color: #1976d2;">● ● ●</span><br>
-                                                <span style="color: #1976d2;">● ● ●</span>
+                                                <span style="color: #2e4fe0;">● ● ●</span><br>
+                                                <span style="color: #2e4fe0;">● ● ●</span><br>
+                                                <span style="color: #2e4fe0;">● ● ●</span>
                                             </div>
                                             <div class="mt-2">
                                                 <small class="text-muted">Tubos alinhados<br>S<sub>T</sub> e S<sub>L</sub> = espaçamentos</small>
@@ -258,20 +268,22 @@
                     </div>
 
                     <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3" style="font-size: 1.2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,123,255,0.3);">
-                            🧮 Calcular Transferência de Calor
+                        <button type="submit" class="btn btn-primary btn-lg" style="border-radius: 4px;">
+                            <i class="fas fa-calculator mr-2"></i>Calcular Transferência de Calor
                         </button>
-
+                        <a href="/calculadora_convectivo" class="btn btn-secondary btn-lg ml-2">
+                            <i class="fas fa-arrow-left mr-1"></i>Voltar
+                        </a>
                     </div>
                 </form>
 
                 <!-- Correlações Teóricas -->
-                <div class="mt-5">
-                    <h4 class="text-center mb-4" style="color: #495057; font-weight: bold;">
-                        📚 Correlações de Zukauskas (Tabela 7-2)
-                        <hr style="width: 100px; border-top: 3px solid #007bff; margin: 10px auto;">
-                    </h4>
-                    
+                <div class="card mb-4 mt-5">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-book icon-blue mr-2"></i>Correlações de Zukauskas (Tabela 7-2)</h5>
+                    </div>
+                    <div class="card-body">
+
                     <div class="row">
                         <div class="col-md-12">
                             <div class="formula-box">
@@ -322,6 +334,7 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -427,12 +440,6 @@
                     {% endif %}
                 </div>
                 {% endif %}
-                
-                        <div class="text-center mt-4">
-                            <a href="/calculadora_convectivo" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left mr-2"></i>Voltar para Calculadoras
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -7,297 +7,411 @@
     <!-- Google Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
-            --bg-body: #f8fafc;
-            --surface-card: #ffffff;
-            --surface-glass: rgba(255, 255, 255, 0.85);
-            --border-color: #e2e8f0;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            
-            --brand-primary: #2563eb;
-            --brand-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            
+            /* Tokens alinhados ao V30 Design System (static/css/design-system.css) —
+               checkpoint V30-UXUI-02. Nomes preservados (usados no resto deste arquivo
+               e em calculadora_natural.html); só os valores foram refinados. */
+            --rail-w: 296px;
+
+            --bg-app: #eef1f6;
+            --panel: #ffffff;
+            --panel-alt: #f6f8fb;
+            --line: #dde3ec;
+            --line-strong: #c1cadb;
+            --ink: #0d1420;
+            --ink-dim: #4c5768;
+            --ink-faint: #8894a3;
+
+            --rail-bg-1: #10182a;
+            --rail-bg-2: #080d17;
+            --rail-line: rgba(255,255,255,0.09);
+            --rail-text: #c3cbdb;
+            --rail-text-dim: #67728a;
+
+            --accent: #2e4fe0;
+            --accent-dim: #1e36a8;
+            --heat: #d9761e;
+            --live: #2dd4a8;
+
             --color-t1: #D62728;
             --color-t2: #9467BD;
             --color-t3: #2CA02C;
             --color-t4: #1F77B4;
             --color-t5: #EAB308;
             --color-t6: #8C564B;
-            
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
-            --card-hover-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+
+            --success-color: #0f9d63;
+            --warning-color: #c2790a;
+            --danger-color: #d6373a;
+
+            --radius: 5px;
+            --radius-sm: 3px;
+
+            --heat-soft: rgba(217, 118, 30, 0.14);
+            --cool: #2f9bb0;
+            --cool-soft: rgba(47, 155, 176, 0.14);
         }
 
-        * {
-            box-sizing: border-box;
+        * { box-sizing: border-box; }
+
+        /* ── identidade térmica V30-UXUI-04 (local, arquivo não importa design-system.css) ── */
+        .page-head--thermal { position: relative; z-index: 1; }
+        .page-head--thermal::before {
+            content: ''; position: absolute; z-index: -1; pointer-events: none;
+            top: -1.6rem; left: -2.2rem; right: -2.2rem; height: 10rem;
+            background:
+                radial-gradient(ellipse 68% 100% at 88% 0%, var(--cool-soft), transparent 82%),
+                radial-gradient(ellipse 68% 100% at 4% 100%, var(--heat-soft), transparent 82%);
+        }
+        .page-kicker {
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.74rem; color: var(--ink-dim);
+            display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 0.7rem;
+            border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.25rem 0.7rem 0.25rem 0.5rem;
+            background: rgba(255, 255, 255, 0.72);
+        }
+        .page-kicker i { color: var(--live); }
+        .eng-scale-rule {
+            height: 8px; margin: 0.3rem 0 1.6rem; max-width: 340px;
+            background:
+                repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 22px) left bottom / 100% 7px no-repeat,
+                linear-gradient(var(--line-strong), var(--line-strong)) left bottom / 100% 1px no-repeat;
+            opacity: 0.65;
         }
 
-        body {
-            background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
-            min-height: 100vh;
-            font-family: 'Inter', sans-serif;
-            color: var(--text-primary);
-            padding-bottom: 3rem;
+        html, body {
             margin: 0;
+            background: var(--bg-app);
+            color: var(--ink);
+            font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Top Header / Navbar ── */
-        .top-navbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
+        a { color: inherit; }
+
+        /* ══════════════════ APP SHELL ══════════════════ */
+        .app-shell {
+            display: flex;
+            align-items: stretch;
+            min-height: 100vh;
+        }
+
+        /* ── Console Rail (control column) ── */
+        .console-rail {
+            width: var(--rail-w);
+            flex-shrink: 0;
+            background: linear-gradient(180deg, var(--rail-bg-1) 0%, var(--rail-bg-2) 100%);
+            color: var(--rail-text);
+            border-right: 1px solid var(--rail-line);
             position: sticky;
             top: 0;
-            z-index: 100;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scrollbar-width: thin;
         }
 
-        .brand-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            background: rgba(37, 99, 235, 0.2);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .header-title {
-            font-size: 1.45rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin: 0;
-            color: #ffffff;
+        .rail-brand {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.7rem;
+            padding: 1.15rem 1.25rem;
+            border-bottom: 1px solid var(--rail-line);
         }
-
-        /* ── Status Pulse Pill ── */
-        .live-status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            color: #34d399;
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #10b981;
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            animation: pulse-ring 2s infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        /* ── Action Buttons in Navbar ── */
-        .btn-nav-action {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #e2e8f0;
-            font-size: 0.85rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-nav-action:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: #ffffff;
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        /* ── Container Layout ── */
-        .container-custom {
-            max-width: 1400px;
-            padding: 0 1.25rem;
-            margin: 0 auto;
-        }
-
-        /* ── KPI Summary Cards ── */
-        .kpi-card {
-            background: var(--surface-card);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            padding: 1.15rem 1.35rem;
-            box-shadow: var(--card-shadow);
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--card-hover-shadow);
-        }
-        .kpi-title {
-            font-size: 0.78rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            margin-bottom: 0.3rem;
-        }
-        .kpi-val {
-            font-size: 1.45rem;
-            font-weight: 800;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-primary);
-            margin: 0;
-            line-height: 1.2;
-        }
-        .kpi-badge {
-            font-size: 0.72rem;
-            font-weight: 600;
-            padding: 0.2rem 0.55rem;
-            border-radius: 0.35rem;
-            margin-top: 0.35rem;
-            display: inline-block;
-        }
-        .kpi-icon-box {
-            width: 46px;
-            height: 46px;
-            border-radius: 0.75rem;
+        .rail-brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(47, 102, 224, 0.18);
+            border: 1px solid rgba(94, 140, 234, 0.35);
+            color: #8fb3f5;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 0.95rem;
             flex-shrink: 0;
         }
-
-        /* ── Section Cards ── */
-        .dashboard-section {
-            background: var(--surface-card);
-            border: 1px solid var(--border-color);
-            border-radius: 1.25rem;
-            box-shadow: var(--card-shadow);
-            padding: 1.75rem;
-            margin-bottom: 1.75rem;
+        .rail-brand-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.25;
+        }
+        .rail-brand-sub {
+            font-size: 0.7rem;
+            color: var(--rail-text-dim);
+            letter-spacing: 0.02em;
         }
 
-        .section-header {
+        .rail-status {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.5rem;
+            font-size: 0.76rem;
+            color: var(--live);
+            font-weight: 500;
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
         }
-        .section-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--live);
+            box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.6);
+            animation: pulse-ring 2s infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.55); }
+            70% { box-shadow: 0 0 0 6px rgba(45, 212, 168, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0); }
+        }
+
+        .rail-section {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--rail-line);
+        }
+        .rail-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--rail-text-dim);
+            margin-bottom: 0.55rem;
+        }
+
+        .rail-timer {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.55rem;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.01em;
+            margin-bottom: 0.6rem;
+        }
+        .rail-btn-row { display: flex; gap: 0.4rem; }
+
+        .rail-btn {
+            background: rgba(255,255,255,0.055);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--rail-text);
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 0.48rem 0.7rem;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+        }
+        .rail-btn:hover { background: rgba(255,255,255,0.11); color: #fff; border-color: rgba(255,255,255,0.22); }
+        .rail-btn.w-100 { width: 100%; margin-bottom: 0.4rem; }
+        .rail-btn:last-child { margin-bottom: 0; }
+        .rail-btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .rail-btn-accent:hover { background: #2657c4; border-color: #2657c4; color: #fff; }
+        .rail-btn-danger { color: #f3a9a9; }
+        .rail-btn-danger:hover { background: rgba(214, 55, 58, 0.16); border-color: rgba(214, 55, 58, 0.4); color: #ffb4b4; }
+        .rail-btn-ghost { width: 44px; flex-shrink: 0; }
+
+        .rail-target-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+        .rail-input {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.88rem;
+            padding: 0.5rem 0.7rem;
+            outline: none;
+        }
+        .rail-input::placeholder { color: var(--rail-text-dim); }
+        .rail-input-unit {
+            padding: 0 0.7rem;
+            font-size: 0.75rem;
+            color: var(--rail-text-dim);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            align-self: stretch;
+            display: flex;
+            align-items: center;
+        }
+        .rail-target-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.76rem;
+            color: var(--rail-text);
+            margin-top: 0.6rem;
+        }
+        .rail-target-value .dim { color: var(--rail-text-dim); font-style: italic; }
+        .rail-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+        .rail-badge {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.25rem 0.55rem;
+            border-radius: var(--radius-sm);
+            letter-spacing: 0.01em;
+        }
+        .rail-alert {
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .rail-nav-links {
+            margin-top: auto;
+            padding-top: 1rem;
+            padding-bottom: 1.1rem;
+            border-bottom: none;
+        }
+        .rail-link {
             display: flex;
             align-items: center;
             gap: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--rail-text);
+            padding: 0.55rem 0.1rem;
+            text-decoration: none;
+            transition: color 0.12s ease;
         }
-        .section-title i {
-            color: var(--brand-primary);
+        .rail-link:hover { color: #fff; }
+        .rail-link i { width: 16px; text-align: center; color: var(--rail-text-dim); }
+
+        /* ══════════════════ MAIN AREA ══════════════════ */
+        .main-area {
+            flex: 1;
+            min-width: 0;
+            padding: 2.1rem 2.4rem 3rem;
+            max-width: 1500px;
         }
 
-        /* ── 6 Sensor Cards Grid ── */
+        .page-head { margin-bottom: 1.6rem; }
+        .page-head h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin: 0 0 0.25rem;
+            color: var(--ink);
+        }
+        .page-head p {
+            font-size: 0.85rem;
+            color: var(--ink-dim);
+            margin: 0;
+        }
+
+        /* ── Generic panel ── */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+        }
+        .panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            padding: 1.1rem 1.35rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .panel-head h2 {
+            font-size: 0.98rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--ink);
+        }
+        .panel-head .panel-sub {
+            font-size: 0.78rem;
+            color: var(--ink-faint);
+        }
+        .panel-body { padding: 1.35rem; }
+
+        /* ── Inline metrics strip (replaces 4 KPI cards) ── */
+        .metrics-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background: var(--line);
+            gap: 1px;
+            border-bottom: 1px solid var(--line);
+        }
+        .metric-cell {
+            background: var(--panel-alt);
+            padding: 0.85rem 1.35rem;
+        }
+        .metric-cell-label {
+            font-size: 0.72rem;
+            color: var(--ink-faint);
+            margin-bottom: 0.3rem;
+        }
+        .metric-cell-val {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.28rem;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.15;
+        }
+        .metric-cell-val .temp-unit { font-size: 0.78rem; font-weight: 500; color: var(--ink-faint); margin-left: 0.15rem; }
+        .metric-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: var(--radius-sm);
+            margin-top: 0.35rem;
+            display: inline-block;
+        }
+        @media (max-width: 900px) {
+            .metrics-strip { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ── Channel strip: 6-way divided sensor readout ── */
         .sensor-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 1.15rem;
+            background: var(--line);
+            gap: 1px;
         }
-        @media (max-width: 1200px) {
+        @media (max-width: 1150px) {
             .sensor-grid { grid-template-columns: repeat(3, 1fr); }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 620px) {
             .sensor-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 480px) {
-            .sensor-grid { grid-template-columns: 1fr; }
-        }
 
-        /* ── Sensor Card Style ── */
         .temp-card {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            padding: 1.25rem 1.1rem;
+            background: var(--panel);
+            border: none;
+            border-left: 3px solid var(--line-strong);
+            border-radius: 0;
+            padding: 1rem 1.05rem 0.95rem;
             position: relative;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            min-height: 175px;
+            gap: 0.5rem;
+            min-height: 150px;
         }
+        .temp-card:hover { background: var(--panel-alt); }
 
-        .temp-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--brand-primary);
-            transition: height 0.2s ease;
-        }
-
-        .temp-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--card-hover-shadow);
-            border-color: #cbd5e1;
-        }
-        .temp-card:hover::before {
-            height: 6px;
-        }
-
-        /* Sensor Custom Color Accents */
-        .card-t1::before { background: var(--color-t1) !important; }
-        .card-t2::before { background: var(--color-t2) !important; }
-        .card-t3::before { background: var(--color-t3) !important; }
-        .card-t4::before { background: var(--color-t4) !important; }
-        .card-t5::before { background: var(--color-t5) !important; }
-        .card-t6::before { background: var(--color-t6) !important; }
-
-        .temp-card-cinza::before { background: var(--color-t4); }
-        .temp-card-roxo::before { background: var(--color-t5); }
+        .card-t1 { border-left-color: var(--color-t1); }
+        .card-t2 { border-left-color: var(--color-t2); }
+        .card-t3 { border-left-color: var(--color-t3); }
+        .card-t4 { border-left-color: var(--color-t4); }
+        .card-t5 { border-left-color: var(--color-t5); }
+        .card-t6 { border-left-color: var(--color-t6); }
 
         .icon-t1, .card-t1 .card-icon { color: var(--color-t1) !important; }
         .icon-t2, .card-t2 .card-icon { color: var(--color-t2) !important; }
@@ -310,7 +424,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.75rem;
         }
 
         .drag-handle {
@@ -318,278 +431,324 @@
             user-select: none;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-secondary);
+            gap: 0.4rem;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--ink-dim);
             margin: 0;
             line-height: 1.2;
         }
         .drag-handle:active { cursor: grabbing; }
 
         .drag-grip {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            opacity: 0.6;
-            transition: opacity 0.2s;
+            color: var(--ink-faint);
+            font-size: 0.72rem;
+            opacity: 0;
+            transition: opacity 0.15s;
         }
-        .temp-card:hover .drag-grip { opacity: 1; color: var(--brand-primary); }
+        .temp-card:hover .drag-grip { opacity: 0.75; }
 
         .temp-card.dragging {
             opacity: 0.35;
-            transform: scale(0.96);
-            border: 2px dashed var(--brand-primary);
+            background: var(--panel-alt);
         }
         .temp-card.drag-over {
-            border: 2px dashed var(--brand-primary);
-            background: #eff6ff;
-            transform: scale(1.02);
+            background: #eaf0fe;
         }
 
         .temp-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.7rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            letter-spacing: -0.03em;
-            margin: 0.35rem 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.55rem;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: -0.01em;
             display: flex;
             align-items: baseline;
             gap: 0.2rem;
             transition: opacity 0.2s ease;
         }
         .temp-unit {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-size: 0.86rem;
+            font-weight: 500;
+            color: var(--ink-faint);
         }
 
         .temp-description {
-            font-size: 0.75rem;
+            font-size: 0.71rem;
             font-weight: 500;
-            color: var(--text-muted);
+            color: var(--ink-faint);
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.3rem;
         }
 
-        .drag-hint-box {
-            background: #f1f5f9;
-            border-radius: 0.5rem;
-            padding: 0.6rem 1rem;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            display: inline-flex;
+        .drag-hint {
+            display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-top: 1.25rem;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            padding: 0.65rem 1.35rem;
+            font-size: 0.75rem;
+            color: var(--ink-faint);
+            border-top: 1px solid var(--line);
         }
+        .drag-hint .text-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+        }
+        .drag-hint .text-btn:hover { text-decoration: underline; }
 
-        /* ── Chart Container ── */
+        /* ── Chart panel ── */
         .chart-wrapper {
             position: relative;
-            height: 520px;
+            height: 560px;
             width: 100%;
+            padding: 0.5rem 1rem 1rem;
         }
 
-        /* ── Controls Toolbar ── */
-        .toolbar-group {
+        .collection-bar {
             display: flex;
-            gap: 0.75rem;
+            justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .btn-action-primary {
-            background: var(--brand-gradient);
-            color: #ffffff;
-            border: none;
-            padding: 0.6rem 1.25rem;
-            font-size: 0.88rem;
-            font-weight: 600;
-            border-radius: 0.6rem;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .btn-action-primary:hover {
-            color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
-        }
-
-        .btn-action-secondary {
-            background: #ffffff;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            padding: 0.6rem 1.15rem;
-            font-size: 0.88rem;
-            font-weight: 600;
-            border-radius: 0.6rem;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .btn-action-secondary:hover {
-            background: #f8fafc;
-            color: var(--text-primary);
-            border-color: #cbd5e1;
-            transform: translateY(-1px);
-        }
-
-        /* ── Informational Box ── */
-        .info-card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.25rem;
-        }
-        .guide-box {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 0.85rem;
-            padding: 1.25rem;
-            display: flex;
             gap: 1rem;
+            padding: 0.85rem 1.35rem;
+            border-top: 1px solid var(--line);
+            background: var(--panel-alt);
+            font-size: 0.78rem;
+            color: var(--ink-dim);
         }
-        .guide-icon {
-            font-size: 1.35rem;
-            color: var(--brand-primary);
-            background: rgba(37, 99, 235, 0.1);
-            width: 42px;
-            height: 42px;
-            border-radius: 0.6rem;
+        .collection-bar strong { color: var(--ink); font-family: 'IBM Plex Mono', monospace; }
+        .collection-stats { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+
+        /* ── Data-treatment drawer ── */
+        #painel-tratamento-container {
+            border: none;
+            border-top: 1px solid var(--line);
+            border-radius: 0;
+            background: var(--panel-alt);
+        }
+        .treat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--line);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+        @media (max-width: 900px) {
+            .treat-grid { grid-template-columns: 1fr; }
+        }
+        .treat-cell {
+            background: var(--panel);
+            padding: 1rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0.7rem;
+        }
+        .treat-cell-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .treat-cell-hint {
+            font-size: 0.73rem;
+            color: var(--ink-faint);
+            display: block;
+            margin-bottom: 0.6rem;
+        }
+
+        /* ── Reference strip (bottom guidance) ── */
+        .reference-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--line);
+        }
+        @media (max-width: 900px) {
+            .reference-strip { grid-template-columns: 1fr; }
+        }
+        .reference-item {
+            background: var(--panel);
+            padding: 1rem 1.35rem;
+        }
+        .reference-item h6 {
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin: 0 0 0.35rem;
+            color: var(--ink);
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+            gap: 0.5rem;
         }
-        .guide-content h6 {
-            font-weight: 700;
-            margin-bottom: 0.35rem;
-            color: var(--text-primary);
-        }
-        .guide-content p {
-            font-size: 0.83rem;
-            color: var(--text-secondary);
+        .reference-item h6 i { color: var(--accent); font-size: 0.8rem; width: 16px; }
+        .reference-item p {
+            font-size: 0.78rem;
+            color: var(--ink-dim);
             margin: 0;
-            line-height: 1.45;
+            line-height: 1.5;
+        }
+
+        /* ── Buttons used inside main-area panels (treatment drawer) ── */
+        .btn-flat {
+            font-size: 0.76rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            padding: 0.4rem 0.7rem;
+            border: 1px solid var(--line-strong);
+            background: #fff;
+            color: var(--ink-dim);
+            cursor: pointer;
+            transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        }
+        .btn-flat:hover { background: var(--panel-alt); color: var(--ink); }
+        .btn-flat-accent { border-color: var(--accent); color: var(--accent); }
+        .btn-flat-accent:hover { background: rgba(47,102,224,0.08); }
+        .btn-flat-danger { border-color: #eab3b3; color: var(--danger-color); }
+        .btn-flat-danger:hover { background: rgba(214,55,58,0.06); }
+
+        /* ── Mobile: rail collapses above content ── */
+        @media (max-width: 980px) {
+            .app-shell { flex-direction: column; }
+            .console-rail {
+                width: 100%;
+                height: auto;
+                position: static;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .rail-brand, .rail-status, .rail-section, .rail-nav-links {
+                border-bottom: none;
+                border-right: 1px solid var(--rail-line);
+                flex: 1 1 220px;
+            }
+            .rail-nav-links { margin-top: 0; }
+            .main-area { padding: 1.5rem 1.1rem 2.5rem; }
         }
     </style>
 </head>
 <body>
+<div class="app-shell">
 
-    <!-- ── Header Superior Glassmorphism ── -->
-    <nav class="top-navbar">
-        <div class="container-custom">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div>
-                    <div class="brand-badge mb-1">
-                        <i class="fas fa-microchip"></i>
-                        Sistema de Aquisição Térmica
-                    </div>
-                    <h1 class="header-title">
-                        <i class="fas fa-chart-line text-primary"></i>
-                        Painel de Monitoramento em Tempo Real
-                    </h1>
-                </div>
-
-                <div class="d-flex align-items-center gap-3 flex-wrap">
-                    <a href="{{ url_for('index') }}" class="btn-nav-action">
-                        <i class="fas fa-home"></i>
-                        <span>Menu Principal</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-custom">
-
-        <!-- ── Live KPI Summary Metrics Row ── -->
-        <div class="row g-3 mb-4">
-            <!-- KPI 1: Temperatura Média da Superfície -->
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-title">Média da Superfície (T1, T2, T3)</div>
-                        <div class="kpi-val" id="kpi-t-media">0.0000 <span class="temp-unit">°C</span></div>
-                        <span class="kpi-badge bg-primary-subtle text-primary" id="kpi-media-badge">Ts Médio (3 Sensores)</span>
-                    </div>
-                    <div class="kpi-icon-box bg-primary-subtle text-primary">
-                        <i class="fas fa-fire-flame-curved"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KPI 2: Gradiente Térmico na Placa -->
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-title">Gradiente da Placa |T1 - T3|</div>
-                        <div class="kpi-val" id="kpi-delta-t">0.0000 <span class="temp-unit">°C</span></div>
-                        <span class="kpi-badge bg-success-subtle text-success" id="kpi-unif-badge">Homogêneo</span>
-                    </div>
-                    <div class="kpi-icon-box bg-success-subtle text-success">
-                        <i class="fas fa-arrows-split-up-and-left"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KPI 3: Temperatura Ambiente (DHT11) -->
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-title">Ambiente (T4)</div>
-                        <div class="kpi-val" id="kpi-t-amb">0.00 <span class="temp-unit">°C</span></div>
-                        <span class="kpi-badge bg-info-subtle text-info">DHT11 #01</span>
-                    </div>
-                    <div class="kpi-icon-box bg-info-subtle text-info">
-                        <i class="fas fa-cloud-sun"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KPI 4: Média Inferior (T5-T6) -->
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-title">Base Inferior (T5-T6)</div>
-                        <div class="kpi-val" id="kpi-t-inf">0.00 <span class="temp-unit">°C</span></div>
-                        <span class="kpi-badge" style="background: rgba(139, 92, 246, 0.15); color: #7c3aed;">ESP32 #02</span>
-                    </div>
-                    <div class="kpi-icon-box" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                </div>
+    <!-- ══════════════════ CONSOLE RAIL (control column) ══════════════════ -->
+    <aside class="console-rail">
+        <div class="rail-brand">
+            <div class="rail-brand-mark"><i class="fas fa-microchip"></i></div>
+            <div>
+                <div class="rail-brand-title">Bancada Térmica</div>
+                <div class="rail-brand-sub">UFR · Aquisição ESP32</div>
             </div>
         </div>
 
-        <!-- ── Seção 1: Canais de Sensores em Tempo Real ── -->
-        <div class="dashboard-section">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">
-                        <i class="fas fa-microchip"></i>
-                        Canais de Temperatura
-                    </h2>
-                    <span class="text-muted small">Leituras sincronizadas dos microcontroladores ESP32</span>
-                </div>
+        <div class="rail-status">
+            <span class="live-dot"></span> Monitorando em tempo real
+        </div>
 
-                <div class="toolbar-group">
-                    <button type="button" class="btn-action-primary" onclick="atualizarAgora()">
-                        <i class="fas fa-sync-alt"></i>
-                        Atualizar Agora
-                    </button>
-                    <a href="/calculadora_convectivo/natural" class="btn-action-secondary">
-                        Calculadora Convectiva
-                    </a>
+        <div class="rail-section">
+            <div class="rail-label">Tempo de ensaio</div>
+            <div class="rail-timer" id="cronometro-display">00:00:00</div>
+            <div class="rail-btn-row">
+                <button type="button" class="rail-btn" id="btn-cronometro-toggle" onclick="toggleCronometro()" style="flex:1;">
+                    <i class="fas fa-play" id="cronometro-icon"></i><span id="cronometro-btn-text">Iniciar Tempo</span>
+                </button>
+                <button type="button" class="rail-btn rail-btn-ghost" id="btn-cronometro-reset" onclick="resetarCronometro()" title="Zerar cronômetro">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="rail-section">
+            <div class="rail-label">Temperatura-alvo do ensaio</div>
+            <div class="rail-target-row">
+                <input type="text" id="input-temperatura-alvo" class="rail-input" placeholder="Ex: 50,0" onkeydown="if(event.key==='Enter') definirTemperaturaAlvo()">
+                <span class="rail-input-unit">°C</span>
+            </div>
+            <button type="button" class="rail-btn rail-btn-accent w-100" id="btn-definir-alvo" onclick="definirTemperaturaAlvo()">
+                Definir temperatura
+            </button>
+            <div class="rail-target-value" id="display-alvo-configurado">
+                Valor configurado: <span class="dim">Não configurada</span>
+            </div>
+            <div class="rail-badges">
+                <span id="badge-regime-permanente" class="rail-badge" style="display: none;"></span>
+                <span id="badge-coerencia-fisica" class="rail-badge" style="display: none;"></span>
+            </div>
+            <div id="alerta-temperatura-alvo" class="rail-alert" style="display: none;"></div>
+        </div>
+
+        <div class="rail-section rail-actions">
+            <div class="rail-label">Ações</div>
+            <button type="button" class="rail-btn rail-btn-accent w-100" onclick="atualizarAgora()">
+                <i class="fas fa-sync-alt"></i> Atualizar agora
+            </button>
+            <button type="button" class="rail-btn w-100" onclick="exportarGraficoPNG()" title="Baixar imagem PNG em alta resolução do gráfico">
+                <i class="fas fa-file-image"></i> Exportar gráfico (PNG)
+            </button>
+            <button type="button" class="rail-btn w-100" onclick="exportarHistoricoCSV()" title="Salvar planilha CSV com todos os dados do ensaio">
+                <i class="fas fa-file-csv"></i> Salvar CSV
+            </button>
+            <button type="button" class="rail-btn w-100" id="btn-toggle-tratamento" onclick="togglePainelTratamento()" title="Remover curvas de erro do termostato W3002, recortar intervalos e estabilizar o gráfico">
+                <i class="fas fa-sliders"></i> Tratar / recortar dados
+            </button>
+            <button type="button" class="rail-btn w-100" id="btn-pause-toggle" onclick="togglePauseMonitoramento()">
+                <i class="fas fa-pause"></i> Pausar
+            </button>
+            <button type="button" class="rail-btn rail-btn-danger w-100" onclick="limparHistoricoGrafico()">
+                <i class="fas fa-trash-can"></i> Limpar histórico
+            </button>
+        </div>
+
+        <div class="rail-nav-links">
+            <a href="{{ url_for('index') }}" class="rail-link"><i class="fas fa-house"></i> Menu principal</a>
+            <a href="/calculadora_convectivo/natural" class="rail-link"><i class="fas fa-calculator"></i> Calculadora convectiva</a>
+        </div>
+    </aside>
+
+    <!-- ══════════════════ MAIN AREA ══════════════════ -->
+    <main class="main-area">
+
+        <div class="page-head page-head--thermal">
+            <div class="page-kicker"><i class="fa-solid fa-satellite-dish"></i> Painel · telemetria ao vivo</div>
+            <h1>Monitoramento em tempo real</h1>
+            <p>Leituras sincronizadas dos microcontroladores ESP32 &bull; atualização a cada 2 s</p>
+        </div>
+        <div class="eng-scale-rule"></div>
+
+        <!-- ── Canais de Temperatura + Métricas ── -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="fas fa-microchip" style="color: var(--accent); margin-right: 0.5rem;"></i>Canais de Temperatura</h2>
+                <span class="panel-sub">Ordem física T1 &rarr; T6 &bull; arraste para reorganizar</span>
+            </div>
+
+            <div class="metrics-strip">
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Média da Superfície (T1, T2, T3)</div>
+                    <div class="metric-cell-val" id="kpi-t-media">0.0000 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" id="kpi-media-badge" style="background: rgba(47,102,224,0.1); color: var(--accent);">Ts médio</span>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Gradiente da Placa |T1 &minus; T3|</div>
+                    <div class="metric-cell-val" id="kpi-delta-t">0.0000 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" id="kpi-unif-badge" style="background: rgba(15,157,99,0.1); color: var(--success-color);">Homogêneo</span>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Ambiente (T4)</div>
+                    <div class="metric-cell-val" id="kpi-t-amb">0.00 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" style="background: rgba(31,119,180,0.1); color: var(--color-t4);">DHT11 #01</span>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Base Inferior (T5, T6)</div>
+                    <div class="metric-cell-val" id="kpi-t-inf">0.00 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" style="background: rgba(140,86,75,0.12); color: var(--color-t6);">ESP32 #02</span>
                 </div>
             </div>
 
@@ -704,57 +863,19 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-                <div class="drag-hint-box">
-                    <i class="fas fa-grip-vertical text-muted"></i>
-                    <span><strong>Organização Interativa:</strong> Arraste os cards pelas alças para personalizar a ordem dos sensores na bancada.</span>
-                </div>
-                <div class="d-inline-flex align-items-center gap-2 bg-light px-3 py-1 rounded border shadow-sm">
-                    <span class="small font-weight-bold text-muted"><i class="fas fa-stopwatch text-primary mr-1"></i> Tempo de Ensaio:</span>
-                    <span id="cronometro-display" class="fw-bold font-monospace text-primary" style="font-size: 1rem; min-width: 68px;">00:00:00</span>
-                    <button type="button" class="btn btn-sm btn-outline-success font-weight-bold py-0 px-2" id="btn-cronometro-toggle" onclick="toggleCronometro()" style="font-size: 0.75rem; border-radius: 6px; height: 26px;">
-                        <i class="fas fa-play mr-1" id="cronometro-icon"></i><span id="cronometro-btn-text">Iniciar Tempo</span>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary font-weight-bold py-0 px-2" id="btn-cronometro-reset" onclick="resetarCronometro()" style="font-size: 0.75rem; border-radius: 6px; height: 26px;" title="Zerar cronômetro">
-                        <i class="fas fa-rotate-left"></i> Zerar
-                    </button>
-                </div>
+            <div class="drag-hint">
+                <span><i class="fas fa-grip-vertical" style="margin-right: 0.4rem; color: var(--ink-faint);"></i>Arraste os canais pelas alças para reorganizar a ordem na bancada.</span>
+                <button type="button" class="text-btn" onclick="restaurarMapeamentoPadrao()" title="Restaurar mapeamento físico original (T1 a T6)">
+                    Restaurar ordem padrão (T1&ndash;T6)
+                </button>
             </div>
-        </div>
+        </section>
 
-        <!-- ── Seção 2: Gráfico em Tempo Real ── -->
-        <div class="dashboard-section">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">
-                        <i class="fas fa-wave-square"></i>
-                        Histórico Temporal das Temperaturas
-                    </h2>
-                    <span class="text-muted small">Monitoramento contínuo da estabilidade térmica da bancada</span>
-                </div>
-
-                <div class="toolbar-group">
-                    <button type="button" class="btn-action-primary btn-sm" onclick="exportarGraficoPNG()" title="Baixar imagem PNG em alta resolução do gráfico">
-                        <i class="fas fa-file-image"></i>
-                        Exportar Gráfico (PNG)
-                    </button>
-                    <button type="button" class="btn-action-secondary btn-sm" onclick="exportarHistoricoCSV()" title="Salvar planilha CSV com todos os dados do ensaio">
-                        <i class="fas fa-file-csv text-success"></i>
-                        Salvar CSV
-                    </button>
-                    <button type="button" class="btn-action-secondary btn-sm" id="btn-toggle-tratamento" onclick="togglePainelTratamento()" title="Remover curvas de erro do termostato W3002, recortar intervalos e estabilizar o gráfico">
-                        <i class="fas fa-wand-magic-sparkles text-warning"></i>
-                        Tratar / Recortar Dados
-                    </button>
-                    <button type="button" class="btn-action-secondary btn-sm" onclick="limparHistoricoGrafico()">
-                        <i class="fas fa-trash-can text-danger"></i>
-                        Limpar
-                    </button>
-                    <button type="button" class="btn-action-secondary btn-sm" id="btn-pause-toggle" onclick="togglePauseMonitoramento()">
-                        <i class="fas fa-pause"></i>
-                        Pausar
-                    </button>
-                </div>
+        <!-- ── Histórico Temporal (gráfico, painel principal) ── -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="fas fa-chart-line" style="color: var(--accent); margin-right: 0.5rem;"></i>Histórico Temporal das Temperaturas</h2>
+                <span class="panel-sub">Estabilidade térmica da bancada ao longo do ensaio</span>
             </div>
 
             <!-- ── Painel Expansível de Tratamento de Dados & Recorte de Curvas (W3002 / Ebulidor) ── -->
@@ -768,96 +889,90 @@
                         <button type="button" class="btn-close btn-sm" onclick="togglePainelTratamento()"></button>
                     </div>
 
-                    <div class="row g-3 align-items-stretch">
+                    <div class="treat-grid">
                         <!-- Opção 1: Remover Intervalo de Oscilação / Erro (Lombada) -->
-                        <div class="col-lg-4 col-md-6">
-                            <div class="p-2 border rounded bg-white h-100 d-flex flex-column justify-content-between">
-                                <div>
-                                    <span class="small fw-bold text-danger d-block mb-1">
-                                        <i class="fas fa-scissors mr-1"></i> 1. Remover Trecho / Lombada
-                                    </span>
-                                    <span class="text-muted small d-block mb-2" style="font-size: 0.78rem;">
-                                        Exclui o reaquecimento indesejado do W3002 e une os pontos.
-                                    </span>
-                                    <div class="d-flex gap-2 align-items-center mb-2">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">De</span>
-                                            <input type="number" id="corte-de" class="form-control font-monospace" placeholder="Ex: 960" min="0">
-                                            <span class="input-group-text">s</span>
-                                        </div>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Até</span>
-                                            <input type="number" id="corte-ate" class="form-control font-monospace" placeholder="Ex: 1060" min="0">
-                                            <span class="input-group-text">s</span>
-                                        </div>
+                        <div class="treat-cell">
+                            <div>
+                                <span class="treat-cell-title" style="color: var(--danger-color);">
+                                    <i class="fas fa-scissors mr-1"></i> 1. Remover trecho / lombada
+                                </span>
+                                <span class="treat-cell-hint">
+                                    Exclui o reaquecimento indesejado do W3002 e une os pontos.
+                                </span>
+                                <div class="d-flex gap-2 align-items-center mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">De</span>
+                                        <input type="number" id="corte-de" class="form-control font-monospace" placeholder="Ex: 960" min="0">
+                                        <span class="input-group-text">s</span>
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Até</span>
+                                        <input type="number" id="corte-ate" class="form-control font-monospace" placeholder="Ex: 1060" min="0">
+                                        <span class="input-group-text">s</span>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-danger w-100 fw-semibold" onclick="removerTrechoIndesejado()">
-                                    <i class="fas fa-trash-can mr-1"></i> Excluir Trecho e Unir
-                                </button>
                             </div>
+                            <button type="button" class="btn-flat btn-flat-danger w-100" onclick="removerTrechoIndesejado()">
+                                <i class="fas fa-trash-can mr-1"></i> Excluir trecho e unir
+                            </button>
                         </div>
 
                         <!-- Opção 2: Manter Apenas Intervalo de Regime (Recorte) -->
-                        <div class="col-lg-4 col-md-6">
-                            <div class="p-2 border rounded bg-white h-100 d-flex flex-column justify-content-between">
-                                <div>
-                                    <span class="small fw-bold text-primary d-block mb-1">
-                                        <i class="fas fa-crop-simple mr-1"></i> 2. Manter Apenas Faixa de Tempo
-                                    </span>
-                                    <span class="text-muted small d-block mb-2" style="font-size: 0.78rem;">
-                                        Isola apenas o regime desejado (o tempo se reinicia em 0s).
-                                    </span>
-                                    <div class="d-flex gap-2 align-items-center mb-2">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Início</span>
-                                            <input type="number" id="manter-de" class="form-control font-monospace" placeholder="Ex: 550" min="0">
-                                            <span class="input-group-text">s</span>
-                                        </div>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Fim</span>
-                                            <input type="number" id="manter-ate" class="form-control font-monospace" placeholder="Ex: 960" min="0">
-                                            <span class="input-group-text">s</span>
-                                        </div>
+                        <div class="treat-cell">
+                            <div>
+                                <span class="treat-cell-title" style="color: var(--accent);">
+                                    <i class="fas fa-crop-simple mr-1"></i> 2. Manter apenas faixa de tempo
+                                </span>
+                                <span class="treat-cell-hint">
+                                    Isola apenas o regime desejado (o tempo se reinicia em 0 s).
+                                </span>
+                                <div class="d-flex gap-2 align-items-center mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Início</span>
+                                        <input type="number" id="manter-de" class="form-control font-monospace" placeholder="Ex: 550" min="0">
+                                        <span class="input-group-text">s</span>
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Fim</span>
+                                        <input type="number" id="manter-ate" class="form-control font-monospace" placeholder="Ex: 960" min="0">
+                                        <span class="input-group-text">s</span>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary w-100 fw-semibold" onclick="manterApenasFaixa()">
-                                    <i class="fas fa-check mr-1"></i> Isolar Esta Faixa
-                                </button>
                             </div>
+                            <button type="button" class="btn-flat btn-flat-accent w-100" onclick="manterApenasFaixa()">
+                                <i class="fas fa-check mr-1"></i> Isolar esta faixa
+                            </button>
                         </div>
 
                         <!-- Opção 3: Suavização / Estabilização Digital + Importar CSV -->
-                        <div class="col-lg-4 col-md-12">
-                            <div class="p-2 border rounded bg-white h-100 d-flex flex-column justify-content-between">
-                                <div>
-                                    <span class="small fw-bold text-success d-block mb-1">
-                                        <i class="fas fa-filter mr-1"></i> 3. Filtros & Importação
-                                    </span>
-                                    <span class="text-muted small d-block mb-2" style="font-size: 0.78rem;">
-                                        Suavize ruídos térmicos ou carregue um arquivo CSV salvo.
-                                    </span>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill fw-semibold" onclick="aplicarSuavizacaoMediaMovel()" title="Média móvel de 5 pontos para filtrar ruídos">
-                                            <i class="fas fa-wave-square mr-1"></i> Suavizar
-                                        </button>
-                                        <label class="btn btn-sm btn-outline-secondary flex-fill mb-0 fw-semibold" title="Carregar arquivo CSV gravado anteriormente para tratar">
-                                            <i class="fas fa-upload mr-1"></i> Carregar CSV
-                                            <input type="file" id="input-carregar-csv" accept=".csv" style="display: none;" onchange="carregarArquivoCSV(event)">
-                                        </label>
-                                    </div>
+                        <div class="treat-cell">
+                            <div>
+                                <span class="treat-cell-title" style="color: var(--success-color);">
+                                    <i class="fas fa-filter mr-1"></i> 3. Filtros &amp; importação
+                                </span>
+                                <span class="treat-cell-hint">
+                                    Suavize ruídos térmicos ou carregue um arquivo CSV salvo.
+                                </span>
+                                <div class="d-flex gap-2 mb-2">
+                                    <button type="button" class="btn-flat flex-fill" onclick="aplicarSuavizacaoMediaMovel()" title="Média móvel de 5 pontos para filtrar ruídos">
+                                        <i class="fas fa-wave-square mr-1"></i> Suavizar
+                                    </button>
+                                    <label class="btn-flat flex-fill mb-0" style="text-align:center; display:inline-flex; align-items:center; justify-content:center;" title="Carregar arquivo CSV gravado anteriormente para tratar">
+                                        <i class="fas fa-upload mr-1"></i> Carregar CSV
+                                        <input type="file" id="input-carregar-csv" accept=".csv" style="display: none;" onchange="carregarArquivoCSV(event)">
+                                    </label>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-warning w-100 fw-bold" onclick="restaurarDadosOriginais()" id="btn-restaurar" title="Restaura os dados originais brutos da coleta" disabled>
-                                    <i class="fas fa-rotate-left mr-1"></i> Restaurar Original (<span id="count-pontos-backup">0</span> pts)
-                                </button>
                             </div>
+                            <button type="button" class="btn-flat w-100" onclick="restaurarDadosOriginais()" id="btn-restaurar" title="Restaura os dados originais brutos da coleta" disabled>
+                                <i class="fas fa-rotate-left mr-1"></i> Restaurar original (<span id="count-pontos-backup">0</span> pts)
+                            </button>
                         </div>
                     </div>
 
                     <!-- Rodapé informativo do painel de tratamento -->
-                    <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 small text-muted">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small" style="padding: 0.75rem 1.1rem; color: var(--ink-dim);">
                         <span id="status-tratamento">
-                            <i class="fas fa-info-circle text-info mr-1"></i> Use <strong>Excluir Trecho</strong> para remover a onda do ebulidor ou <strong>Isolar Faixa</strong> para focar no regime estável.
+                            <i class="fas fa-info-circle mr-1" style="color: var(--accent);"></i> Use <strong>Excluir Trecho</strong> para remover a onda do ebulidor ou <strong>Isolar Faixa</strong> para focar no regime estável.
                         </span>
                         <span id="badge-status-dados" class="badge bg-secondary">Dados Brutos Originais</span>
                     </div>
@@ -869,77 +984,39 @@
             </div>
 
             <!-- Barra Inferior de Métricas da Coleta -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-3 pt-3 border-top">
-                <div class="d-flex align-items-center gap-3 flex-wrap">
-                    <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded border">
-                        <i class="fas fa-stopwatch text-primary"></i>
-                        <span class="small font-weight-bold text-muted">Tempo Total de Coleta:</span>
-                        <span id="chart-tempo-decorrido" class="font-monospace fw-bold text-primary">00:00:00</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded border">
-                        <i class="fas fa-chart-line text-success"></i>
-                        <span class="small font-weight-bold text-muted">Pontos Coletados:</span>
-                        <span id="chart-total-pontos" class="font-monospace fw-bold text-success">0</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded border">
-                        <i class="fas fa-bolt text-warning"></i>
-                        <span class="small font-weight-bold text-muted">Taxa de Amostragem:</span>
-                        <span class="font-monospace fw-bold text-dark">2.0 s</span>
-                    </div>
+            <div class="collection-bar">
+                <div class="collection-stats">
+                    <span><i class="fas fa-stopwatch mr-1" style="color: var(--accent);"></i>Tempo total de coleta: <strong id="chart-tempo-decorrido">00:00:00</strong></span>
+                    <span><i class="fas fa-chart-line mr-1" style="color: var(--success-color);"></i>Pontos coletados: <strong id="chart-total-pontos">0</strong></span>
+                    <span><i class="fas fa-bolt mr-1" style="color: var(--warning-color);"></i>Taxa de amostragem: <strong>2.0 s</strong></span>
                 </div>
-                <div class="text-muted small">
-                    <i class="fas fa-clock mr-1 text-info"></i>
-                    Horário da Última Amostra: <span id="chart-ultima-amostra" class="fw-semibold text-dark font-monospace">--:--:--</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Seção 3: Informações Técnicas e Análise do Sistema ── -->
-        <div class="dashboard-section">
-            <div class="section-header">
                 <div>
-                    <h2 class="section-title">
-                        <i class="fas fa-circle-info"></i>
-                        Diretrizes de Operação e Análise Térmica
-                    </h2>
-                    <span class="text-muted small">Critérios de regime permanente e validação experimental</span>
+                    <i class="fas fa-clock mr-1"></i>
+                    Última amostra: <strong id="chart-ultima-amostra">--:--:--</strong>
                 </div>
             </div>
+        </section>
 
-            <div class="info-card-grid">
-                <div class="guide-box">
-                    <div class="guide-icon">
-                        <i class="fas fa-temperature-arrow-up"></i>
-                    </div>
-                    <div class="guide-content">
-                        <h6>Critério de Regime Permanente</h6>
-                        <p>O ensaio atinge o regime permanente quando a variação temporal de todas as temperaturas for inferior a <strong>0,2 °C/min</strong> em um intervalo de 5 minutos.</p>
-                    </div>
+        <!-- ── Diretrizes de Operação (referência, discreta) ── -->
+        <section class="panel">
+            <div class="reference-strip">
+                <div class="reference-item">
+                    <h6><i class="fas fa-temperature-arrow-up"></i>Regime Permanente</h6>
+                    <p>Atingido quando a variação temporal de todas as temperaturas fica abaixo de <strong>0,2 °C/min</strong> por 5 minutos.</p>
                 </div>
-
-                <div class="guide-box">
-                    <div class="guide-icon">
-                        <i class="fas fa-arrows-left-right-to-line"></i>
-                    </div>
-                    <div class="guide-content">
-                        <h6>Verificação de Uniformidade</h6>
-                        <p>Se &Delta;T = |T2 - T3| for próximo de zero, a chapa opera sob condição de <strong>temperatura superficial constante (T_s &approx; const)</strong>.</p>
-                    </div>
+                <div class="reference-item">
+                    <h6><i class="fas fa-arrows-left-right-to-line"></i>Uniformidade</h6>
+                    <p>Se &Delta;T = |T2 &minus; T3| for próximo de zero, a chapa opera com <strong>temperatura superficial constante</strong>.</p>
                 </div>
-
-                <div class="guide-box">
-                    <div class="guide-icon">
-                        <i class="fas fa-network-wired"></i>
-                    </div>
-                    <div class="guide-content">
-                        <h6>Sincronização com a API</h6>
-                        <p>As leituras são transferidas via JSON diretamente para os módulos de <strong>Convecção Natural</strong> e <strong>Escoamento Externo</strong> para cálculo automático do coeficiente h.</p>
-                    </div>
+                <div class="reference-item">
+                    <h6><i class="fas fa-network-wired"></i>Sincronização com a API</h6>
+                    <p>As leituras seguem via JSON para os módulos de <strong>Convecção Natural</strong> e <strong>Escoamento Externo</strong> para cálculo automático de h.</p>
                 </div>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </main>
+</div>
 
     <!-- ── Scripts e Lógica Reativa ── -->
     <script>
@@ -1118,7 +1195,7 @@
                                 boxWidth: 8,
                                 padding: 18,
                                 font: {
-                                    family: 'Inter',
+                                    family: 'IBM Plex Sans',
                                     size: 12,
                                     weight: '600'
                                 },
@@ -1139,8 +1216,8 @@
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleFont: { family: 'Inter', size: 13, weight: '700' },
-                            bodyFont: { family: 'JetBrains Mono', size: 12 },
+                            titleFont: { family: 'IBM Plex Sans', size: 13, weight: '700' },
+                            bodyFont: { family: 'IBM Plex Mono', size: 12 },
                             padding: 12,
                             cornerRadius: 8,
                             boxPadding: 6,
@@ -1164,14 +1241,14 @@
                             title: {
                                 display: true,
                                 text: 'Temperatura (°C)',
-                                font: { family: 'Inter', size: 12, weight: '600' },
+                                font: { family: 'IBM Plex Sans', size: 12, weight: '600' },
                                 color: '#64748b'
                             },
                             grid: {
                                 color: '#f1f5f9'
                             },
                             ticks: {
-                                font: { family: 'JetBrains Mono', size: 11 },
+                                font: { family: 'IBM Plex Mono', size: 11 },
                                 color: '#64748b',
                                 stepSize: 2,
                                 autoSkip: false,
@@ -1197,14 +1274,14 @@
                             title: {
                                 display: true,
                                 text: 'Tempo (s)',
-                                font: { family: 'Inter', size: 12, weight: '600' },
+                                font: { family: 'IBM Plex Sans', size: 12, weight: '600' },
                                 color: '#64748b'
                             },
                             grid: {
                                 display: false
                             },
                             ticks: {
-                                font: { family: 'JetBrains Mono', size: 10 },
+                                font: { family: 'IBM Plex Mono', size: 10 },
                                 color: '#94a3b8',
                                 callback: function(val) {
                                     const lbl = this.getLabelForValue(val);
@@ -1264,7 +1341,8 @@
                 t3: Number(t3),
                 t4: Number(t4),
                 t5: Number(t5),
-                t6: Number(t6)
+                t6: Number(t6),
+                alvo: (temperaturaAlvoAtual !== null && !isNaN(temperaturaAlvoAtual)) ? Number(temperaturaAlvoAtual) : null
             };
 
             if (!validarRegistroTemperatura(novoRegistro)) {
@@ -1348,13 +1426,20 @@
                 }
             }
 
-            // Estrutura exata do CSV conforme Item 14:
-            // Horário,Tempo_s,T1_Inicio_C,T2_Meio_C,T3_Fim_C,T4_Ambiente_C,T5_Base_C,T6_Base_C
-            const cabecalho = 'Horário;Tempo_s;T1_Inicio_C;T2_Meio_C;T3_Fim_C;T4_Ambiente_C;T5_Base_C;T6_Base_C';
+            // Estrutura do CSV com coluna de referência da temperatura-alvo do ensaio
+            const cabecalho = 'Horário;Tempo_s;T1_Inicio_C;T2_Meio_C;T3_Fim_C;T4_Ambiente_C;T5_Base_C;T6_Base_C;Alvo_C';
             const linhas = [cabecalho];
+
+            const alvoPadrao = (temperaturaAlvoAtual !== null && !isNaN(temperaturaAlvoAtual))
+                ? Number(temperaturaAlvoAtual).toFixed(1).replace('.', ',')
+                : '-';
 
             for (let i = 0; i < dadosTemperatura.length; i++) {
                 const d = dadosTemperatura[i];
+                const valAlvo = (d.alvo !== undefined && d.alvo !== null && !isNaN(d.alvo))
+                    ? Number(d.alvo).toFixed(1).replace('.', ',')
+                    : alvoPadrao;
+
                 const linha = [
                     d.horario,
                     d.tempo_s,
@@ -1363,7 +1448,8 @@
                     Number(d.t3).toFixed(4).replace('.', ','),
                     Number(d.t4).toFixed(4).replace('.', ','),
                     Number(d.t5).toFixed(4).replace('.', ','),
-                    Number(d.t6).toFixed(4).replace('.', ',')
+                    Number(d.t6).toFixed(4).replace('.', ','),
+                    valAlvo
                 ].join(';');
                 linhas.push(linha);
             }
@@ -1373,7 +1459,10 @@
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_');
-            link.download = `ensaio_termico_dados_${timestamp}.csv`;
+            const sufixoAlvo = (temperaturaAlvoAtual !== null && !isNaN(temperaturaAlvoAtual))
+                ? `_alvo_${temperaturaAlvoAtual.toFixed(1).replace('.', '_')}C`
+                : '';
+            link.download = `ensaio_termico${sufixoAlvo}_dados_${timestamp}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1662,7 +1751,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const texto = e.target.result;
-                const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('#'));
                 if (linhas.length < 2) {
                     alert('Arquivo CSV vazio ou com formato inválido.');
                     return;
@@ -1680,6 +1769,7 @@
                 const idxT4 = colunas.findIndex(c => c.includes('t4'));
                 const idxT5 = colunas.findIndex(c => c.includes('t5'));
                 const idxT6 = colunas.findIndex(c => c.includes('t6'));
+                const idxAlvo = colunas.findIndex(c => c.includes('alvo'));
 
                 const parseNum = (val) => {
                     if (!val) return 0.0;
@@ -1699,6 +1789,7 @@
                     const t4 = idxT4 >= 0 ? parseNum(partes[idxT4]) : 0;
                     const t5 = idxT5 >= 0 ? parseNum(partes[idxT5]) : 0;
                     const t6 = idxT6 >= 0 ? parseNum(partes[idxT6]) : 0;
+                    const alvo = idxAlvo >= 0 ? parseNum(partes[idxAlvo]) : null;
 
                     novosDados.push({
                         horario: horario,
@@ -1708,7 +1799,8 @@
                         t3: t3,
                         t4: t4,
                         t5: t5,
-                        t6: t6
+                        t6: t6,
+                        alvo: alvo
                     });
                 }
 
@@ -1749,6 +1841,23 @@
                     status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Arquivo <strong>${file.name}</strong> carregado (${novosDados.length} pontos). O monitoramento ao vivo foi pausado para edição.`;
                 }
 
+                if (idxAlvo >= 0) {
+                    const primeiroAlvo = novosDados.find(d => d.alvo && d.alvo > 0);
+                    if (primeiroAlvo) {
+                        temperaturaAlvoAtual = primeiroAlvo.alvo;
+                        const display = document.getElementById('display-alvo-configurado');
+                        const input = document.getElementById('input-temperatura-alvo');
+                        const formatado = temperaturaAlvoAtual.toFixed(1).replace('.', ',');
+                        if (display) display.innerHTML = `Valor configurado: <strong>${formatado} °C</strong>`;
+                        if (input) input.value = formatado;
+                    }
+                }
+
+                if (novosDados.length > 0) {
+                    const ultimo = novosDados[novosDados.length - 1];
+                    atualizarKPIs(ultimo.t1, ultimo.t2, ultimo.t3, ultimo.t4, ultimo.t5, ultimo.t6);
+                }
+
                 const painel = document.getElementById('painel-tratamento-container');
                 if (painel) painel.style.display = 'block';
 
@@ -1759,7 +1868,8 @@
 
         // ── Atualização dos Indicadores de KPI ao Vivo ─────────────────────────
         function atualizarKPIs(t1, t2, t3, t4, t5, t6) {
-            const tMedia = ((t1 + t2 + t3) / 3).toFixed(4);
+            const tMediaVal = (t1 + t2 + t3) / 3;
+            const tMedia = tMediaVal.toFixed(4);
             document.getElementById('kpi-t-media').innerHTML = `${tMedia} <span class="temp-unit">°C</span>`;
 
             const deltaT = Math.abs(t1 - t3).toFixed(4);
@@ -1778,6 +1888,9 @@
 
             const tInf = ((t5 + t6) / 2).toFixed(4);
             document.getElementById('kpi-t-inf').innerHTML = `${tInf} <span class="temp-unit">°C</span>`;
+
+            atualizarRegimePermanente(tMediaVal);
+            atualizarCoerenciaFisica(t1, t2, t3, t4, t5, t6);
         }
 
         async function buscarDadosMonitoramento() {
@@ -1835,6 +1948,17 @@
 
         function salvarMapeamento() {
             localStorage.setItem('sensorMapping', JSON.stringify(sensorMapping));
+        }
+
+        function restaurarMapeamentoPadrao() {
+            sensorMapping = PADRAO_MAPEAMENTO.slice();
+            try {
+                localStorage.removeItem('sensorMapping');
+            } catch(e) {}
+            aplicarMapeamentoNaTela();
+            if (ultimosDadosRecebidos) {
+                atualizarCardsTemperatura(ultimosDadosRecebidos);
+            }
         }
 
         let ultimosDadosRecebidos = null;
@@ -1965,10 +2089,247 @@
             }
         }
 
+        // =====================================================================
+        // CONTROLE DA TEMPERATURA-ALVO DO ENSAIO (REFERÊNCIA DE BANCADA)
+        // E DETECTOR DE REGIME PERMANENTE
+        // =====================================================================
+        let temperaturaAlvoAtual = null;
+        let tempoInicioEstabilidade = null;
+
+        function atualizarRegimePermanente(tPlaca) {
+            const badge = document.getElementById('badge-regime-permanente');
+            if (!badge) return;
+
+            // Se não houver temperatura-alvo configurada ou leitura válida da placa
+            if (temperaturaAlvoAtual === null || isNaN(temperaturaAlvoAtual) || tPlaca <= 0) {
+                badge.style.display = 'none';
+                tempoInicioEstabilidade = null;
+                return;
+            }
+
+            const erro = tPlaca - temperaturaAlvoAtual;
+            const desvio = Math.abs(erro);
+
+            if (desvio > 0.5) {
+                // Fora da faixa de tolerância de ±0,5 °C: reinicia a contagem de estabilidade
+                tempoInicioEstabilidade = null;
+                badge.style.display = 'inline-block';
+                if (erro < 0) {
+                    badge.textContent = 'Aquecendo em direção ao alvo...';
+                } else {
+                    badge.textContent = 'Ajustando em direção ao alvo...';
+                }
+                badge.style.backgroundColor = '#fef3c7';
+                badge.style.color = '#92400e';
+                badge.style.border = '1px solid #fcd34d';
+            } else {
+                // Dentro da faixa de tolerância de ±0,5 °C do alvo
+                if (!tempoInicioEstabilidade) {
+                    tempoInicioEstabilidade = Date.now();
+                }
+
+                const decorridoSeg = Math.floor((Date.now() - tempoInicioEstabilidade) / 1000);
+                badge.style.display = 'inline-block';
+
+                if (decorridoSeg < 120) {
+                    badge.textContent = `Estabilizando... (${decorridoSeg}s / 120s)`;
+                    badge.style.backgroundColor = '#e0f2fe';
+                    badge.style.color = '#0369a1';
+                    badge.style.border = '1px solid #bae6fd';
+                } else {
+                    badge.textContent = 'Regime Permanente Estabelecido!';
+                    badge.style.backgroundColor = '#dcfce7';
+                    badge.style.color = '#15803d';
+                    badge.style.border = '1px solid #86efac';
+                }
+            }
+        }
+
+        // =====================================================================
+        // DETECTOR DE COERÊNCIA FÍSICA E TERMODINÂMICA EM TEMPO REAL
+        // Validação da 1ª e 2ª Leis da Termodinâmica para Condução Unidimensional:
+        // Gradiente estritamente decrescente a partir da fonte: T3 >= T2 >= T1
+        // =====================================================================
+        function atualizarCoerenciaFisica(t1, t2, t3, t4, t5, t6) {
+            const badge = document.getElementById('badge-coerencia-fisica');
+            if (!badge) return;
+
+            // Se sensores da placa não tiverem leitura válida ou inicializando
+            if (t1 <= 0 || t2 <= 0 || t3 <= 0) {
+                badge.style.display = 'none';
+                return;
+            }
+
+            const tAmb = (t4 && t4 > 0) ? t4 : 25.0;
+            const tMediaPlaca = (t1 + t2 + t3) / 3;
+
+            // Condição 1: Bancada desligada / temperatura ambiente (repouso térmico)
+            if (tMediaPlaca < tAmb + 1.5) {
+                badge.style.display = 'inline-block';
+                badge.textContent = 'Equilíbrio Ambiente';
+                badge.style.backgroundColor = '#f1f5f9';
+                badge.style.color = '#475569';
+                badge.style.border = '1px solid #cbd5e1';
+                badge.title = 'Bancada em temperatura ambiente de repouso.';
+                return;
+            }
+
+            // Condição 2: Bancada aquecida (Gradiente Unidimensional Ativo)
+            // Ordem física experimental da bancada: T3 >= T2 >= T1 (da fonte de calor para a extremidade)
+            // Margem metrológica de incerteza do DS18B20 digital (+-0.15 °C)
+            const MARGEM_INCERTEZA = 0.15;
+            const inversaoT2 = (t2 - t3) > MARGEM_INCERTEZA; // T2 não pode superar T3
+            const inversaoT1 = (t1 - t2) > MARGEM_INCERTEZA; // T1 não pode superar T2
+
+            if (inversaoT2) {
+                badge.style.display = 'inline-block';
+                badge.textContent = `Inversão Térmica: T2 > T3 (+${(t2 - t3).toFixed(2)} °C)`;
+                badge.style.backgroundColor = '#fee2e2';
+                badge.style.color = '#991b1b';
+                badge.style.border = '1px solid #f87171';
+                badge.title = 'Violação da 2ª Lei da Termodinâmica: Sensor T2 mais quente que T3 (fonte de calor). Verifique alocação física ou calibração.';
+            } else if (inversaoT1) {
+                badge.style.display = 'inline-block';
+                badge.textContent = `Inversão Térmica: T1 > T2 (+${(t1 - t2).toFixed(2)} °C)`;
+                badge.style.backgroundColor = '#fee2e2';
+                badge.style.color = '#991b1b';
+                badge.style.border = '1px solid #f87171';
+                badge.title = 'Violação da 2ª Lei da Termodinâmica: Sensor T1 (extremidade) mais quente que T2 (meio). Verifique alocação física ou calibração.';
+            } else {
+                badge.style.display = 'inline-block';
+                badge.textContent = 'Gradiente Físico Coerente (T3 ≥ T2 ≥ T1)';
+                badge.style.backgroundColor = '#dcfce7';
+                badge.style.color = '#166534';
+                badge.style.border = '1px solid #86efac';
+                badge.title = 'Gradiente unidimensional experimental consistente com o fluxo condutivo da fonte de calor (T3 ≥ T2 ≥ T1).';
+            }
+        }
+
+        function exibirFeedbackAlvo(mensagem, tipo = 'sucesso') {
+            const alerta = document.getElementById('alerta-temperatura-alvo');
+            if (!alerta) return;
+
+            alerta.style.color = (tipo === 'sucesso') ? '#15803d' : '#b91c1c';
+            alerta.textContent = mensagem;
+            alerta.style.display = 'inline-block';
+
+            if (tipo === 'sucesso') {
+                setTimeout(() => {
+                    alerta.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        async function carregarTemperaturaAlvo() {
+            try {
+                const response = await fetch('/api/temperatura-alvo');
+                if (!response.ok) return;
+                const data = await response.json();
+
+                const display = document.getElementById('display-alvo-configurado');
+                const input = document.getElementById('input-temperatura-alvo');
+
+                if (data && data.definida && data.temperatura_alvo !== null) {
+                    temperaturaAlvoAtual = parseFloat(data.temperatura_alvo);
+                    tempoInicioEstabilidade = null;
+                    const formatted = temperaturaAlvoAtual.toFixed(1).replace('.', ',');
+                    if (display) {
+                        display.innerHTML = `Valor configurado: <strong>${formatted} °C</strong>`;
+                    }
+                    if (input && !input.value) {
+                        input.value = formatted;
+                    }
+                    if (ultimosDadosRecebidos) {
+                        atualizarCardsTemperatura(ultimosDadosRecebidos);
+                    }
+                } else {
+                    temperaturaAlvoAtual = null;
+                    tempoInicioEstabilidade = null;
+                    if (display) {
+                        display.innerHTML = `Valor configurado: <span class="text-muted fst-italic">Não configurada</span>`;
+                    }
+                    const badge = document.getElementById('badge-regime-permanente');
+                    if (badge) badge.style.display = 'none';
+                }
+            } catch (err) {
+                console.warn('[ALVO] Falha ao consultar temperatura-alvo inicial:', err);
+            }
+        }
+
+        async function definirTemperaturaAlvo() {
+            const input = document.getElementById('input-temperatura-alvo');
+            const btn = document.getElementById('btn-definir-alvo');
+            const display = document.getElementById('display-alvo-configurado');
+
+            if (!input) return;
+
+            const rawVal = input.value.trim();
+
+            // 1. Validação de campo vazio
+            if (!rawVal) {
+                exibirFeedbackAlvo('Por favor, informe a temperatura-alvo do ensaio.', 'erro');
+                input.focus();
+                return;
+            }
+
+            // 2. Validação numérica e substituição de vírgula decimal
+            const valorTratado = rawVal.replace(',', '.');
+            const valorNum = parseFloat(valorTratado);
+
+            // 3. Validação de NaN e texto inválido
+            if (isNaN(valorNum) || !/^-?\d+(\.\d+)?$/.test(valorTratado)) {
+                exibirFeedbackAlvo('Texto inválido! Digite um número decimal válido (ex: 50,0 ou 50.0).', 'erro');
+                input.focus();
+                return;
+            }
+
+            // 4. Validação de faixa física do banho de água (0 °C a 100 °C)
+            if (valorNum < 0.0 || valorNum > 100.0) {
+                exibirFeedbackAlvo(`Valor fora da faixa física do ensaio (0,0 °C a 100,0 °C). Você informou: ${valorNum.toFixed(1).replace('.', ',')} °C.`, 'erro');
+                input.focus();
+                return;
+            }
+
+            if (btn) btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/temperatura-alvo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ temperatura_alvo: valorNum })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    temperaturaAlvoAtual = valorNum;
+                    tempoInicioEstabilidade = null;
+                    const formatado = valorNum.toFixed(1).replace('.', ',');
+                    if (display) {
+                        display.innerHTML = `Valor configurado: <strong>${formatado} °C</strong>`;
+                    }
+                    input.value = formatado;
+                    exibirFeedbackAlvo(`Temperatura-alvo configurada com sucesso para ${formatado} °C!`, 'sucesso');
+                    if (ultimosDadosRecebidos) {
+                        atualizarCardsTemperatura(ultimosDadosRecebidos);
+                    }
+                } else {
+                    const msgErro = data && data.mensagem ? data.mensagem : 'Erro ao salvar temperatura-alvo.';
+                    exibirFeedbackAlvo(msgErro, 'erro');
+                }
+            } catch (err) {
+                console.error('[ALVO] Erro na requisição:', err);
+                exibirFeedbackAlvo('Falha de conexão com o servidor ao salvar temperatura-alvo.', 'erro');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             aplicarMapeamentoNaTela();
             iniciarMonitoramento();
             initDragDrop();
+            carregarTemperaturaAlvo();
         });
 
         window.addEventListener('beforeunload', function() {
