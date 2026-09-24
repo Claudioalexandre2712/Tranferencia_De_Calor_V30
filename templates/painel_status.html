@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Status — Monitoramento Térmico em Tempo Real</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            /* Tokens alinhados ao V30 Design System (static/css/design-system.css) —
+               checkpoint V30-UXUI-02. Nomes preservados (usados no resto deste arquivo
+               e em calculadora_natural.html); só os valores foram refinados. */
+            --rail-w: 296px;
+
+            --bg-app: #eef1f6;
+            --panel: #ffffff;
+            --panel-alt: #f6f8fb;
+            --line: #dde3ec;
+            --line-strong: #c1cadb;
+            --ink: #0d1420;
+            --ink-dim: #4c5768;
+            --ink-faint: #8894a3;
+
+            --rail-bg-1: #10182a;
+            --rail-bg-2: #080d17;
+            --rail-line: rgba(255,255,255,0.09);
+            --rail-text: #c3cbdb;
+            --rail-text-dim: #67728a;
+
+            --accent: #2e4fe0;
+            --accent-dim: #1e36a8;
+            --heat: #d9761e;
+            --live: #2dd4a8;
+
+            --color-t1: #D62728;
+            --color-t2: #9467BD;
+            --color-t3: #2CA02C;
+            --color-t4: #1F77B4;
+            --color-t5: #EAB308;
+            --color-t6: #8C564B;
+
+            --success-color: #0f9d63;
+            --warning-color: #c2790a;
+            --danger-color: #d6373a;
+
+            --radius: 5px;
+            --radius-sm: 3px;
+
+            --heat-soft: rgba(217, 118, 30, 0.14);
+            --cool: #2f9bb0;
+            --cool-soft: rgba(47, 155, 176, 0.14);
+        }
+
+        * { box-sizing: border-box; }
+
+        /* ── identidade térmica V30-UXUI-04 (local, arquivo não importa design-system.css) ── */
+        .page-head--thermal { position: relative; z-index: 1; }
+        .page-head--thermal::before {
+            content: ''; position: absolute; z-index: -1; pointer-events: none;
+            top: -1.6rem; left: -2.2rem; right: -2.2rem; height: 10rem;
+            background:
+                radial-gradient(ellipse 68% 100% at 88% 0%, var(--cool-soft), transparent 82%),
+                radial-gradient(ellipse 68% 100% at 4% 100%, var(--heat-soft), transparent 82%);
+        }
+        .page-kicker {
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.74rem; color: var(--ink-dim);
+            display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 0.7rem;
+            border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.25rem 0.7rem 0.25rem 0.5rem;
+            background: rgba(255, 255, 255, 0.72);
+        }
+        .page-kicker i { color: var(--live); }
+        .eng-scale-rule {
+            height: 8px; margin: 0.3rem 0 1.6rem; max-width: 340px;
+            background:
+                repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 22px) left bottom / 100% 7px no-repeat,
+                linear-gradient(var(--line-strong), var(--line-strong)) left bottom / 100% 1px no-repeat;
+            opacity: 0.65;
+        }
+
+        html, body {
+            margin: 0;
+            background: var(--bg-app);
+            color: var(--ink);
+            font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; }
+
+        /* ══════════════════ APP SHELL ══════════════════ */
+        .app-shell {
+            display: flex;
+            align-items: stretch;
+            min-height: 100vh;
+        }
+
+        /* ── Console Rail (control column) ── */
+        .console-rail {
+            width: var(--rail-w);
+            flex-shrink: 0;
+            background: linear-gradient(180deg, var(--rail-bg-1) 0%, var(--rail-bg-2) 100%);
+            color: var(--rail-text);
+            border-right: 1px solid var(--rail-line);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scrollbar-width: thin;
+        }
+
+        .rail-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 1.15rem 1.25rem;
+            border-bottom: 1px solid var(--rail-line);
+        }
+        .rail-brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(47, 102, 224, 0.18);
+            border: 1px solid rgba(94, 140, 234, 0.35);
+            color: #8fb3f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+        .rail-brand-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.25;
+        }
+        .rail-brand-sub {
+            font-size: 0.7rem;
+            color: var(--rail-text-dim);
+            letter-spacing: 0.02em;
+        }
+
+        .rail-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.76rem;
+            color: var(--live);
+            font-weight: 500;
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+        }
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--live);
+            box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.6);
+            animation: pulse-ring 2s infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.55); }
+            70% { box-shadow: 0 0 0 6px rgba(45, 212, 168, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0); }
+        }
+
+        .rail-section {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--rail-line);
+        }
+        .rail-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--rail-text-dim);
+            margin-bottom: 0.55rem;
+        }
+
+        .rail-timer {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.55rem;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.01em;
+            margin-bottom: 0.6rem;
+        }
+        .rail-btn-row { display: flex; gap: 0.4rem; }
+
+        .rail-btn {
+            background: rgba(255,255,255,0.055);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--rail-text);
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 0.48rem 0.7rem;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+        }
+        .rail-btn:hover { background: rgba(255,255,255,0.11); color: #fff; border-color: rgba(255,255,255,0.22); }
+        .rail-btn.w-100 { width: 100%; margin-bottom: 0.4rem; }
+        .rail-btn:last-child { margin-bottom: 0; }
+        .rail-btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .rail-btn-accent:hover { background: #2657c4; border-color: #2657c4; color: #fff; }
+        .rail-btn-danger { color: #f3a9a9; }
+        .rail-btn-danger:hover { background: rgba(214, 55, 58, 0.16); border-color: rgba(214, 55, 58, 0.4); color: #ffb4b4; }
+        .rail-btn-ghost { width: 44px; flex-shrink: 0; }
+
+        .rail-target-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+        .rail-input {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.88rem;
+            padding: 0.5rem 0.7rem;
+            outline: none;
+        }
+        .rail-input::placeholder { color: var(--rail-text-dim); }
+        .rail-input-unit {
+            padding: 0 0.7rem;
+            font-size: 0.75rem;
+            color: var(--rail-text-dim);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            align-self: stretch;
+            display: flex;
+            align-items: center;
+        }
+        .rail-target-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.76rem;
+            color: var(--rail-text);
+            margin-top: 0.6rem;
+        }
+        .rail-target-value .dim { color: var(--rail-text-dim); font-style: italic; }
+        .rail-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+        .rail-badge {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.25rem 0.55rem;
+            border-radius: var(--radius-sm);
+            letter-spacing: 0.01em;
+        }
+        .rail-alert {
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .rail-nav-links {
+            margin-top: auto;
+            padding-top: 1rem;
+            padding-bottom: 1.1rem;
+            border-bottom: none;
+        }
+        .rail-link {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--rail-text);
+            padding: 0.55rem 0.1rem;
+            text-decoration: none;
+            transition: color 0.12s ease;
+        }
+        .rail-link:hover { color: #fff; }
+        .rail-link i { width: 16px; text-align: center; color: var(--rail-text-dim); }
+
+        /* ══════════════════ MAIN AREA ══════════════════ */
+        .main-area {
+            flex: 1;
+            min-width: 0;
+            padding: 2.1rem 2.4rem 3rem;
+            max-width: 1500px;
+        }
+
+        .page-head { margin-bottom: 1.6rem; }
+        .page-head h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin: 0 0 0.25rem;
+            color: var(--ink);
+        }
+        .page-head p {
+            font-size: 0.85rem;
+            color: var(--ink-dim);
+            margin: 0;
+        }
+
+        /* ── Generic panel ── */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+        }
+        .panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            padding: 1.1rem 1.35rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .panel-head h2 {
+            font-size: 0.98rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--ink);
+        }
+        .panel-head .panel-sub {
+            font-size: 0.78rem;
+            color: var(--ink-faint);
+        }
+        .panel-body { padding: 1.35rem; }
+
+        /* ── Inline metrics strip (replaces 4 KPI cards) ── */
+        .metrics-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background: var(--line);
+            gap: 1px;
+            border-bottom: 1px solid var(--line);
+        }
+        .metric-cell {
+            background: var(--panel-alt);
+            padding: 0.85rem 1.35rem;
+        }
+        .metric-cell-label {
+            font-size: 0.72rem;
+            color: var(--ink-faint);
+            margin-bottom: 0.3rem;
+        }
+        .metric-cell-val {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.28rem;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.15;
+        }
+        .metric-cell-val .temp-unit { font-size: 0.78rem; font-weight: 500; color: var(--ink-faint); margin-left: 0.15rem; }
+        .metric-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: var(--radius-sm);
+            margin-top: 0.35rem;
+            display: inline-block;
+        }
+        @media (max-width: 900px) {
+            .metrics-strip { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ── Channel strip: 6-way divided sensor readout ── */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            background: var(--line);
+            gap: 1px;
+        }
+        @media (max-width: 1150px) {
+            .sensor-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 620px) {
+            .sensor-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .temp-card {
+            background: var(--panel);
+            border: none;
+            border-left: 3px solid var(--line-strong);
+            border-radius: 0;
+            padding: 1rem 1.05rem 0.95rem;
+            position: relative;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 150px;
+        }
+        .temp-card:hover { background: var(--panel-alt); }
+
+        .card-t1 { border-left-color: var(--color-t1); }
+        .card-t2 { border-left-color: var(--color-t2); }
+        .card-t3 { border-left-color: var(--color-t3); }
+        .card-t4 { border-left-color: var(--color-t4); }
+        .card-t5 { border-left-color: var(--color-t5); }
+        .card-t6 { border-left-color: var(--color-t6); }
+
+        .icon-t1, .card-t1 .card-icon { color: var(--color-t1) !important; }
+        .icon-t2, .card-t2 .card-icon { color: var(--color-t2) !important; }
+        .icon-t3, .card-t3 .card-icon { color: var(--color-t3) !important; }
+        .icon-t4, .card-t4 .card-icon { color: var(--color-t4) !important; }
+        .icon-t5, .card-t5 .card-icon { color: var(--color-t5) !important; }
+        .icon-t6, .card-t6 .card-icon { color: var(--color-t6) !important; }
+
+        .card-header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--ink-dim);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .drag-handle:active { cursor: grabbing; }
+
+        .drag-grip {
+            color: var(--ink-faint);
+            font-size: 0.72rem;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .temp-card:hover .drag-grip { opacity: 0.75; }
+
+        .temp-card.dragging {
+            opacity: 0.35;
+            background: var(--panel-alt);
+        }
+        .temp-card.drag-over {
+            background: #eaf0fe;
+        }
+
+        .temp-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.55rem;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: baseline;
+            gap: 0.2rem;
+            transition: opacity 0.2s ease;
+        }
+        .temp-unit {
+            font-size: 0.86rem;
+            font-weight: 500;
+            color: var(--ink-faint);
+        }
+
+        .temp-description {
+            font-size: 0.71rem;
+            font-weight: 500;
+            color: var(--ink-faint);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .drag-hint {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            padding: 0.65rem 1.35rem;
+            font-size: 0.75rem;
+            color: var(--ink-faint);
+            border-top: 1px solid var(--line);
+        }
+        .drag-hint .text-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+        }
+        .drag-hint .text-btn:hover { text-decoration: underline; }
+
+        /* ── Chart panel ── */
+        .chart-wrapper {
+            position: relative;
+            height: 560px;
+            width: 100%;
+            padding: 0.5rem 1rem 1rem;
+        }
+
+        .collection-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0.85rem 1.35rem;
+            border-top: 1px solid var(--line);
+            background: var(--panel-alt);
+            font-size: 0.78rem;
+            color: var(--ink-dim);
+        }
+        .collection-bar strong { color: var(--ink); font-family: 'IBM Plex Mono', monospace; }
+        .collection-stats { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+
+        /* ── Data-treatment drawer ── */
+        #painel-tratamento-container {
+            border: none;
+            border-top: 1px solid var(--line);
+            border-radius: 0;
+            background: var(--panel-alt);
+        }
+        .treat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--line);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+        @media (max-width: 900px) {
+            .treat-grid { grid-template-columns: 1fr; }
+        }
+        .treat-cell {
+            background: var(--panel);
+            padding: 1rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0.7rem;
+        }
+        .treat-cell-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .treat-cell-hint {
+            font-size: 0.73rem;
+            color: var(--ink-faint);
+            display: block;
+            margin-bottom: 0.6rem;
+        }
+
+        /* ── Reference strip (bottom guidance) ── */
+        .reference-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--line);
+        }
+        @media (max-width: 900px) {
+            .reference-strip { grid-template-columns: 1fr; }
+        }
+        .reference-item {
+            background: var(--panel);
+            padding: 1rem 1.35rem;
+        }
+        .reference-item h6 {
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin: 0 0 0.35rem;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .reference-item h6 i { color: var(--accent); font-size: 0.8rem; width: 16px; }
+        .reference-item p {
+            font-size: 0.78rem;
+            color: var(--ink-dim);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* ── Buttons used inside main-area panels (treatment drawer) ── */
+        .btn-flat {
+            font-size: 0.76rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            padding: 0.4rem 0.7rem;
+            border: 1px solid var(--line-strong);
+            background: #fff;
+            color: var(--ink-dim);
+            cursor: pointer;
+            transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        }
+        .btn-flat:hover { background: var(--panel-alt); color: var(--ink); }
+        .btn-flat-accent { border-color: var(--accent); color: var(--accent); }
+        .btn-flat-accent:hover { background: rgba(47,102,224,0.08); }
+        .btn-flat-danger { border-color: #eab3b3; color: var(--danger-color); }
+        .btn-flat-danger:hover { background: rgba(214,55,58,0.06); }
+
+        /* ── Mobile: rail collapses above content ── */
+        @media (max-width: 980px) {
+            .app-shell { flex-direction: column; }
+            .console-rail {
+                width: 100%;
+                height: auto;
+                position: static;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .rail-brand, .rail-status, .rail-section, .rail-nav-links {
+                border-bottom: none;
+                border-right: 1px solid var(--rail-line);
+                flex: 1 1 220px;
+            }
+            .rail-nav-links { margin-top: 0; }
+            .main-area { padding: 1.5rem 1.1rem 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- ══════════════════ CONSOLE RAIL (control column) ══════════════════ -->
+    <aside class="console-rail">
+        <div class="rail-brand">
+            <div class="rail-brand-mark"><i class="fas fa-microchip"></i></div>
+            <div>
+                <div class="rail-brand-title">Bancada Térmica</div>
+                <div class="rail-brand-sub">UFR · Aquisição ESP32</div>
+            </div>
+        </div>
+
+        <div class="rail-status">
+            <span class="live-dot"></span> Monitorando em tempo real
+        </div>
+
+        <div class="rail-section">
+            <div class="rail-label">Tempo de ensaio</div>
+            <div class="rail-timer" id="cronometro-display">00:00:00</div>
+            <div class="rail-btn-row">
+                <button type="button" class="rail-btn" id="btn-cronometro-toggle" onclick="toggleCronometro()" style="flex:1;">
+                    <i class="fas fa-play" id="cronometro-icon"></i><span id="cronometro-btn-text">Iniciar Tempo</span>
+                </button>
+                <button type="button" class="rail-btn rail-btn-ghost" id="btn-cronometro-reset" onclick="resetarCronometro()" title="Zerar cronômetro">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="rail-section">
+            <div class="rail-label">Temperatura-alvo do ensaio</div>
+            <div class="rail-target-row">
+                <input type="text" id="input-temperatura-alvo" class="rail-input" placeholder="Ex: 50,0" onkeydown="if(event.key==='Enter') definirTemperaturaAlvo()">
+                <span class="rail-input-unit">°C</span>
+            </div>
+            <button type="button" class="rail-btn rail-btn-accent w-100" id="btn-definir-alvo" onclick="definirTemperaturaAlvo()">
+                Definir temperatura
+            </button>
+            <div class="rail-target-value" id="display-alvo-configurado">
+                Valor configurado: <span class="dim">Não configurada</span>
+            </div>
+            <div class="rail-badges">
+                <span id="badge-regime-permanente" class="rail-badge" style="display: none;"></span>
+                <span id="badge-coerencia-fisica" class="rail-badge" style="display: none;"></span>
+            </div>
+            <div id="alerta-temperatura-alvo" class="rail-alert" style="display: none;"></div>
+        </div>
+
+        <div class="rail-section rail-actions">
+            <div class="rail-label">Ações</div>
+            <button type="button" class="rail-btn rail-btn-accent w-100" onclick="atualizarAgora()">
+                <i class="fas fa-sync-alt"></i> Atualizar agora
+            </button>
+            <button type="button" class="rail-btn w-100" onclick="exportarGraficoPNG()" title="Baixar imagem PNG em alta resolução do gráfico">
+                <i class="fas fa-file-image"></i> Exportar gráfico (PNG)
+            </button>
+            <button type="button" class="rail-btn w-100" onclick="exportarHistoricoCSV()" title="Salvar planilha CSV com todos os dados do ensaio">
+                <i class="fas fa-file-csv"></i> Salvar CSV
+            </button>
+            <button type="button" class="rail-btn w-100" id="btn-toggle-tratamento" onclick="togglePainelTratamento()" title="Remover curvas de erro do termostato W3002, recortar intervalos e estabilizar o gráfico">
+                <i class="fas fa-sliders"></i> Tratar / recortar dados
+            </button>
+            <button type="button" class="rail-btn w-100" id="btn-pause-toggle" onclick="togglePauseMonitoramento()">
+                <i class="fas fa-pause"></i> Pausar
+            </button>
+            <button type="button" class="rail-btn rail-btn-danger w-100" onclick="limparHistoricoGrafico()">
+                <i class="fas fa-trash-can"></i> Limpar histórico
+            </button>
+        </div>
+
+        <div class="rail-nav-links">
+            <a href="{{ url_for('index') }}" class="rail-link"><i class="fas fa-house"></i> Menu principal</a>
+            <a href="/calculadora_convectivo/natural" class="rail-link"><i class="fas fa-calculator"></i> Calculadora convectiva</a>
+        </div>
+    </aside>
+
+    <!-- ══════════════════ MAIN AREA ══════════════════ -->
+    <main class="main-area">
+
+        <div class="page-head page-head--thermal">
+            <div class="page-kicker"><i class="fa-solid fa-satellite-dish"></i> Painel · telemetria ao vivo</div>
+            <h1>Monitoramento em tempo real</h1>
+            <p>Leituras sincronizadas dos microcontroladores ESP32 &bull; atualização a cada 2 s</p>
+        </div>
+        <div class="eng-scale-rule"></div>
+
+        <!-- ── Canais de Temperatura + Métricas ── -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="fas fa-microchip" style="color: var(--accent); margin-right: 0.5rem;"></i>Canais de Temperatura</h2>
+                <span class="panel-sub">Ordem física T1 &rarr; T6 &bull; arraste para reorganizar</span>
+            </div>
+
+            <div class="metrics-strip">
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Média da Superfície (T1, T2, T3)</div>
+                    <div class="metric-cell-val" id="kpi-t-media">0.0000 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" id="kpi-media-badge" style="background: rgba(47,102,224,0.1); color: var(--accent);">Ts médio</span>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Gradiente da Placa |T1 &minus; T3|</div>
+                    <div class="metric-cell-val" id="kpi-delta-t">0.0000 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" id="kpi-unif-badge" style="background: rgba(15,157,99,0.1); color: var(--success-color);">Homogêneo</span>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Ambiente (T4)</div>
+                    <div class="metric-cell-val" id="kpi-t-amb">0.00 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" style="background: rgba(31,119,180,0.1); color: var(--color-t4);">DHT11 #01</span>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-cell-label">Base Inferior (T5, T6)</div>
+                    <div class="metric-cell-val" id="kpi-t-inf">0.00 <span class="temp-unit">°C</span></div>
+                    <span class="metric-tag" style="background: rgba(140,86,75,0.12); color: var(--color-t6);">ESP32 #02</span>
+                </div>
+            </div>
+
+            <!-- 6 Cards Grid -->
+            <div class="sensor-grid" id="cards-row">
+                <!-- T1 -->
+                <div data-slot="0">
+                    <div class="temp-card card-t1" data-sensor-key="t1" data-card-class="card-t1">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-fire mr-1 card-icon icon-t1" style="color: var(--color-t1);"></i>
+                                <span class="card-label">T1 — Início Chama</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-primary"></i>
+                            Sensor #01 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T2 -->
+                <div data-slot="1">
+                    <div class="temp-card card-t2" data-sensor-key="t2" data-card-class="card-t2">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-square mr-1 card-icon icon-t2" style="color: var(--color-t2);"></i>
+                                <span class="card-label">T2 — Meio Chapa</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-primary"></i>
+                            Sensor #02 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T3 -->
+                <div data-slot="2">
+                    <div class="temp-card card-t3" data-sensor-key="t3" data-card-class="card-t3">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-fire-burner mr-1 card-icon icon-t3" style="color: var(--color-t3);"></i>
+                                <span class="card-label">T3 — Fim Chama</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-primary"></i>
+                            Sensor #03 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T4 -->
+                <div data-slot="3">
+                    <div class="temp-card card-t4" data-sensor-key="t4" data-card-class="card-t4">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-wind mr-1 card-icon icon-t4" style="color: var(--color-t4);"></i>
+                                <span class="card-label">T4 — Ambiente</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes text-info"></i>
+                            DHT11 — ESP32 #01
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T5 -->
+                <div data-slot="4">
+                    <div class="temp-card card-t5" data-sensor-key="t5" data-card-class="card-t5">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-layer-group mr-1 card-icon icon-t5" style="color: var(--color-t5);"></i>
+                                <span class="card-label">T5 — Base Inferior</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes" style="color: var(--color-t5);"></i>
+                            Sensor #04 — ESP32 #02
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T6 -->
+                <div data-slot="5">
+                    <div class="temp-card card-t6" data-sensor-key="t6" data-card-class="card-t6">
+                        <div class="card-header-flex">
+                            <label class="drag-handle">
+                                <i class="fas fa-grip-vertical drag-grip" title="Arraste para reposicionar"></i>
+                                <i class="fas fa-layer-group mr-1 card-icon icon-t6" style="color: var(--color-t6);"></i>
+                                <span class="card-label">T6 — Base Inferior</span>
+                            </label>
+                        </div>
+                        <div class="temp-value sensor-value">0.0000<span class="temp-unit">°C</span></div>
+                        <div class="temp-description sensor-desc">
+                            <i class="fas fa-circle-nodes" style="color: var(--color-t6);"></i>
+                            Sensor #05 — ESP32 #02
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="drag-hint">
+                <span><i class="fas fa-grip-vertical" style="margin-right: 0.4rem; color: var(--ink-faint);"></i>Arraste os canais pelas alças para reorganizar a ordem na bancada.</span>
+                <button type="button" class="text-btn" onclick="restaurarMapeamentoPadrao()" title="Restaurar mapeamento físico original (T1 a T6)">
+                    Restaurar ordem padrão (T1&ndash;T6)
+                </button>
+            </div>
+        </section>
+
+        <!-- ── Histórico Temporal (gráfico, painel principal) ── -->
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="fas fa-chart-line" style="color: var(--accent); margin-right: 0.5rem;"></i>Histórico Temporal das Temperaturas</h2>
+                <span class="panel-sub">Estabilidade térmica da bancada ao longo do ensaio</span>
+            </div>
+
+            <!-- ── Painel Expansível de Tratamento de Dados & Recorte de Curvas (W3002 / Ebulidor) ── -->
+            <div id="painel-tratamento-container" class="card border-warning mb-3 shadow-sm" style="display: none; background: #fffdfa; border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="fas fa-sliders text-warning"></i>
+                            Tratamento Térmico de Dados & Recorte de Curvas (Controle W3002 / Ebulidor)
+                        </h6>
+                        <button type="button" class="btn-close btn-sm" onclick="togglePainelTratamento()"></button>
+                    </div>
+
+                    <div class="treat-grid">
+                        <!-- Opção 1: Remover Intervalo de Oscilação / Erro (Lombada) -->
+                        <div class="treat-cell">
+                            <div>
+                                <span class="treat-cell-title" style="color: var(--danger-color);">
+                                    <i class="fas fa-scissors mr-1"></i> 1. Remover trecho / lombada
+                                </span>
+                                <span class="treat-cell-hint">
+                                    Exclui o reaquecimento indesejado do W3002 e une os pontos.
+                                </span>
+                                <div class="d-flex gap-2 align-items-center mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">De</span>
+                                        <input type="number" id="corte-de" class="form-control font-monospace" placeholder="Ex: 960" min="0">
+                                        <span class="input-group-text">s</span>
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Até</span>
+                                        <input type="number" id="corte-ate" class="form-control font-monospace" placeholder="Ex: 1060" min="0">
+                                        <span class="input-group-text">s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-flat btn-flat-danger w-100" onclick="removerTrechoIndesejado()">
+                                <i class="fas fa-trash-can mr-1"></i> Excluir trecho e unir
+                            </button>
+                        </div>
+
+                        <!-- Opção 2: Manter Apenas Intervalo de Regime (Recorte) -->
+                        <div class="treat-cell">
+                            <div>
+                                <span class="treat-cell-title" style="color: var(--accent);">
+                                    <i class="fas fa-crop-simple mr-1"></i> 2. Manter apenas faixa de tempo
+                                </span>
+                                <span class="treat-cell-hint">
+                                    Isola apenas o regime desejado (o tempo se reinicia em 0 s).
+                                </span>
+                                <div class="d-flex gap-2 align-items-center mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Início</span>
+                                        <input type="number" id="manter-de" class="form-control font-monospace" placeholder="Ex: 550" min="0">
+                                        <span class="input-group-text">s</span>
+                                    </div>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Fim</span>
+                                        <input type="number" id="manter-ate" class="form-control font-monospace" placeholder="Ex: 960" min="0">
+                                        <span class="input-group-text">s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-flat btn-flat-accent w-100" onclick="manterApenasFaixa()">
+                                <i class="fas fa-check mr-1"></i> Isolar esta faixa
+                            </button>
+                        </div>
+
+                        <!-- Opção 3: Suavização / Estabilização Digital + Importar CSV -->
+                        <div class="treat-cell">
+                            <div>
+                                <span class="treat-cell-title" style="color: var(--success-color);">
+                                    <i class="fas fa-filter mr-1"></i> 3. Filtros &amp; importação
+                                </span>
+                                <span class="treat-cell-hint">
+                                    Suavize ruídos térmicos ou carregue um arquivo CSV salvo.
+                                </span>
+                                <div class="d-flex gap-2 mb-2">
+                                    <button type="button" class="btn-flat flex-fill" onclick="aplicarSuavizacaoMediaMovel()" title="Média móvel de 5 pontos para filtrar ruídos">
+                                        <i class="fas fa-wave-square mr-1"></i> Suavizar
+                                    </button>
+                                    <label class="btn-flat flex-fill mb-0" style="text-align:center; display:inline-flex; align-items:center; justify-content:center;" title="Carregar arquivo CSV gravado anteriormente para tratar">
+                                        <i class="fas fa-upload mr-1"></i> Carregar CSV
+                                        <input type="file" id="input-carregar-csv" accept=".csv" style="display: none;" onchange="carregarArquivoCSV(event)">
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-flat w-100" onclick="restaurarDadosOriginais()" id="btn-restaurar" title="Restaura os dados originais brutos da coleta" disabled>
+                                <i class="fas fa-rotate-left mr-1"></i> Restaurar original (<span id="count-pontos-backup">0</span> pts)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Rodapé informativo do painel de tratamento -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small" style="padding: 0.75rem 1.1rem; color: var(--ink-dim);">
+                        <span id="status-tratamento">
+                            <i class="fas fa-info-circle mr-1" style="color: var(--accent);"></i> Use <strong>Excluir Trecho</strong> para remover a onda do ebulidor ou <strong>Isolar Faixa</strong> para focar no regime estável.
+                        </span>
+                        <span id="badge-status-dados" class="badge bg-secondary">Dados Brutos Originais</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="temperaturaChart"></canvas>
+            </div>
+
+            <!-- Barra Inferior de Métricas da Coleta -->
+            <div class="collection-bar">
+                <div class="collection-stats">
+                    <span><i class="fas fa-stopwatch mr-1" style="color: var(--accent);"></i>Tempo total de coleta: <strong id="chart-tempo-decorrido">00:00:00</strong></span>
+                    <span><i class="fas fa-chart-line mr-1" style="color: var(--success-color);"></i>Pontos coletados: <strong id="chart-total-pontos">0</strong></span>
+                    <span><i class="fas fa-bolt mr-1" style="color: var(--warning-color);"></i>Taxa de amostragem: <strong>2.0 s</strong></span>
+                </div>
+                <div>
+                    <i class="fas fa-clock mr-1"></i>
+                    Última amostra: <strong id="chart-ultima-amostra">--:--:--</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Diretrizes de Operação (referência, discreta) ── -->
+        <section class="panel">
+            <div class="reference-strip">
+                <div class="reference-item">
+                    <h6><i class="fas fa-temperature-arrow-up"></i>Regime Permanente</h6>
+                    <p>Atingido quando a variação temporal de todas as temperaturas fica abaixo de <strong>0,2 °C/min</strong> por 5 minutos.</p>
+                </div>
+                <div class="reference-item">
+                    <h6><i class="fas fa-arrows-left-right-to-line"></i>Uniformidade</h6>
+                    <p>Se &Delta;T = |T2 &minus; T3| for próximo de zero, a chapa opera com <strong>temperatura superficial constante</strong>.</p>
+                </div>
+                <div class="reference-item">
+                    <h6><i class="fas fa-network-wired"></i>Sincronização com a API</h6>
+                    <p>As leituras seguem via JSON para os módulos de <strong>Convecção Natural</strong> e <strong>Escoamento Externo</strong> para cálculo automático de h.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+    <!-- ── Scripts e Lógica Reativa ── -->
+    <script>
+        // ── Cronômetro de Avaliação do Tempo de Ensaio / Simulação ─────────────
+        let cronometroInterval = null;
+        let cronometroSegundos = 0;
+        let cronometroRodando = false;
+
+        function formatarTempo(segundos) {
+            const h = Math.floor(segundos / 3600).toString().padStart(2, '0');
+            const m = Math.floor((segundos % 3600) / 60).toString().padStart(2, '0');
+            const s = (segundos % 60).toString().padStart(2, '0');
+            return h + ':' + m + ':' + s;
+        }
+
+        function toggleCronometro() {
+            const btnText = document.getElementById('cronometro-btn-text');
+            const btnIcon = document.getElementById('cronometro-icon');
+            const btn = document.getElementById('btn-cronometro-toggle');
+            
+            if (!cronometroRodando) {
+                cronometroRodando = true;
+                if (btnText) btnText.textContent = 'Pausar';
+                if (btnIcon) btnIcon.className = 'fas fa-pause mr-1';
+                if (btn) btn.className = 'btn btn-sm btn-outline-warning font-weight-bold py-0 px-2';
+                
+                cronometroInterval = setInterval(() => {
+                    cronometroSegundos++;
+                    const display = document.getElementById('cronometro-display');
+                    if (display) display.textContent = formatarTempo(cronometroSegundos);
+                }, 1000);
+            } else {
+                cronometroRodando = false;
+                clearInterval(cronometroInterval);
+                if (btnText) btnText.textContent = 'Continuar';
+                if (btnIcon) btnIcon.className = 'fas fa-play mr-1';
+                if (btn) btn.className = 'btn btn-sm btn-outline-success font-weight-bold py-0 px-2';
+            }
+        }
+
+        function resetarCronometro() {
+            cronometroRodando = false;
+            clearInterval(cronometroInterval);
+            cronometroSegundos = 0;
+            const display = document.getElementById('cronometro-display');
+            if (display) display.textContent = '00:00:00';
+            const btnText = document.getElementById('cronometro-btn-text');
+            const btnIcon = document.getElementById('cronometro-icon');
+            const btn = document.getElementById('btn-cronometro-toggle');
+            if (btnText) btnText.textContent = 'Iniciar Tempo';
+            if (btnIcon) btnIcon.className = 'fas fa-play mr-1';
+            if (btn) btn.className = 'btn btn-sm btn-outline-success font-weight-bold py-0 px-2';
+        }
+
+        // =====================================================================
+        // FONTE ÚNICA DA VERDADE — HISTÓRICO DE DADOS DE MONITORAMENTO
+        // =====================================================================
+        // Um único array armazena o histórico completo com todos os sensores,
+        // o tempo decorrido em segundos e o horário exato da medição.
+        // O gráfico e o CSV consomem rigorosamente esta mesma base de dados.
+        const dadosTemperatura = [];
+
+        let monitoringInterval = null;
+        let isPaused = false;
+        let temperaturaChart = null;
+        let inicioColetaTimestamp = null;
+        let totalPontosColetados = 0;
+
+        function inicializarGrafico() {
+            const ctx = document.getElementById('temperaturaChart').getContext('2d');
+            
+            const gradientT1 = ctx.createLinearGradient(0, 0, 0, 350);
+            gradientT1.addColorStop(0, 'rgba(214, 39, 40, 0.2)');
+            gradientT1.addColorStop(1, 'rgba(214, 39, 40, 0.0)');
+
+            temperaturaChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'T1 - Início',
+                            data: [],
+                            borderColor: '#D62728',
+                            backgroundColor: gradientT1,
+                            borderWidth: 2.2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 1.5,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#D62728'
+                        },
+                        {
+                            label: 'T2 - Meio',
+                            data: [],
+                            borderColor: '#9467BD',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 1.5,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#9467BD'
+                        },
+                        {
+                            label: 'T3 - Fim',
+                            data: [],
+                            borderColor: '#2CA02C',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 1.5,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#2CA02C'
+                        },
+                        {
+                            label: 'T4 - Ambiente',
+                            data: [],
+                            borderColor: '#1F77B4',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 1.5,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#1F77B4'
+                        },
+                        {
+                            label: 'T5 - Base',
+                            data: [],
+                            borderColor: '#EAB308',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 1.5,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#EAB308'
+                        },
+                        {
+                            label: 'T6 - Base',
+                            data: [],
+                            borderColor: '#8C564B',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            fill: false,
+                            pointRadius: 1.5,
+                            pointHoverRadius: 6,
+                            pointHitRadius: 10,
+                            pointBackgroundColor: '#8C564B'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                padding: 18,
+                                font: {
+                                    family: 'IBM Plex Sans',
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                color: '#475569'
+                            },
+                            onClick: function(e, legendItem, legend) {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                if (ci.isDatasetVisible(index)) {
+                                    ci.hide(index);
+                                    legendItem.hidden = true;
+                                } else {
+                                    ci.show(index);
+                                    legendItem.hidden = false;
+                                }
+                                ci.update();
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleFont: { family: 'IBM Plex Sans', size: 13, weight: '700' },
+                            bodyFont: { family: 'IBM Plex Mono', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            boxPadding: 6,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items || items.length === 0) return '';
+                                    const idx = items[0].dataIndex;
+                                    const reg = dadosTemperatura[idx];
+                                    const hor = reg ? reg.horario : '--:--:--';
+                                    const seg = reg ? reg.tempo_s : items[0].label;
+                                    return `Tempo: ${seg} s  |  Horário: ${hor}`;
+                                },
+                                label: function(context) {
+                                    return ' ' + context.dataset.label + ': ' + Number(context.parsed.y).toFixed(4) + ' °C';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Temperatura (°C)',
+                                font: { family: 'IBM Plex Sans', size: 12, weight: '600' },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                font: { family: 'IBM Plex Mono', size: 11 },
+                                color: '#64748b',
+                                stepSize: 2,
+                                autoSkip: false,
+                                callback: function(value) {
+                                    return Number(value).toFixed(1) + '°C';
+                                }
+                            },
+                            afterDataLimits: function(axis) {
+                                if (!isFinite(axis.min) || !isFinite(axis.max)) return;
+                                let min = Math.floor(axis.min / 2) * 2;
+                                let max = Math.ceil(axis.max / 2) * 2 + 2;
+                                if (max - min < 4) {
+                                    max = min + 4;
+                                }
+                                if (axis.min >= 0 && min < 0) {
+                                    min = 0;
+                                }
+                                axis.min = min;
+                                axis.max = max;
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tempo (s)',
+                                font: { family: 'IBM Plex Sans', size: 12, weight: '600' },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { family: 'IBM Plex Mono', size: 10 },
+                                color: '#94a3b8',
+                                callback: function(val) {
+                                    const lbl = this.getLabelForValue(val);
+                                    return (lbl !== undefined ? lbl : val) + ' s';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Validação rigorosa dos dados antes de registrar e exportar (Item 11)
+        function validarRegistroTemperatura(registro) {
+            if (typeof registro.tempo_s !== 'number' || isNaN(registro.tempo_s) || registro.tempo_s < 0) {
+                console.error('[Validação] Tempo (s) inválido:', registro.tempo_s);
+                return false;
+            }
+            if (!registro.horario || typeof registro.horario !== 'string') {
+                console.error('[Validação] Horário ausente ou inválido:', registro.horario);
+                return false;
+            }
+            const sensores = ['t1', 't2', 't3', 't4', 't5', 't6'];
+            for (const s of sensores) {
+                if (typeof registro[s] !== 'number' || isNaN(registro[s])) {
+                    console.error(`[Validação] Sensor ${s} com valor não numérico:`, registro[s]);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function adicionarPontoGrafico(t1, t2, t3, t4, t5, t6) {
+            if (isPaused) return;
+
+            const agora = new Date();
+            const timeLabel = 
+                agora.getHours().toString().padStart(2, '0') + ':' + 
+                agora.getMinutes().toString().padStart(2, '0') + ':' + 
+                agora.getSeconds().toString().padStart(2, '0');
+
+            let tempo_s = 0;
+            if (dadosTemperatura.length === 0) {
+                inicioColetaTimestamp = agora.getTime();
+                tempo_s = 0;
+            } else {
+                const segCalc = Math.round((agora.getTime() - inicioColetaTimestamp) / 1000);
+                const ultimoTempo = dadosTemperatura[dadosTemperatura.length - 1].tempo_s;
+                tempo_s = segCalc > ultimoTempo ? segCalc : (ultimoTempo + 2);
+            }
+
+            const novoRegistro = {
+                horario: timeLabel,
+                tempo_s: tempo_s,
+                t1: Number(t1),
+                t2: Number(t2),
+                t3: Number(t3),
+                t4: Number(t4),
+                t5: Number(t5),
+                t6: Number(t6),
+                alvo: (temperaturaAlvoAtual !== null && !isNaN(temperaturaAlvoAtual)) ? Number(temperaturaAlvoAtual) : null
+            };
+
+            if (!validarRegistroTemperatura(novoRegistro)) {
+                return;
+            }
+
+            // 1. Armazena na BASE ÚNICA DE DADOS
+            dadosTemperatura.push(novoRegistro);
+            totalPontosColetados++;
+
+            // 2. Atualiza os dados do gráfico a partir dessa MESMA base de dados
+            if (temperaturaChart) {
+                temperaturaChart.data.labels.push(tempo_s);
+                temperaturaChart.data.datasets[0].data.push(novoRegistro.t1);
+                temperaturaChart.data.datasets[1].data.push(novoRegistro.t2);
+                temperaturaChart.data.datasets[2].data.push(novoRegistro.t3);
+                temperaturaChart.data.datasets[3].data.push(novoRegistro.t4);
+                temperaturaChart.data.datasets[4].data.push(novoRegistro.t5);
+                temperaturaChart.data.datasets[5].data.push(novoRegistro.t6);
+                temperaturaChart.update('none');
+            }
+
+            // 3. Atualiza os indicadores de rodapé
+            const elTempo = document.getElementById('chart-tempo-decorrido');
+            if (elTempo) elTempo.textContent = formatarTempo(tempo_s);
+            
+            const elPontos = document.getElementById('chart-total-pontos');
+            if (elPontos) elPontos.textContent = totalPontosColetados;
+            
+            const elAmostra = document.getElementById('chart-ultima-amostra');
+            if (elAmostra) elAmostra.textContent = timeLabel;
+        }
+
+        function exportarGraficoPNG() {
+            if (!temperaturaChart) return;
+
+            const origCanvas = document.getElementById('temperaturaChart');
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = origCanvas.width + 60;
+            exportCanvas.height = origCanvas.height + 130;
+            const ctx = exportCanvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 16px Inter, sans-serif';
+            ctx.fillText('Histórico Temporal de Temperaturas — Bancada Térmica UFR', 30, 35);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px Inter, sans-serif';
+            const agoraStr = new Date().toLocaleString('pt-BR');
+            const duracaoStr = document.getElementById('chart-tempo-decorrido') ? document.getElementById('chart-tempo-decorrido').textContent : '00:00:00';
+            ctx.fillText('Exportado em: ' + agoraStr + ' | Duração: ' + duracaoStr + ' | Pontos: ' + dadosTemperatura.length + ' | Eixo X: Tempo (s)', 30, 58);
+
+            ctx.drawImage(origCanvas, 30, 75);
+
+            const link = document.createElement('a');
+            link.download = 'grafico_ensaio_termico_' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '_') + '.png';
+            link.href = exportCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        // Função de Exportação para CSV consumindo EXATAMENTE a mesma base de dados do gráfico (Item 5 e Item 14)
+        function exportarHistoricoCSV() {
+            if (!dadosTemperatura || dadosTemperatura.length === 0) {
+                alert('Nenhum dado registrado no ensaio térmico para exportar.');
+                return;
+            }
+
+            // Validação de alinhamento e consistência temporal (Item 11)
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const reg = dadosTemperatura[i];
+                if (!validarRegistroTemperatura(reg)) {
+                    alert(`Inconsistência detectada no registro ${i + 1}. Verifique o console.`);
+                    return;
+                }
+                if (i > 0 && reg.tempo_s <= dadosTemperatura[i - 1].tempo_s) {
+                    console.warn(`[CSV] Ajustando tempo para garantir ordem estritamente crescente: registro ${i}`);
+                    reg.tempo_s = dadosTemperatura[i - 1].tempo_s + 1;
+                }
+            }
+
+            // Estrutura do CSV com coluna de referência da temperatura-alvo do ensaio
+            const cabecalho = 'Horário;Tempo_s;T1_Inicio_C;T2_Meio_C;T3_Fim_C;T4_Ambiente_C;T5_Base_C;T6_Base_C;Alvo_C';
+            const linhas = [cabecalho];
+
+            const alvoPadrao = (temperaturaAlvoAtual !== null && !isNaN(temperaturaAlvoAtual))
+                ? Number(temperaturaAlvoAtual).toFixed(1).replace('.', ',')
+                : '-';
+
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const d = dadosTemperatura[i];
+                const valAlvo = (d.alvo !== undefined && d.alvo !== null && !isNaN(d.alvo))
+                    ? Number(d.alvo).toFixed(1).replace('.', ',')
+                    : alvoPadrao;
+
+                const linha = [
+                    d.horario,
+                    d.tempo_s,
+                    Number(d.t1).toFixed(4).replace('.', ','),
+                    Number(d.t2).toFixed(4).replace('.', ','),
+                    Number(d.t3).toFixed(4).replace('.', ','),
+                    Number(d.t4).toFixed(4).replace('.', ','),
+                    Number(d.t5).toFixed(4).replace('.', ','),
+                    Number(d.t6).toFixed(4).replace('.', ','),
+                    valAlvo
+                ].join(';');
+                linhas.push(linha);
+            }
+
+            const csvConteudo = '\uFEFF' + linhas.join('\r\n');
+            const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_');
+            const sufixoAlvo = (temperaturaAlvoAtual !== null && !isNaN(temperaturaAlvoAtual))
+                ? `_alvo_${temperaturaAlvoAtual.toFixed(1).replace('.', '_')}C`
+                : '';
+            link.download = `ensaio_termico${sufixoAlvo}_dados_${timestamp}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        function limparHistoricoGrafico() {
+            dadosTemperatura.length = 0;
+            totalPontosColetados = 0;
+            inicioColetaTimestamp = null;
+            dadosOriginaisBackup = null;
+
+            if (temperaturaChart) {
+                temperaturaChart.data.labels = [];
+                temperaturaChart.data.datasets.forEach(ds => { ds.data = []; });
+                temperaturaChart.update();
+            }
+
+            if (document.getElementById('chart-tempo-decorrido')) document.getElementById('chart-tempo-decorrido').textContent = '00:00:00';
+            if (document.getElementById('chart-total-pontos')) document.getElementById('chart-total-pontos').textContent = '0';
+            if (document.getElementById('chart-ultima-amostra')) document.getElementById('chart-ultima-amostra').textContent = '--:--:--';
+
+            const btnRes = document.getElementById('btn-restaurar');
+            if (btnRes) btnRes.disabled = true;
+            const countBackup = document.getElementById('count-pontos-backup');
+            if (countBackup) countBackup.textContent = '0';
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = 'Dados Brutos Originais';
+            }
+        }
+
+        function togglePauseMonitoramento() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('btn-pause-toggle');
+            if (isPaused) {
+                btn.innerHTML = '<i class="fas fa-play"></i> Continuar';
+                btn.classList.replace('btn-action-secondary', 'btn-action-primary');
+            } else {
+                btn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+                btn.classList.replace('btn-action-primary', 'btn-action-secondary');
+            }
+        }
+
+        // =====================================================================
+        // TRATAMENTO TÉRMICO DE DADOS & RECORTE DE CURVAS (W3002 / EBULIDOR)
+        // =====================================================================
+        let dadosOriginaisBackup = null;
+
+        function garantirBackup() {
+            if (!dadosOriginaisBackup && dadosTemperatura.length > 0) {
+                dadosOriginaisBackup = JSON.parse(JSON.stringify(dadosTemperatura));
+                const btnRes = document.getElementById('btn-restaurar');
+                if (btnRes) btnRes.disabled = false;
+                const countBackup = document.getElementById('count-pontos-backup');
+                if (countBackup) countBackup.textContent = dadosOriginaisBackup.length;
+            }
+        }
+
+        function togglePainelTratamento() {
+            const painel = document.getElementById('painel-tratamento-container');
+            if (!painel) return;
+            const estaVisivel = painel.style.display !== 'none';
+            painel.style.display = estaVisivel ? 'none' : 'block';
+
+            if (!estaVisivel && dadosTemperatura.length > 0) {
+                const tMin = dadosTemperatura[0].tempo_s;
+                const tMax = dadosTemperatura[dadosTemperatura.length - 1].tempo_s;
+
+                const inputManterDe = document.getElementById('manter-de');
+                const inputManterAte = document.getElementById('manter-ate');
+                if (inputManterDe && (!inputManterDe.value || inputManterDe.value == 0)) inputManterDe.value = tMin;
+                if (inputManterAte && (!inputManterAte.value || inputManterAte.value == 0)) inputManterAte.value = tMax;
+
+                const countBackup = document.getElementById('count-pontos-backup');
+                if (countBackup) countBackup.textContent = (dadosOriginaisBackup ? dadosOriginaisBackup.length : dadosTemperatura.length);
+            }
+        }
+
+        function redesenharGraficoCompleto() {
+            if (!temperaturaChart) return;
+
+            temperaturaChart.data.labels = dadosTemperatura.map(d => d.tempo_s);
+            temperaturaChart.data.datasets[0].data = dadosTemperatura.map(d => d.t1);
+            temperaturaChart.data.datasets[1].data = dadosTemperatura.map(d => d.t2);
+            temperaturaChart.data.datasets[2].data = dadosTemperatura.map(d => d.t3);
+            temperaturaChart.data.datasets[3].data = dadosTemperatura.map(d => d.t4);
+            temperaturaChart.data.datasets[4].data = dadosTemperatura.map(d => d.t5);
+            temperaturaChart.data.datasets[5].data = dadosTemperatura.map(d => d.t6);
+            temperaturaChart.update();
+
+            const total = dadosTemperatura.length;
+            totalPontosColetados = total;
+            if (document.getElementById('chart-total-pontos')) {
+                document.getElementById('chart-total-pontos').textContent = total;
+            }
+            if (total > 0) {
+                const ultimo = dadosTemperatura[total - 1];
+                if (document.getElementById('chart-tempo-decorrido')) {
+                    document.getElementById('chart-tempo-decorrido').textContent = formatarTempo(ultimo.tempo_s);
+                }
+                if (document.getElementById('chart-ultima-amostra')) {
+                    document.getElementById('chart-ultima-amostra').textContent = ultimo.horario;
+                }
+            }
+        }
+
+        // Opção 1: Excluir trecho de erro / oscilação (lombada do ebulidor)
+        function removerTrechoIndesejado() {
+            if (dadosTemperatura.length === 0) {
+                alert('Nenhum dado registrado para tratamento.');
+                return;
+            }
+            const deInput = document.getElementById('corte-de');
+            const ateInput = document.getElementById('corte-ate');
+            const tDe = parseFloat(deInput.value);
+            const tAte = parseFloat(ateInput.value);
+
+            if (isNaN(tDe) || isNaN(tAte) || tDe >= tAte) {
+                alert('Por favor, informe um intervalo de tempo válido (ex: De 960s Até 1060s).');
+                return;
+            }
+
+            garantirBackup();
+
+            const pontosAntes = dadosTemperatura.length;
+            const deltaTempo = tAte - tDe;
+            const novosDados = [];
+
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const reg = dadosTemperatura[i];
+                if (reg.tempo_s < tDe) {
+                    novosDados.push({ ...reg });
+                } else if (reg.tempo_s > tAte) {
+                    const regAjustado = { ...reg };
+                    regAjustado.tempo_s = Math.round(reg.tempo_s - deltaTempo);
+                    novosDados.push(regAjustado);
+                }
+            }
+
+            const pontosRemovidos = pontosAntes - novosDados.length;
+            if (pontosRemovidos === 0) {
+                alert(`Nenhum ponto encontrado no intervalo entre ${tDe}s e ${tAte}s.`);
+                return;
+            }
+
+            dadosTemperatura.length = 0;
+            dadosTemperatura.push(...novosDados);
+
+            redesenharGraficoCompleto();
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-warning text-dark';
+                badge.textContent = `Trecho Removido (-${pontosRemovidos} pts)`;
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Removida oscilação de <strong>${tDe}s</strong> até <strong>${tAte}s</strong> (${pontosRemovidos} pontos excluídos). Curva unida e tempo reajustado!`;
+            }
+        }
+
+        // Opção 2: Manter apenas a faixa de tempo desejada (Regime Permanente)
+        function manterApenasFaixa() {
+            if (dadosTemperatura.length === 0) {
+                alert('Nenhum dado registrado para tratamento.');
+                return;
+            }
+            const deInput = document.getElementById('manter-de');
+            const ateInput = document.getElementById('manter-ate');
+            const tDe = parseFloat(deInput.value);
+            const tAte = parseFloat(ateInput.value);
+
+            if (isNaN(tDe) || isNaN(tAte) || tDe >= tAte) {
+                alert('Por favor, informe uma faixa válida (ex: Início 550s e Fim 960s).');
+                return;
+            }
+
+            garantirBackup();
+
+            const novosDados = [];
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const reg = dadosTemperatura[i];
+                if (reg.tempo_s >= tDe && reg.tempo_s <= tAte) {
+                    const regAjustado = { ...reg };
+                    regAjustado.tempo_s = Math.round(reg.tempo_s - tDe);
+                    novosDados.push(regAjustado);
+                }
+            }
+
+            if (novosDados.length === 0) {
+                alert(`Nenhum ponto encontrado na faixa de ${tDe}s a ${tAte}s.`);
+                return;
+            }
+
+            const totalMantidos = novosDados.length;
+            dadosTemperatura.length = 0;
+            dadosTemperatura.push(...novosDados);
+
+            redesenharGraficoCompleto();
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-primary';
+                badge.textContent = `Faixa Isolada (${totalMantidos} pts)`;
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Faixa de <strong>${tDe}s a ${tAte}s</strong> isolada com sucesso! O tempo do ensaio agora se inicia em 0s (${totalMantidos} pontos mantidos).`;
+            }
+        }
+
+        // Opção 3: Suavização por Média Móvel
+        function aplicarSuavizacaoMediaMovel() {
+            if (dadosTemperatura.length < 5) {
+                alert('Pontos insuficientes para suavização (mínimo 5 pontos).');
+                return;
+            }
+
+            garantirBackup();
+
+            const janela = 5;
+            const metade = Math.floor(janela / 2);
+            const sensores = ['t1', 't2', 't3', 't4', 't5', 't6'];
+            const dadosBase = JSON.parse(JSON.stringify(dadosTemperatura));
+
+            for (let i = 0; i < dadosTemperatura.length; i++) {
+                const ini = Math.max(0, i - metade);
+                const fim = Math.min(dadosTemperatura.length, i + metade + 1);
+                const count = fim - ini;
+
+                for (const s of sensores) {
+                    let soma = 0;
+                    for (let j = ini; j < fim; j++) {
+                        soma += dadosBase[j][s];
+                    }
+                    dadosTemperatura[i][s] = Number((soma / count).toFixed(4));
+                }
+            }
+
+            redesenharGraficoCompleto();
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Suavizado (Média Móvel)';
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Filtro de estabilização térmica (Média Móvel de 5 pontos) aplicado com sucesso! Ruídos atenuados.`;
+            }
+        }
+
+        // Restaurar dados originais brutos
+        function restaurarDadosOriginais() {
+            if (!dadosOriginaisBackup || dadosOriginaisBackup.length === 0) {
+                return;
+            }
+
+            dadosTemperatura.length = 0;
+            dadosTemperatura.push(...JSON.parse(JSON.stringify(dadosOriginaisBackup)));
+
+            redesenharGraficoCompleto();
+
+            const btnRes = document.getElementById('btn-restaurar');
+            if (btnRes) btnRes.disabled = true;
+            dadosOriginaisBackup = null;
+
+            const badge = document.getElementById('badge-status-dados');
+            if (badge) {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = 'Dados Brutos Originais';
+            }
+            const status = document.getElementById('status-tratamento');
+            if (status) {
+                status.innerHTML = `<i class="fas fa-rotate-left text-primary mr-1"></i> Dados originais restaurados com sucesso! Todos os cortes foram desfeitos.`;
+            }
+        }
+
+        // Carregar arquivo CSV gravado anteriormente
+        function carregarArquivoCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const texto = e.target.result;
+                const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('#'));
+                if (linhas.length < 2) {
+                    alert('Arquivo CSV vazio ou com formato inválido.');
+                    return;
+                }
+
+                const cabecalho = linhas[0];
+                const sep = cabecalho.includes(';') ? ';' : ',';
+                const colunas = cabecalho.split(sep).map(c => c.trim().toLowerCase());
+
+                const idxHorario = colunas.findIndex(c => c.includes('hor'));
+                const idxTempo = colunas.findIndex(c => c.includes('temp') || c.includes('seg') || c.includes('s'));
+                const idxT1 = colunas.findIndex(c => c.includes('t1'));
+                const idxT2 = colunas.findIndex(c => c.includes('t2'));
+                const idxT3 = colunas.findIndex(c => c.includes('t3'));
+                const idxT4 = colunas.findIndex(c => c.includes('t4'));
+                const idxT5 = colunas.findIndex(c => c.includes('t5'));
+                const idxT6 = colunas.findIndex(c => c.includes('t6'));
+                const idxAlvo = colunas.findIndex(c => c.includes('alvo'));
+
+                const parseNum = (val) => {
+                    if (!val) return 0.0;
+                    return parseFloat(val.replace(',', '.').trim()) || 0.0;
+                };
+
+                const novosDados = [];
+                for (let i = 1; i < linhas.length; i++) {
+                    const partes = linhas[i].split(sep);
+                    if (partes.length < 4) continue;
+
+                    const horario = idxHorario >= 0 ? partes[idxHorario].trim() : `--:--:${i}`;
+                    const tempo_s = idxTempo >= 0 ? Math.round(parseNum(partes[idxTempo])) : (i - 1) * 2;
+                    const t1 = idxT1 >= 0 ? parseNum(partes[idxT1]) : 0;
+                    const t2 = idxT2 >= 0 ? parseNum(partes[idxT2]) : 0;
+                    const t3 = idxT3 >= 0 ? parseNum(partes[idxT3]) : 0;
+                    const t4 = idxT4 >= 0 ? parseNum(partes[idxT4]) : 0;
+                    const t5 = idxT5 >= 0 ? parseNum(partes[idxT5]) : 0;
+                    const t6 = idxT6 >= 0 ? parseNum(partes[idxT6]) : 0;
+                    const alvo = idxAlvo >= 0 ? parseNum(partes[idxAlvo]) : null;
+
+                    novosDados.push({
+                        horario: horario,
+                        tempo_s: tempo_s,
+                        t1: t1,
+                        t2: t2,
+                        t3: t3,
+                        t4: t4,
+                        t5: t5,
+                        t6: t6,
+                        alvo: alvo
+                    });
+                }
+
+                if (novosDados.length === 0) {
+                    alert('Nenhum dado válido de temperatura encontrado no CSV.');
+                    return;
+                }
+
+                if (!isPaused) {
+                    togglePauseMonitoramento();
+                }
+
+                dadosOriginaisBackup = JSON.parse(JSON.stringify(novosDados));
+                dadosTemperatura.length = 0;
+                dadosTemperatura.push(...novosDados);
+
+                redesenharGraficoCompleto();
+
+                const btnRes = document.getElementById('btn-restaurar');
+                if (btnRes) btnRes.disabled = false;
+                const countBackup = document.getElementById('count-pontos-backup');
+                if (countBackup) countBackup.textContent = dadosOriginaisBackup.length;
+
+                const tMin = dadosTemperatura[0].tempo_s;
+                const tMax = dadosTemperatura[dadosTemperatura.length - 1].tempo_s;
+                const inputManterDe = document.getElementById('manter-de');
+                const inputManterAte = document.getElementById('manter-ate');
+                if (inputManterDe) inputManterDe.value = tMin;
+                if (inputManterAte) inputManterAte.value = tMax;
+
+                const badge = document.getElementById('badge-status-dados');
+                if (badge) {
+                    badge.className = 'badge bg-info text-dark';
+                    badge.textContent = `CSV Carregado (${novosDados.length} pts)`;
+                }
+                const status = document.getElementById('status-tratamento');
+                if (status) {
+                    status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Arquivo <strong>${file.name}</strong> carregado (${novosDados.length} pontos). O monitoramento ao vivo foi pausado para edição.`;
+                }
+
+                if (idxAlvo >= 0) {
+                    const primeiroAlvo = novosDados.find(d => d.alvo && d.alvo > 0);
+                    if (primeiroAlvo) {
+                        temperaturaAlvoAtual = primeiroAlvo.alvo;
+                        const display = document.getElementById('display-alvo-configurado');
+                        const input = document.getElementById('input-temperatura-alvo');
+                        const formatado = temperaturaAlvoAtual.toFixed(1).replace('.', ',');
+                        if (display) display.innerHTML = `Valor configurado: <strong>${formatado} °C</strong>`;
+                        if (input) input.value = formatado;
+                    }
+                }
+
+                if (novosDados.length > 0) {
+                    const ultimo = novosDados[novosDados.length - 1];
+                    atualizarKPIs(ultimo.t1, ultimo.t2, ultimo.t3, ultimo.t4, ultimo.t5, ultimo.t6);
+                }
+
+                const painel = document.getElementById('painel-tratamento-container');
+                if (painel) painel.style.display = 'block';
+
+                event.target.value = '';
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // ── Atualização dos Indicadores de KPI ao Vivo ─────────────────────────
+        function atualizarKPIs(t1, t2, t3, t4, t5, t6) {
+            const tMediaVal = (t1 + t2 + t3) / 3;
+            const tMedia = tMediaVal.toFixed(4);
+            document.getElementById('kpi-t-media').innerHTML = `${tMedia} <span class="temp-unit">°C</span>`;
+
+            const deltaT = Math.abs(t1 - t3).toFixed(4);
+            document.getElementById('kpi-delta-t').innerHTML = `${deltaT} <span class="temp-unit">°C</span>`;
+            
+            const badgeDelta = document.getElementById('kpi-unif-badge');
+            if (parseFloat(deltaT) <= 2.5) {
+                badgeDelta.className = 'kpi-badge bg-success-subtle text-success';
+                badgeDelta.textContent = 'Homogêneo (Ts ≈ const)';
+            } else {
+                badgeDelta.className = 'kpi-badge bg-warning-subtle text-warning';
+                badgeDelta.textContent = 'Gradiente Ativo';
+            }
+
+            document.getElementById('kpi-t-amb').innerHTML = `${t4.toFixed(4)} <span class="temp-unit">°C</span>`;
+
+            const tInf = ((t5 + t6) / 2).toFixed(4);
+            document.getElementById('kpi-t-inf').innerHTML = `${tInf} <span class="temp-unit">°C</span>`;
+
+            atualizarRegimePermanente(tMediaVal);
+            atualizarCoerenciaFisica(t1, t2, t3, t4, t5, t6);
+        }
+
+        async function buscarDadosMonitoramento() {
+            try {
+                const response = await fetch('/api/monitoramento', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    console.error('Erro na resposta:', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success && data.data) {
+                    atualizarCardsTemperatura(data.data);
+                }
+            } catch (error) {
+                console.error('Falha de rede:', error);
+            }
+        }
+
+        // ── Posições Fixas na Bancada Térmica ─────────────────────────────────
+        const POSICOES_BANCADA = [
+            { id: 't1', label: 'T1 — Início da Placa', icon: 'fa-fire',        iconColor: 'icon-t1', cardClass: 'card-t1' },
+            { id: 't2', label: 'T2 — Centro da Placa', icon: 'fa-square',      iconColor: 'icon-t2', cardClass: 'card-t2' },
+            { id: 't3', label: 'T3 — Fim da Placa',    icon: 'fa-fire-burner', iconColor: 'icon-t3', cardClass: 'card-t3' },
+            { id: 't4', label: 'T4 — Ambiente',        icon: 'fa-wind',        iconColor: 'icon-t4', cardClass: 'card-t4' },
+            { id: 't5', label: 'T5 — Base / Água',     icon: 'fa-layer-group', iconColor: 'icon-t5', cardClass: 'card-t5' },
+            { id: 't6', label: 'T6 — Base / Água',     icon: 'fa-layer-group', iconColor: 'icon-t6', cardClass: 'card-t6' }
+        ];
+
+        const INFO_SENSORES_FISICOS = {
+            't1': { nome: 'Sensor #01 (ESP32 #01)', badge: 'Sensor 1' },
+            't2': { nome: 'Sensor #02 (ESP32 #01)', badge: 'Sensor 2' },
+            't3': { nome: 'Sensor #03 (ESP32 #01)', badge: 'Sensor 3' },
+            't4': { nome: 'Sensor #04 (DHT11 #01)', badge: 'Sensor 4' },
+            't5': { nome: 'Sensor #05 (ESP32 #02)', badge: 'Sensor 5' },
+            't6': { nome: 'Sensor #06 (ESP32 #02)', badge: 'Sensor 6' }
+        };
+
+        const PADRAO_MAPEAMENTO = ['t1', 't2', 't3', 't4', 't5', 't6'];
+        let sensorMapping = PADRAO_MAPEAMENTO.slice();
+
+        try {
+            const salvo = localStorage.getItem('sensorMapping');
+            if (salvo) {
+                const parsed = JSON.parse(salvo);
+                if (Array.isArray(parsed) && parsed.length === PADRAO_MAPEAMENTO.length) {
+                    sensorMapping = parsed;
+                }
+            }
+        } catch(e) {}
+
+        function salvarMapeamento() {
+            localStorage.setItem('sensorMapping', JSON.stringify(sensorMapping));
+        }
+
+        function restaurarMapeamentoPadrao() {
+            sensorMapping = PADRAO_MAPEAMENTO.slice();
+            try {
+                localStorage.removeItem('sensorMapping');
+            } catch(e) {}
+            aplicarMapeamentoNaTela();
+            if (ultimosDadosRecebidos) {
+                atualizarCardsTemperatura(ultimosDadosRecebidos);
+            }
+        }
+
+        let ultimosDadosRecebidos = null;
+
+        function aplicarMapeamentoNaTela() {
+            const slots = document.querySelectorAll('#cards-row [data-slot]');
+            slots.forEach((col, i) => {
+                const pos = POSICOES_BANCADA[i];
+                const canalConectado = sensorMapping[i];
+                const infoSensor = INFO_SENSORES_FISICOS[canalConectado] || { nome: `Sensor ${canalConectado}`, badge: canalConectado };
+                
+                const card = col.querySelector('.temp-card');
+                card.className = 'temp-card ' + pos.cardClass;
+                card.setAttribute('data-posicao', pos.id);
+                card.setAttribute('data-sensor-canal', canalConectado);
+                
+                col.querySelector('.card-label').textContent = pos.label;
+                
+                const iconEl = col.querySelector('.card-icon');
+                iconEl.className = `fas ${pos.icon} mr-1 card-icon ${pos.iconColor}`;
+                
+                col.querySelector('.sensor-desc').innerHTML = `<i class="fas fa-microchip text-primary mr-1"></i>Conectado ao: <strong>${infoSensor.nome}</strong>`;
+            });
+        }
+
+        function atualizarCardsTemperatura(dados) {
+            ultimosDadosRecebidos = dados;
+            const slots = document.querySelectorAll('#cards-row [data-slot]');
+            slots.forEach(col => { col.querySelector('.sensor-value').style.opacity = '0.4'; });
+
+            setTimeout(() => {
+                const leiturasMapeadas = {};
+
+                slots.forEach((col, i) => {
+                    const pos = POSICOES_BANCADA[i];
+                    const canalConectado = sensorMapping[i];
+                    const val = parseFloat(dados[canalConectado]) || 0;
+                    
+                    leiturasMapeadas[pos.id] = val;
+
+                    col.querySelector('.sensor-value').innerHTML =
+                        `${val.toFixed(4)}<span class="temp-unit">°C</span>`;
+                    col.querySelector('.sensor-value').style.opacity = '1';
+                });
+
+                const t1 = leiturasMapeadas['t1'] || 0;
+                const t2 = leiturasMapeadas['t2'] || 0;
+                const t3 = leiturasMapeadas['t3'] || 0;
+                const t4 = leiturasMapeadas['t4'] || 0;
+                const t5 = leiturasMapeadas['t5'] || 0;
+                const t6 = leiturasMapeadas['t6'] || 0;
+
+                adicionarPontoGrafico(t1, t2, t3, t4, t5, t6);
+                atualizarKPIs(t1, t2, t3, t4, t5, t6);
+            }, 150);
+        }
+
+        // ── Drag & Drop de Mapeamento de Sensores ──────────────────────────────
+        let dragSrcSlot = null;
+
+        function initDragDrop() {
+            const handles = document.querySelectorAll('.drag-handle');
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', () => {
+                    handle.closest('.temp-card').setAttribute('draggable', 'true');
+                });
+                handle.addEventListener('mouseup', () => {
+                    handle.closest('.temp-card').setAttribute('draggable', 'false');
+                });
+            });
+
+            const cards = document.querySelectorAll('#cards-row .temp-card');
+            cards.forEach(card => {
+                card.addEventListener('dragstart', e => {
+                    dragSrcSlot = parseInt(card.closest('[data-slot]').getAttribute('data-slot'));
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                card.addEventListener('dragend', () => {
+                    card.setAttribute('draggable', 'false');
+                    card.classList.remove('dragging');
+                    document.querySelectorAll('.temp-card').forEach(c => c.classList.remove('drag-over'));
+                });
+                card.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    document.querySelectorAll('.temp-card').forEach(c => c.classList.remove('drag-over'));
+                    card.classList.add('drag-over');
+                });
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drag-over');
+                });
+                card.addEventListener('drop', e => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    const destSlot = parseInt(card.closest('[data-slot]').getAttribute('data-slot'));
+                    if (dragSrcSlot === null || dragSrcSlot === destSlot) return;
+                    
+                    const canalOrigem = sensorMapping[dragSrcSlot];
+                    sensorMapping[dragSrcSlot] = sensorMapping[destSlot];
+                    sensorMapping[destSlot] = canalOrigem;
+                    
+                    salvarMapeamento();
+                    aplicarMapeamentoNaTela();
+                    
+                    if (ultimosDadosRecebidos) {
+                        atualizarCardsTemperatura(ultimosDadosRecebidos);
+                    }
+                    dragSrcSlot = null;
+                });
+            });
+        }
+
+        function atualizarAgora() {
+            buscarDadosMonitoramento();
+        }
+
+        function iniciarMonitoramento() {
+            inicializarGrafico();
+            buscarDadosMonitoramento();
+            monitoringInterval = setInterval(buscarDadosMonitoramento, 2000);
+        }
+
+        function pararMonitoramento() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+            }
+        }
+
+        // =====================================================================
+        // CONTROLE DA TEMPERATURA-ALVO DO ENSAIO (REFERÊNCIA DE BANCADA)
+        // E DETECTOR DE REGIME PERMANENTE
+        // =====================================================================
+        let temperaturaAlvoAtual = null;
+        let tempoInicioEstabilidade = null;
+
+        function atualizarRegimePermanente(tPlaca) {
+            const badge = document.getElementById('badge-regime-permanente');
+            if (!badge) return;
+
+            // Se não houver temperatura-alvo configurada ou leitura válida da placa
+            if (temperaturaAlvoAtual === null || isNaN(temperaturaAlvoAtual) || tPlaca <= 0) {
+                badge.style.display = 'none';
+                tempoInicioEstabilidade = null;
+                return;
+            }
+
+            const erro = tPlaca - temperaturaAlvoAtual;
+            const desvio = Math.abs(erro);
+
+            if (desvio > 0.5) {
+                // Fora da faixa de tolerância de ±0,5 °C: reinicia a contagem de estabilidade
+                tempoInicioEstabilidade = null;
+                badge.style.display = 'inline-block';
+                if (erro < 0) {
+                    badge.textContent = 'Aquecendo em direção ao alvo...';
+                } else {
+                    badge.textContent = 'Ajustando em direção ao alvo...';
+                }
+                badge.style.backgroundColor = '#fef3c7';
+                badge.style.color = '#92400e';
+                badge.style.border = '1px solid #fcd34d';
+            } else {
+                // Dentro da faixa de tolerância de ±0,5 °C do alvo
+                if (!tempoInicioEstabilidade) {
+                    tempoInicioEstabilidade = Date.now();
+                }
+
+                const decorridoSeg = Math.floor((Date.now() - tempoInicioEstabilidade) / 1000);
+                badge.style.display = 'inline-block';
+
+                if (decorridoSeg < 120) {
+                    badge.textContent = `Estabilizando... (${decorridoSeg}s / 120s)`;
+                    badge.style.backgroundColor = '#e0f2fe';
+                    badge.style.color = '#0369a1';
+                    badge.style.border = '1px solid #bae6fd';
+                } else {
+                    badge.textContent = 'Regime Permanente Estabelecido!';
+                    badge.style.backgroundColor = '#dcfce7';
+                    badge.style.color = '#15803d';
+                    badge.style.border = '1px solid #86efac';
+                }
+            }
+        }
+
+        // =====================================================================
+        // DETECTOR DE COERÊNCIA FÍSICA E TERMODINÂMICA EM TEMPO REAL
+        // Validação da 1ª e 2ª Leis da Termodinâmica para Condução Unidimensional:
+        // Gradiente estritamente decrescente a partir da fonte: T3 >= T2 >= T1
+        // =====================================================================
+        function atualizarCoerenciaFisica(t1, t2, t3, t4, t5, t6) {
+            const badge = document.getElementById('badge-coerencia-fisica');
+            if (!badge) return;
+
+            // Se sensores da placa não tiverem leitura válida ou inicializando
+            if (t1 <= 0 || t2 <= 0 || t3 <= 0) {
+                badge.style.display = 'none';
+                return;
+            }
+
+            const tAmb = (t4 && t4 > 0) ? t4 : 25.0;
+            const tMediaPlaca = (t1 + t2 + t3) / 3;
+
+            // Condição 1: Bancada desligada / temperatura ambiente (repouso térmico)
+            if (tMediaPlaca < tAmb + 1.5) {
+                badge.style.display = 'inline-block';
+                badge.textContent = 'Equilíbrio Ambiente';
+                badge.style.backgroundColor = '#f1f5f9';
+                badge.style.color = '#475569';
+                badge.style.border = '1px solid #cbd5e1';
+                badge.title = 'Bancada em temperatura ambiente de repouso.';
+                return;
+            }
+
+            // Condição 2: Bancada aquecida (Gradiente Unidimensional Ativo)
+            // Ordem física experimental da bancada: T3 >= T2 >= T1 (da fonte de calor para a extremidade)
+            // Margem metrológica de incerteza do DS18B20 digital (+-0.15 °C)
+            const MARGEM_INCERTEZA = 0.15;
+            const inversaoT2 = (t2 - t3) > MARGEM_INCERTEZA; // T2 não pode superar T3
+            const inversaoT1 = (t1 - t2) > MARGEM_INCERTEZA; // T1 não pode superar T2
+
+            if (inversaoT2) {
+                badge.style.display = 'inline-block';
+                badge.textContent = `Inversão Térmica: T2 > T3 (+${(t2 - t3).toFixed(2)} °C)`;
+                badge.style.backgroundColor = '#fee2e2';
+                badge.style.color = '#991b1b';
+                badge.style.border = '1px solid #f87171';
+                badge.title = 'Violação da 2ª Lei da Termodinâmica: Sensor T2 mais quente que T3 (fonte de calor). Verifique alocação física ou calibração.';
+            } else if (inversaoT1) {
+                badge.style.display = 'inline-block';
+                badge.textContent = `Inversão Térmica: T1 > T2 (+${(t1 - t2).toFixed(2)} °C)`;
+                badge.style.backgroundColor = '#fee2e2';
+                badge.style.color = '#991b1b';
+                badge.style.border = '1px solid #f87171';
+                badge.title = 'Violação da 2ª Lei da Termodinâmica: Sensor T1 (extremidade) mais quente que T2 (meio). Verifique alocação física ou calibração.';
+            } else {
+                badge.style.display = 'inline-block';
+                badge.textContent = 'Gradiente Físico Coerente (T3 ≥ T2 ≥ T1)';
+                badge.style.backgroundColor = '#dcfce7';
+                badge.style.color = '#166534';
+                badge.style.border = '1px solid #86efac';
+                badge.title = 'Gradiente unidimensional experimental consistente com o fluxo condutivo da fonte de calor (T3 ≥ T2 ≥ T1).';
+            }
+        }
+
+        function exibirFeedbackAlvo(mensagem, tipo = 'sucesso') {
+            const alerta = document.getElementById('alerta-temperatura-alvo');
+            if (!alerta) return;
+
+            alerta.style.color = (tipo === 'sucesso') ? '#15803d' : '#b91c1c';
+            alerta.textContent = mensagem;
+            alerta.style.display = 'inline-block';
+
+            if (tipo === 'sucesso') {
+                setTimeout(() => {
+                    alerta.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        async function carregarTemperaturaAlvo() {
+            try {
+                const response = await fetch('/api/temperatura-alvo');
+                if (!response.ok) return;
+                const data = await response.json();
+
+                const display = document.getElementById('display-alvo-configurado');
+                const input = document.getElementById('input-temperatura-alvo');
+
+                if (data && data.definida && data.temperatura_alvo !== null) {
+                    temperaturaAlvoAtual = parseFloat(data.temperatura_alvo);
+                    tempoInicioEstabilidade = null;
+                    const formatted = temperaturaAlvoAtual.toFixed(1).replace('.', ',');
+                    if (display) {
+                        display.innerHTML = `Valor configurado: <strong>${formatted} °C</strong>`;
+                    }
+                    if (input && !input.value) {
+                        input.value = formatted;
+                    }
+                    if (ultimosDadosRecebidos) {
+                        atualizarCardsTemperatura(ultimosDadosRecebidos);
+                    }
+                } else {
+                    temperaturaAlvoAtual = null;
+                    tempoInicioEstabilidade = null;
+                    if (display) {
+                        display.innerHTML = `Valor configurado: <span class="text-muted fst-italic">Não configurada</span>`;
+                    }
+                    const badge = document.getElementById('badge-regime-permanente');
+                    if (badge) badge.style.display = 'none';
+                }
+            } catch (err) {
+                console.warn('[ALVO] Falha ao consultar temperatura-alvo inicial:', err);
+            }
+        }
+
+        async function definirTemperaturaAlvo() {
+            const input = document.getElementById('input-temperatura-alvo');
+            const btn = document.getElementById('btn-definir-alvo');
+            const display = document.getElementById('display-alvo-configurado');
+
+            if (!input) return;
+
+            const rawVal = input.value.trim();
+
+            // 1. Validação de campo vazio
+            if (!rawVal) {
+                exibirFeedbackAlvo('Por favor, informe a temperatura-alvo do ensaio.', 'erro');
+                input.focus();
+                return;
+            }
+
+            // 2. Validação numérica e substituição de vírgula decimal
+            const valorTratado = rawVal.replace(',', '.');
+            const valorNum = parseFloat(valorTratado);
+
+            // 3. Validação de NaN e texto inválido
+            if (isNaN(valorNum) || !/^-?\d+(\.\d+)?$/.test(valorTratado)) {
+                exibirFeedbackAlvo('Texto inválido! Digite um número decimal válido (ex: 50,0 ou 50.0).', 'erro');
+                input.focus();
+                return;
+            }
+
+            // 4. Validação de faixa física do banho de água (0 °C a 100 °C)
+            if (valorNum < 0.0 || valorNum > 100.0) {
+                exibirFeedbackAlvo(`Valor fora da faixa física do ensaio (0,0 °C a 100,0 °C). Você informou: ${valorNum.toFixed(1).replace('.', ',')} °C.`, 'erro');
+                input.focus();
+                return;
+            }
+
+            if (btn) btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/temperatura-alvo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ temperatura_alvo: valorNum })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    temperaturaAlvoAtual = valorNum;
+                    tempoInicioEstabilidade = null;
+                    const formatado = valorNum.toFixed(1).replace('.', ',');
+                    if (display) {
+                        display.innerHTML = `Valor configurado: <strong>${formatado} °C</strong>`;
+                    }
+                    input.value = formatado;
+                    exibirFeedbackAlvo(`Temperatura-alvo configurada com sucesso para ${formatado} °C!`, 'sucesso');
+                    if (ultimosDadosRecebidos) {
+                        atualizarCardsTemperatura(ultimosDadosRecebidos);
+                    }
+                } else {
+                    const msgErro = data && data.mensagem ? data.mensagem : 'Erro ao salvar temperatura-alvo.';
+                    exibirFeedbackAlvo(msgErro, 'erro');
+                }
+            } catch (err) {
+                console.error('[ALVO] Erro na requisição:', err);
+                exibirFeedbackAlvo('Falha de conexão com o servidor ao salvar temperatura-alvo.', 'erro');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            aplicarMapeamentoNaTela();
+            iniciarMonitoramento();
+            initDragDrop();
+            carregarTemperaturaAlvo();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            pararMonitoramento();
+        });
+    </script>
+</body>
+</html>

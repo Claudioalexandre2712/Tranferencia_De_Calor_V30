@@ -1,0 +1,29 @@
+Resultados das Aletas
+Seleção de Aletas: 1)aletas retangulares retas
+Tipo de Aleta: 1)aletas retangulares retas
+Material: Alumínio
+k: 240.0
+Eficiência da Aleta: 0.919953
+Taxa de Transferência de Calor: 17.594096 W
+Área da Aleta: 0.010000 m²
+Efetividade (epsilon_a): 46.917589
+Parâmetro m: 10.307764 m^-1
+Perímetro P: 0.204000 m
+Área Transversal A_tr: 0.000200000 m^2
+Comprimento (m) x Temperatura (°C):
+0.000000 m: 100.000000 °C
+0.003571 m: 98.741447 °C
+0.007143 m: 97.582841 °C
+0.010714 m: 96.522613 °C
+0.014286 m: 95.559326 °C
+0.017857 m: 94.691673 °C
+0.021429 m: 93.918479 °C
+0.025000 m: 93.238697 °C
+0.028571 m: 92.651403 °C
+0.032143 m: 92.155804 °C
+0.035714 m: 91.751226 °C
+0.039286 m: 91.437121 °C
+0.042857 m: 91.213065 °C
+0.046429 m: 91.078752 °C
+0.050000 m: 91.034001 °C
+

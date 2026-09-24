@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V30 — Laboratório de Transferência de Calor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { font-family: var(--font-sans); background: var(--bg-app); color: var(--ink); }
+
+    .stage {
+      position: relative;
+      height: 100vh;   /* altura travada: a página inteira cabe na tela, sem rolagem */
+      overflow: hidden;
+      background: var(--bg-app);
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── Camada 1: grade técnica (folha de desenho de engenharia) ── */
+    .blueprint {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity: 0.55;
+      -webkit-mask-image: radial-gradient(ellipse 90% 60% at 30% 15%, #000 40%, transparent 88%);
+              mask-image: radial-gradient(ellipse 90% 60% at 30% 15%, #000 40%, transparent 88%);
+    }
+    .stage::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse 55% 40% at 82% 10%, var(--cool-soft), transparent 65%),
+                  radial-gradient(ellipse 55% 40% at 18% 96%, var(--heat-soft), transparent 65%);
+    }
+
+    /* ── Camada 2: plume de aletas — CHUVA/CORRENTE CONTÍNUA (emissor + remoção), não um
+       conjunto fixo criado uma vez. Cada partícula nasce, voa e é removida do DOM quando a
+       animação termina (animationend); um timer mantém um número de partículas ativas.
+       Estrutura em DOIS elementos para o voo e a repulsão do mouse NUNCA disputarem a mesma
+       propriedade transform no mesmo elemento:
+         .aleta-particle     → voo (translateY + giro + deriva), 1 iteração, some no topo.
+         .aleta-particle img → só o deslocamento de repulsão do cursor (JS, translate puro).
+       Sem blur, sem grandes mudanças de cor — as imagens originais continuam reconhecíveis. */
+    .plume { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; transition: transform 0.4s ease-out; }
+    .aleta-particle {
+      position: absolute;
+      top: 0;
+      pointer-events: none;
+      will-change: transform;
+      animation-name: vx-rise;
+      animation-timing-function: linear;
+      animation-iteration-count: 1;
+      animation-fill-mode: forwards;
+    }
+    .aleta-particle img {
+      display: block; width: 100%; height: auto;
+      filter: drop-shadow(0 8px 18px rgba(13, 20, 32, 0.22));
+      will-change: transform;
+      transition: transform 180ms cubic-bezier(.22,.8,.32,1);
+    }
+
+    /* Igual ao floatAnim antigo: translateY(110vh) → translateY(-20vh), giro completo 0→360deg.
+       Só acrescenta uma deriva horizontal suave (via --drift, definido por elemento no JS)
+       para não ser uma linha reta — sem tornar o movimento sutil ou lento. */
+    @keyframes vx-rise {
+      0%   { transform: translateY(110vh) translateX(0) rotate(0deg); }
+      50%  { transform: translateY(45vh) translateX(var(--drift, 2vw)) rotate(180deg); }
+      100% { transform: translateY(-20vh) translateX(0) rotate(360deg); }
+    }
+
+    /* ── Camada 3: conteúdo — headline + índice do produto, mesma coluna ──
+       .stage centraliza verticalmente (align-items:center) e tem altura travada em
+       100vh, então o padding aqui é enxuto de propósito: a página inteira precisa
+       caber sem rolagem, em vez de ficar fixa no topo com muito respiro. */
+    .content-col { position: relative; z-index: 2; max-width: 660px; padding: 1.6rem 2.6rem; margin: 0 auto; }
+
+    .hero-readout {
+      font-family: var(--font-mono); font-size: 0.76rem; color: var(--ink-dim);
+      display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;
+      border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.28rem 0.75rem 0.28rem 0.55rem;
+      background: rgba(255,255,255,0.65); backdrop-filter: blur(6px);
+    }
+    .hero-readout .flame { color: var(--heat); }
+    .content-col h1 {
+      font-family: var(--font-display); font-weight: 600;
+      font-size: clamp(1rem, 2.2vw, 2rem);
+      white-space: nowrap;
+      line-height: 1.14; letter-spacing: -0.01em;
+      margin: 0 0 0.6rem; color: var(--ink);
+    }
+    .content-col p.lede { font-size: 0.96rem; line-height: 1.5; color: var(--ink-dim); max-width: 46ch; margin: 0 0 1.3rem; }
+
+    /* ── Índice do produto: os módulos, como o sumário de um manual de engenharia ── */
+    .index-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
+    .index-item { border-bottom: 1px solid var(--line-strong); }
+    .index-item a {
+      position: relative;
+      display: flex; align-items: flex-start; gap: 0.9rem;
+      text-decoration: none; color: inherit;
+      padding: 0.65rem 0.9rem;
+      margin: 0 -0.9rem;
+      border-radius: var(--radius);
+      transition: background-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .index-item a::before {
+      content: ''; position: absolute; left: 0; top: 0.55rem; bottom: 0.55rem; width: 3px;
+      background: var(--accent); border-radius: 2px;
+      transform: scaleY(0); transform-origin: center;
+      transition: transform var(--dur) var(--ease);
+    }
+    .index-item a:hover {
+      background: var(--panel);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(13,20,32,0.10);
+    }
+    .index-item a:hover::before { transform: scaleY(1); }
+    .index-item a:active { transform: translateY(-1px) scale(0.994); }
+    .index-icon {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: var(--radius-sm);
+      background: var(--accent-soft); color: var(--accent); font-size: 0.92rem;
+      transition: transform var(--dur) var(--ease), background-color var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .index-item a:hover .index-icon { transform: scale(1.12) rotate(-8deg); background: var(--accent); color: #fff; box-shadow: 0 8px 18px var(--accent-soft); }
+    .index-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .index-title { display: block; font-size: 0.94rem; font-weight: 600; color: var(--ink); line-height: 1.25; }
+    .index-desc { display: block; font-size: 0.8rem; color: var(--ink-dim); line-height: 1.38; margin-top: 0.15rem; max-width: 44ch; }
+    .index-go { flex-shrink: 0; color: var(--ink-faint); font-size: 0.8rem; margin-top: 0.45rem; opacity: 0.5; transition: transform var(--dur) var(--ease), opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+    .index-item a:hover .index-go { transform: translateX(4px); opacity: 1; color: var(--accent); }
+
+    /* Hierarquia: os dois pilares do produto (calcular / monitorar) ganham mais peso. */
+    .index-item.is-primary .index-icon { width: 38px; height: 38px; font-size: 1.02rem; }
+    .index-item.is-primary .index-title { font-size: 1rem; }
+    .index-item.is-primary a { padding: 0.8rem 0.9rem; margin: 0 -0.9rem; }
+    .index-item:not(.is-primary) .index-icon { background: var(--accent-soft); color: var(--accent); }
+    .index-item:not(.is-primary) .index-desc { font-size: 0.78rem; }
+
+    @media (max-width: 900px) {
+      .stage { height: auto; min-height: 100vh; }
+      .content-col { padding: 2.2rem 1.4rem; max-width: 100%; }
+      .blueprint { background-size: 40px 40px; }
+      .index-desc { max-width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      /* Acessibilidade: o fluxo de aletas continua rodando (ver <script> — só com menos
+         partículas e ritmo mais lento nesse modo, não desligado por completo), sem
+         paralaxe nem repulsão do cursor. Aqui só desliga a transição da paralaxe do
+         campo, que de fato não é ativada nesse modo. */
+      .plume { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="blueprint"></div>
+    <div class="plume" id="plumeField"></div>
+
+    <div class="content-col">
+      <div class="hero-readout"><i class="fa-solid fa-fire-flame-simple flame"></i> Bancada de ensaio · 6 canais de temperatura · tempo real</div>
+      <h1 class="vx-enter">Laboratório de transferência de calor</h1>
+      <p class="lede vx-enter vx-enter-d1">
+        Calculadoras de engenharia térmica e instrumentação ao vivo da bancada
+        aletas, convecção, mudança de fase, arranjos de tubos e circuito térmico,
+        num só lugar.
+      </p>
+
+      <ul class="index-list vx-enter vx-enter-d2">
+        <li class="index-item is-primary">
+          <a href="{{ url_for('calculadora_convectivo') }}">
+            <span class="index-icon"><i class="fa-solid fa-wind"></i></span>
+            <span class="index-text">
+              <span class="index-title">Calculadoras de convecção &amp; mudança de fase</span>
+              <span class="index-desc">Natural, forçada, condensação, ebulição e arranjos.</span>
+            </span>
+            <span class="index-go"><i class="fa-solid fa-arrow-right"></i></span>
+          </a>
+        </li>
+        <li class="index-item is-primary">
+          <a href="{{ url_for('painel_status') }}">
+            <span class="index-icon"><i class="fa-solid fa-gauge-high"></i></span>
+            <span class="index-text">
+              <span class="index-title">Painel de monitoramento</span>
+              <span class="index-desc">Leituras ao vivo dos 6 canais de temperatura da bancada, atualizadas a cada 2 segundos.</span>
+            </span>
+            <span class="index-go"><i class="fa-solid fa-arrow-right"></i></span>
+          </a>
+        </li>
+        <li class="index-item">
+          <a href="{{ url_for('tipos_aletas') }}">
+            <span class="index-icon"><i class="fa-solid fa-layer-group"></i></span>
+            <span class="index-text">
+              <span class="index-title">Aletas</span>
+              <span class="index-desc">Compare geometrias e veja como cada uma dissipa calor.</span>
+            </span>
+            <span class="index-go"><i class="fa-solid fa-arrow-right"></i></span>
+          </a>
+        </li>
+        <li class="index-item">
+          <a href="{{ url_for('sele_aleta') }}">
+            <span class="index-icon"><i class="fa-solid fa-cubes"></i></span>
+            <span class="index-text">
+              <span class="index-title">Materiais</span>
+              <span class="index-desc">Compare condutividades térmicas antes de simular.</span>
+            </span>
+            <span class="index-go"><i class="fa-solid fa-arrow-right"></i></span>
+          </a>
+        </li>
+        <li class="index-item">
+          <a href="{{ url_for('circuito_termico') }}">
+            <span class="index-icon"><i class="fa-solid fa-diagram-project"></i></span>
+            <span class="index-text">
+              <span class="index-title">Circuito térmico</span>
+              <span class="index-desc">Monte um circuito de resistências e resolva a distribuição de temperatura.</span>
+            </span>
+            <span class="index-go"><i class="fa-solid fa-arrow-right"></i></span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const aletasImgs = [
+      "{{ url_for('static', filename='aletas/1.png') }}",
+      "{{ url_for('static', filename='aletas/2.png') }}",
+      "{{ url_for('static', filename='aletas/3.png') }}",
+      "{{ url_for('static', filename='aletas/4.png') }}",
+      "{{ url_for('static', filename='aletas/5.png') }}",
+      "{{ url_for('static', filename='aletas/6.png') }}",
+      "{{ url_for('static', filename='aletas/7.png') }}",
+      "{{ url_for('static', filename='aletas/8.png') }}"
+    ];
+
+    const plume = document.getElementById('plumeField');
+    const stage = document.getElementById('stage');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function ale(min, max) { return Math.random() * (max - min) + min; }
+
+    // ── Emissor contínuo (chuva/corrente de aletas) ──────────────────────────────
+    // Nada de conjunto fixo criado uma vez: spawnAleta() cria UMA partícula, que se
+    // autorremove no fim da própria animação (animationend, 1 iteração só). Um timer
+    // mantém a contagem de ativas perto de MAX_ACTIVE_ALETAS, repondo continuamente.
+    const MAX_ACTIVE_ALETAS = 120;
+    window.__aletaParticles = new Set(); // exposto para inspeção/QA (ver ACTIVE_ALETAS)
+
+    function spawnAleta(initialProgress) {
+      // Piso 70px preservado (nunca menor que o que já tínhamos); teto um pouco maior
+      // (150px) só para dar mais variedade de tamanho, sem ficar exagerado.
+      const size = ale(70, 150);
+      const dur = ale(12, 25);   // mesma faixa da index antiga
+      const wrap = document.createElement('div');
+      wrap.className = 'aleta-particle';
+      wrap.style.left = ale(0, 100) + '%';
+      wrap.style.width = size + 'px';
+      wrap.style.setProperty('--drift', ale(-3.2, 3.2) + 'vw');
+      wrap.style.animationDuration = dur + 's';
+      // Preenchimento inicial: nasce em progresso aleatório da travessia (delay negativo),
+      // para a tela já começar cheia. Partículas emitidas depois (initialProgress
+      // indefinido) nascem do zero, de baixo da viewport, como pedido.
+      if (typeof initialProgress === 'number') {
+        wrap.style.animationDelay = (-initialProgress * dur) + 's';
+      }
+
+      const img = document.createElement('img');
+      img.src = aletasImgs[Math.floor(Math.random() * aletasImgs.length)];
+      img.alt = '';
+      // Correlação simples de profundidade: aletas maiores = mais opacas/"perto";
+      // menores = mais discretas/"longe" — sem tiers separados, sem blur.
+      img.style.opacity = (0.72 + 0.24 * ((size - 70) / 80)).toFixed(2);
+      wrap.appendChild(img);
+
+      const particle = { wrap, img, repelled: false };
+      wrap.addEventListener('animationend', function () {
+        wrap.remove();
+        window.__aletaParticles.delete(particle);
+      });
+
+      plume.appendChild(wrap);
+      window.__aletaParticles.add(particle);
+      return particle;
+    }
+
+    // O fluxo de aletas roda SEMPRE — prefers-reduced-motion só reduz quantidade/ritmo
+    // (menos partículas, reposição mais lenta) em vez de desligar tudo. Isso evita o
+    // problema anterior: com o SO/navegador reportando "reduzir movimento", a página
+    // não mostrava nenhuma aleta, mesmo sendo esse o efeito principal pedido.
+    const activeMax = reducedMotion ? 45 : MAX_ACTIVE_ALETAS;
+    const initialFill = reducedMotion ? 24 : 60;
+    const spawnEveryMs = reducedMotion ? 650 : 160;
+
+    // Preenchimento inicial: parte das aletas já em progresso variado da travessia.
+    for (let i = 0; i < initialFill; i++) spawnAleta(Math.random());
+
+    // Emissor: tenta repor até o teto periodicamente. Quando uma partícula termina
+    // (animationend acima), sai do Set e o próximo tick pode repor — criação,
+    // movimento, remoção e nova criação continuam por tempo indefinido.
+    setInterval(function () {
+      if (window.__aletaParticles.size < activeMax) {
+        spawnAleta();
+      }
+    }, spawnEveryMs);
+
+    // Repulsão por proximidade: um empurrão decisivo POR APROXIMAÇÃO — pode acontecer
+    // quantas vezes o cursor se aproximar (não é "uma vez na vida"), mas não fica
+    // recalculando a cada frame enquanto o cursor permanece perto (é isso que causava
+    // a "vibração"). particle.repelled funciona como uma trava que só rearma quando o
+    // cursor sai do raio de novo — cada nova aproximação dispara um novo empurrão.
+    // Nunca volta suavemente à trajetória original (sem reset de transform). Roda num
+    // loop próprio, separado da animação de voo — só escreve em img.style.transform
+    // (translate puro), nunca no wrap que gira/sobe, então o voo contínuo nunca é
+    // interrompido pela repulsão.
+    const REPEL_RADIUS = reducedMotion ? 100 : 140;    // px — raio que dispara a fuga
+    const REPEL_STRENGTH = reducedMotion ? 70 : 120;   // px — deslocamento de cada empurrão
+    let mouseX = -9999, mouseY = -9999;
+    let repelRafId = null;
+    let repelFrameSkip = false;
+
+    function repelTick() {
+      // Throttle a ~30fps (pula 1 a cada 2 frames): getBoundingClientRect em até
+      // MAX_ACTIVE_ALETAS elementos a cada frame é o ponto mais caro do efeito —
+      // rodar a 60fps sobrecarregava em máquinas mais fracas.
+      repelFrameSkip = !repelFrameSkip;
+      if (repelFrameSkip) {
+        for (const particle of window.__aletaParticles) {
+          const r = particle.wrap.getBoundingClientRect();
+          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          const dx = cx - mouseX, dy = cy - mouseY;
+          const dist = Math.hypot(dx, dy);
+          if (dist < REPEL_RADIUS && dist > 0.01) {
+            if (!particle.repelled) {
+              // dispara o empurrão desta aproximação; fica travado até o cursor se afastar
+              const ux = dx / dist, uy = dy / dist;
+              particle.img.style.transform = `translate(${(ux * REPEL_STRENGTH).toFixed(1)}px, ${(uy * REPEL_STRENGTH).toFixed(1)}px)`;
+              particle.repelled = true;
+            }
+          } else {
+            particle.repelled = false; // saiu do raio — rearma para a próxima aproximação
+          }
+        }
+      }
+      repelRafId = requestAnimationFrame(repelTick);
+    }
+
+    stage.addEventListener('mouseenter', function (e) {
+      mouseX = e.clientX; mouseY = e.clientY;
+      if (!repelRafId) repelRafId = requestAnimationFrame(repelTick);
+    });
+    stage.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX; mouseY = e.clientY;
+    });
+    stage.addEventListener('mouseleave', function () {
+      if (repelRafId) { cancelAnimationFrame(repelRafId); repelRafId = null; }
+      mouseX = -9999; mouseY = -9999;
+      // Não reseta transform: as aletas já empurradas continuam longe, sem voltar.
+    });
+
+    if (!reducedMotion) {
+      // Paralaxe sutil do campo inteiro (bem discreta — a interação principal é a repulsão acima).
+      // Só no modo de movimento completo; é um efeito ambiente a mais, não a interação pedida.
+      let rafPending = false, targetX = 0, targetY = 0;
+      stage.addEventListener('mousemove', function (e) {
+        const rect = stage.getBoundingClientRect();
+        targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+        targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+        if (!rafPending) {
+          rafPending = true;
+          requestAnimationFrame(() => {
+            plume.style.transform = `translate(${targetX * 8}px, ${targetY * 5}px)`;
+            rafPending = false;
+          });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
