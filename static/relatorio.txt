@@ -1,0 +1,25 @@
+Resultados das Aletas
+Tipo de Aleta: 2)aletas triangulares retas
+Eficiência (eta_aleta): 0.981109
+Taxa de Transferência de Calor (Q_aleta): 0.104211 W
+Efetividade (epsilon_a): 196.224344
+Parâmetro m: 19.686665 m^-1
+Perímetro P: 0.020200 m
+Área Transversal A_tr: 0.000001000 m^2
+Comprimento (m) x Temperatura (°C):
+0.000000 m: 100.000000 °C
+0.000714 m: 99.630765 °C
+0.001429 m: 99.289463 °C
+0.002143 m: 98.975960 °C
+0.002857 m: 98.690131 °C
+0.003571 m: 98.431864 °C
+0.004286 m: 98.201056 °C
+0.005000 m: 97.997617 °C
+0.005714 m: 97.821465 °C
+0.006429 m: 97.672531 °C
+0.007143 m: 97.550756 °C
+0.007857 m: 97.456093 °C
+0.008571 m: 97.388502 °C
+0.009286 m: 97.347959 °C
+0.010000 m: 97.334446 °C
+

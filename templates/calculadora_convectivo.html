@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Coeficiente Convectivo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
+    <style>
+        html, body { margin: 0; }
+
+        .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-5); }
+        .hub-card {
+            position: relative; overflow: hidden;
+            background: var(--panel); padding: 1.5rem 1.4rem; text-decoration: none; color: inherit;
+            display: flex; flex-direction: column; gap: 0.6rem;
+            border: 1.5px solid var(--line-strong); border-radius: var(--radius-lg);
+            box-shadow: 0 1px 3px rgba(13, 20, 32, 0.06);
+            transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+                        transform var(--dur-fast) var(--ease);
+        }
+        .hub-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 28px rgba(13, 20, 32, 0.1);
+            transform: translateY(-3px);
+        }
+        .hub-card > * { position: relative; z-index: 1; }
+        .hub-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .hub-card::before {
+            content: ''; position: absolute; right: -14px; bottom: -14px; width: 128px; height: 96px;
+            z-index: 0; pointer-events: none;
+            -webkit-mask-image: linear-gradient(135deg, transparent 8%, #000 58%);
+                    mask-image: linear-gradient(135deg, transparent 8%, #000 58%);
+        }
+        .hub-card--natural::before { background-image: repeating-linear-gradient(66deg, var(--heat-soft) 0 3px, transparent 3px 13px); }
+        .hub-card--forcada::before { background-image: repeating-linear-gradient(to top, var(--accent-soft) 0 2px, transparent 2px 10px); }
+        .hub-card--condensacao::before {
+            background-image:
+                radial-gradient(circle at 30% 35%, var(--cool-soft) 0 5px, transparent 6px),
+                radial-gradient(circle at 68% 65%, var(--cool-soft) 0 4px, transparent 5px),
+                radial-gradient(circle at 50% 12%, var(--cool-soft) 0 3px, transparent 4px);
+        }
+        .hub-card--ebulicao::before {
+            background-image:
+                radial-gradient(circle at 28% 30%, var(--heat-soft) 0 6px, transparent 7px),
+                radial-gradient(circle at 66% 62%, var(--heat-soft) 0 4px, transparent 5px),
+                radial-gradient(circle at 46% 84%, var(--heat-soft) 0 5px, transparent 6px);
+        }
+        .hub-card--tubos::before {
+            background-image: radial-gradient(circle, var(--line-strong) 1.6px, transparent 1.8px);
+            background-size: 14px 14px;
+        }
+        .hub-card--interno::before {
+            background:
+                linear-gradient(var(--line-strong), var(--line-strong)) top / 100% 3px no-repeat,
+                linear-gradient(var(--line-strong), var(--line-strong)) bottom / 100% 3px no-repeat,
+                repeating-linear-gradient(90deg, var(--accent-soft) 0 6px, transparent 6px 16px) center / 100% 3px no-repeat;
+        }
+        .hub-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: transform var(--dur-fast) var(--ease); }
+        .hub-card--natural .hub-icon, .hub-card--ebulicao .hub-icon { background: var(--heat-soft); color: var(--heat); }
+        .hub-card--condensacao .hub-icon { background: var(--cool-soft); color: var(--cool); }
+        .hub-card--tubos .hub-icon { background: var(--panel-alt); color: var(--ink-dim); }
+        .hub-card--natural:hover .hub-icon { transform: translateY(-3px); }
+        .hub-card--forcada:hover .hub-icon, .hub-card--interno:hover .hub-icon { transform: translateX(3px); }
+        .hub-card--condensacao:hover .hub-icon { transform: translateY(2px); }
+        .hub-card--ebulicao:hover .hub-icon { transform: translateY(-2px) scale(1.06); }
+        .hub-card--tubos:hover .hub-icon { transform: scale(1.08); }
+        .hub-card h3 { font-size: 1rem; font-weight: 600; margin: 0; color: var(--ink); }
+        .hub-card p { font-size: 0.83rem; line-height: 1.48; color: var(--ink-dim); margin: 0; flex: 1; }
+        .hub-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 0.2rem; }
+        .hub-range { font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); display: inline-block; width: fit-content; }
+        .hub-go { color: var(--ink-faint); font-size: 0.85rem; transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+        .hub-card:hover .hub-go { color: var(--accent); transform: translateX(3px); }
+        @media (prefers-reduced-motion: reduce) {
+            .hub-card:hover { transform: none; }
+            .hub-card:hover .hub-go { transform: none; }
+            .hub-card:hover .hub-icon { transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <nav class="console-rail">
+            <a href="/" class="rail-brand">
+                <div class="rail-brand-mark"><i class="fa-solid fa-fire-flame-simple"></i></div>
+                <div>
+                    <div class="rail-brand-title">Claudio Aletas</div>
+                    <div class="rail-brand-sub">Laboratório térmico</div>
+                </div>
+            </a>
+            <div class="rail-nav-links">
+                <a href="/" class="rail-link"><i class="fa-solid fa-house"></i> Início</a>
+                <a href="{{ url_for('calculadora_convectivo') }}" class="rail-link is-active"><i class="fa-solid fa-wind"></i> Convecção</a>
+                <a href="{{ url_for('painel_status') }}" class="rail-link"><i class="fa-solid fa-gauge-high"></i> Painel</a>
+                <a href="{{ url_for('circuito_termico') }}" class="rail-link"><i class="fa-solid fa-diagram-project"></i> Circuito térmico</a>
+            </div>
+        </nav>
+
+        <main class="main-area main-area--thermal">
+            <div class="page-head page-head--thermal">
+                <div class="page-kicker"><i class="fa-solid fa-water"></i> Hub · 6 modelos de convecção</div>
+                <h1>Calculadora de Coeficiente Convectivo</h1>
+                <p>Determine o coeficiente de transferência de calor por convecção (h) usando correlações clássicas.</p>
+            </div>
+            <div class="eng-scale-rule"></div>
+
+            <div class="hub-grid">
+                <a href="{{ url_for('calculadora_convectivo_tipo', tipo='natural') }}" class="hub-card hub-card--natural" id="card-natural">
+                    <div class="hub-icon"><i class="fa-solid fa-wind"></i></div>
+                    <h3>Convecção natural</h3>
+                    <p>Movimento do fluido causado por diferenças de densidade devido ao gradiente de temperatura.</p>
+                    <div class="hub-foot">
+                        <span class="hub-range">h ≈ 2–25 W/m²·K</span>
+                        <i class="fa-solid fa-arrow-right hub-go"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('calculadora_convectivo_tipo', tipo='forcada') }}" class="hub-card hub-card--forcada" id="card-forcada">
+                    <div class="hub-icon"><i class="fa-solid fa-fan"></i></div>
+                    <h3>Convecção forçada</h3>
+                    <p>Movimento do fluido induzido por meios externos, como ventiladores, bombas ou vento.</p>
+                    <div class="hub-foot">
+                        <span class="hub-range">h ≈ 10–500 W/m²·K</span>
+                        <i class="fa-solid fa-arrow-right hub-go"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('calculadora_condensacao') }}" class="hub-card hub-card--condensacao" id="card-condensacao">
+                    <div class="hub-icon"><i class="fa-solid fa-droplet"></i></div>
+                    <h3>Condensação</h3>
+                    <p>Transferência de calor durante a mudança de fase vapor–líquido em superfícies frias.</p>
+                    <div class="hub-foot">
+                        <span class="hub-range">h ≈ 2.500–25.000 W/m²·K</span>
+                        <i class="fa-solid fa-arrow-right hub-go"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('calculadora_ebulicao') }}" class="hub-card hub-card--ebulicao" id="card-ebulicao">
+                    <div class="hub-icon"><i class="fa-solid fa-fire"></i></div>
+                    <h3>Ebulição</h3>
+                    <p>Transferência de calor durante a mudança de fase líquido–vapor em superfícies aquecidas.</p>
+                    <div class="hub-foot">
+                        <span class="hub-range">h ≈ 2.500–100.000 W/m²·K</span>
+                        <i class="fa-solid fa-arrow-right hub-go"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('calculadora_arranjos_tubos') }}" class="hub-card hub-card--tubos" id="card-arranjos-tubos">
+                    <div class="hub-icon"><i class="fa-solid fa-industry"></i></div>
+                    <h3>Arranjos de tubos</h3>
+                    <p>Bancos de tubos em trocadores de calor, com diferentes configurações geométricas.</p>
+                    <div class="hub-foot">
+                        <span class="hub-range">h ≈ 50–1.000 W/m²·K</span>
+                        <i class="fa-solid fa-arrow-right hub-go"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('calculadora_escoamento_interno') }}" class="hub-card hub-card--interno" id="card-escoamento-interno">
+                    <div class="hub-icon"><i class="fa-solid fa-arrows-left-right"></i></div>
+                    <h3>Escoamento interno</h3>
+                    <p>Correlações para escoamento em tubos circulares, laminar e turbulento.</p>
+                    <div class="hub-foot">
+                        <span class="hub-range">h ≈ 50–10.000 W/m²·K</span>
+                        <i class="fa-solid fa-arrow-right hub-go"></i>
+                    </div>
+                </a>
+            </div>
+
+            <div class="vx-alert vx-alert-info">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                    <strong>Convecção natural</strong> — ideal para superfícies sem ventilação forçada (h = 2–25 W/m²·K).
+                    <strong>Convecção forçada</strong> — para sistemas com ventilação ativa (h = 10–500 W/m²·K).
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

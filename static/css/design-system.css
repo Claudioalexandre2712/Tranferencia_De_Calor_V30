@@ -1,0 +1,317 @@
+/*
+  V30 Design System — Foundations + componentes compartilhados.
+  Formaliza e refina a linguagem "console/rail" já emergente em painel_status.html
+  e calculadora_natural.html (ver AI-Brain: 19 Plano Mestre/FASE 02 - UXUI).
+  Carregado via <link> em cada template (o projeto não usa herança de template Jinja).
+  Convenção: .rail-*, .panel, .app-shell, .metric-cell, .temp-card = linguagem de shell
+  já existente, mantida e estendida. .eng-* = componentes de engenharia novos.
+*/
+
+:root {
+  /* ---- cor: base neutra (instrumentação) ---- */
+  --bg-app: #eef1f6;
+  --panel: #ffffff;
+  --panel-alt: #f6f8fb;
+  --line: #dde3ec;
+  --line-strong: #c1cadb;
+  --ink: #0d1420;
+  --ink-dim: #4c5768;
+  --ink-faint: #8894a3;
+
+  --rail-bg-1: #10182a;
+  --rail-bg-2: #080d17;
+  --rail-line: rgba(255, 255, 255, 0.09);
+  --rail-text: #c3cbdb;
+  --rail-text-dim: #67728a;
+
+  /* ---- cor: assinatura ---- */
+  /* azul de instrumento — ação primária, links, foco */
+  --accent: #2e4fe0;
+  --accent-dim: #1e36a8;
+  --accent-soft: rgba(46, 79, 224, 0.12);
+  /* cobre — único uso: hero, marca, ênfase "quente"/ativa. Não usar em botões utilitários. */
+  --heat: #d9761e;
+  --heat-soft: rgba(217, 118, 30, 0.14);
+  /* ciano — extremo "frio" do gradiente térmico do hero (ver index.html). Mesmo uso restrito do --heat. */
+  --cool: #2f9bb0;
+  --cool-soft: rgba(47, 155, 176, 0.14);
+
+  --live: #2dd4a8;
+
+  /* ---- cor: semântica de estado ---- */
+  --success: #0f9d63;
+  --warning: #c2790a;
+  --danger: #d6373a;
+  --info: var(--accent);
+
+  /* ---- cor: canais de sensor (categórico, já em uso — preservado) ---- */
+  --color-t1: #d62728;
+  --color-t2: #9467bd;
+  --color-t3: #2ca02c;
+  --color-t4: #1f77b4;
+  --color-t5: #eab308;
+  --color-t6: #8c564b;
+
+  /* ---- tipografia ---- */
+  --font-display: 'IBM Plex Serif', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* ---- espaçamento (escala em rem, base 4px) ---- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-8: 3rem;
+  --sp-10: 4rem;
+
+  /* ---- radius: poucos valores ---- */
+  --radius-sm: 3px;
+  --radius: 6px;
+  --radius-lg: 12px;
+
+  /* ---- elevation: hairline como padrão; sombra só para overlay ---- */
+  --shadow-overlay: 0 12px 40px rgba(13, 20, 32, 0.18);
+
+  /* ---- motion ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 420ms;
+
+  --rail-w: 288px;
+}
+
+/* ══════════════════ RESET MÍNIMO ══════════════════ */
+.vx-scope, .app-shell { box-sizing: border-box; }
+.vx-scope *, .app-shell *, .app-shell *::before, .app-shell *::after { box-sizing: inherit; }
+
+/* ══════════════════ APP SHELL (rail + main) ══════════════════ */
+.app-shell { display: flex; align-items: stretch; min-height: 100vh; background: var(--bg-app); }
+
+.console-rail {
+  width: var(--rail-w);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, var(--rail-bg-1) 0%, var(--rail-bg-2) 100%);
+  color: var(--rail-text);
+  border-right: 1px solid var(--rail-line);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  font-family: var(--font-sans);
+}
+.rail-brand { display: flex; align-items: center; gap: var(--sp-3); padding: 1.15rem 1.25rem; border-bottom: 1px solid var(--rail-line); text-decoration: none; }
+.rail-brand-mark {
+  width: 34px; height: 34px; border-radius: var(--radius-sm);
+  background: var(--accent-soft); border: 1px solid rgba(94, 140, 234, 0.35);
+  color: #8fb3f5; display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem; flex-shrink: 0; font-family: var(--font-mono); font-weight: 600;
+}
+.rail-brand-title { font-size: 0.92rem; font-weight: 600; color: #fff; line-height: 1.25; }
+.rail-brand-sub { font-size: 0.7rem; color: var(--rail-text-dim); }
+
+.rail-section { padding: 1rem 1.25rem; border-bottom: 1px solid var(--rail-line); }
+.rail-label { font-size: 0.68rem; font-weight: 600; color: var(--rail-text-dim); margin-bottom: 0.55rem; }
+
+.rail-nav-links { margin-top: auto; padding: 1rem 1.25rem 1.1rem; }
+.rail-link {
+  display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: var(--rail-text);
+  padding: 0.55rem 0.1rem; text-decoration: none; transition: color var(--dur-fast) var(--ease);
+}
+.rail-link:hover { color: #fff; }
+.rail-link.is-active { color: #fff; font-weight: 600; }
+.rail-link i { width: 16px; text-align: center; color: var(--rail-text-dim); }
+
+.main-area { flex: 1; min-width: 0; padding: 2.1rem 2.4rem 3rem; max-width: 1500px; font-family: var(--font-sans); color: var(--ink); }
+
+.page-head { margin-bottom: 1.6rem; }
+.page-head h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.3rem; color: var(--ink); }
+.page-head p { font-size: 0.88rem; color: var(--ink-dim); margin: 0; max-width: 64ch; }
+
+/* ══════════════════ PANEL / CARD ══════════════════ */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: var(--sp-5); }
+.panel-head {
+  display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;
+  padding: 1.1rem 1.35rem; border-bottom: 1px solid var(--line);
+}
+.panel-head h2 { font-size: 0.98rem; font-weight: 600; margin: 0; color: var(--ink); }
+.panel-head .panel-sub { font-size: 0.78rem; color: var(--ink-faint); }
+.panel-body { padding: 1.35rem; }
+
+/* ══════════════════ BUTTONS ══════════════════ */
+.vx-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600;
+  padding: 0.62rem 1.15rem; border-radius: var(--radius); border: 1px solid transparent;
+  cursor: pointer; text-decoration: none; line-height: 1.2;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.vx-btn:active { transform: translateY(1px); }
+.vx-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.vx-btn-primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+.vx-btn-ghost { background: transparent; border-color: var(--line-strong); color: var(--ink-dim); }
+.vx-btn-ghost:hover { background: var(--panel-alt); color: var(--ink); }
+.vx-btn-on-dark { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); color: var(--rail-text); }
+.vx-btn-on-dark:hover { background: rgba(255, 255, 255, 0.11); color: #fff; border-color: rgba(255, 255, 255, 0.24); }
+.vx-btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+.vx-btn-lg { padding: 0.85rem 1.6rem; font-size: 0.98rem; }
+.vx-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ══════════════════ INPUTS / SELECTS ══════════════════ */
+.vx-field { margin-bottom: var(--sp-4); }
+.vx-field-label {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+  font-size: 0.8rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 0.4rem;
+}
+.vx-field-label .vx-symbol { font-family: var(--font-mono); color: var(--ink-faint); font-weight: 500; }
+.vx-input, .vx-select {
+  width: 100%; font-family: var(--font-mono); font-size: 0.92rem; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem; transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.vx-select { font-family: var(--font-sans); }
+.vx-input:focus, .vx-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.vx-input-unit-row { display: flex; align-items: stretch; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden; }
+.vx-input-unit-row .vx-input { border: none; border-radius: 0; }
+.vx-input-unit-row .vx-unit { display: flex; align-items: center; padding: 0 0.75rem; background: var(--panel-alt); color: var(--ink-faint); font-family: var(--font-mono); font-size: 0.82rem; border-left: 1px solid var(--line); }
+.vx-field-help { font-size: 0.74rem; color: var(--ink-faint); margin-top: 0.3rem; }
+.vx-fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4) var(--sp-4) var(--sp-2); margin-bottom: var(--sp-5); }
+.vx-fieldset legend { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.02em; color: var(--ink-dim); padding: 0 0.4rem; width: auto; }
+
+/* ══════════════════ BADGES / STATUS ══════════════════ */
+.vx-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 600;
+  padding: 0.22rem 0.55rem; border-radius: var(--radius-sm); letter-spacing: 0.01em; line-height: 1.4;
+}
+.vx-badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.vx-badge-success { background: rgba(15, 157, 99, 0.12); color: var(--success); }
+.vx-badge-success .vx-badge-dot { background: var(--success); }
+.vx-badge-warning { background: rgba(194, 121, 10, 0.12); color: var(--warning); }
+.vx-badge-warning .vx-badge-dot { background: var(--warning); }
+.vx-badge-danger { background: rgba(214, 55, 58, 0.12); color: var(--danger); }
+.vx-badge-danger .vx-badge-dot { background: var(--danger); }
+.vx-badge-neutral { background: var(--panel-alt); color: var(--ink-faint); border: 1px solid var(--line); }
+.vx-badge-live { background: rgba(45, 212, 168, 0.12); color: #0c8d6c; }
+.vx-badge-live .vx-badge-dot { background: var(--live); box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.6); animation: vx-pulse-ring 2s infinite; }
+@keyframes vx-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0.55); }
+  70% { box-shadow: 0 0 0 6px rgba(45, 212, 168, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(45, 212, 168, 0); }
+}
+
+/* ══════════════════ ALERTS ══════════════════ */
+.vx-alert { display: flex; gap: 0.7rem; padding: 0.9rem 1.1rem; border-radius: var(--radius); border: 1px solid; font-size: 0.85rem; margin-bottom: var(--sp-4); }
+.vx-alert i { flex-shrink: 0; margin-top: 0.1rem; }
+.vx-alert-info { background: var(--accent-soft); border-color: rgba(46, 79, 224, 0.25); color: var(--accent-dim); }
+.vx-alert-success { background: rgba(15, 157, 99, 0.08); border-color: rgba(15, 157, 99, 0.25); color: #0b7a4d; }
+.vx-alert-warning { background: rgba(194, 121, 10, 0.08); border-color: rgba(194, 121, 10, 0.28); color: #935c07; }
+.vx-alert-danger { background: rgba(214, 55, 58, 0.08); border-color: rgba(214, 55, 58, 0.25); color: #a82b2d; }
+
+/* ══════════════════ ENGINEERING COMPONENTS ══════════════════ */
+
+/* Resultado principal: número em máxima prioridade, unidade secundária */
+.eng-result { display: flex; flex-direction: column; gap: 0.2rem; }
+.eng-result-label { font-size: 0.76rem; font-weight: 600; color: var(--ink-faint); }
+.eng-result-value { font-family: var(--font-mono); font-size: 2rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 0.35rem; }
+.eng-result-unit { font-family: var(--font-mono); font-size: 1rem; font-weight: 500; color: var(--ink-faint); }
+.eng-result-context { font-size: 0.78rem; color: var(--ink-dim); margin-top: 0.2rem; }
+.eng-result.is-secondary .eng-result-value { font-size: 1.15rem; }
+
+/* Entrada de engenharia: nome, símbolo, valor, unidade, ajuda — ver .vx-field acima */
+
+/* Correlação usada */
+.eng-correlation { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4); background: var(--panel-alt); }
+.eng-correlation-name { font-size: 0.92rem; font-weight: 600; color: var(--ink); margin-bottom: 0.2rem; }
+.eng-correlation-regime { font-size: 0.76rem; color: var(--ink-dim); margin-bottom: 0.6rem; }
+.eng-correlation-params { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink); }
+.eng-correlation-params span { color: var(--ink-faint); font-family: var(--font-sans); margin-right: 0.25rem; }
+
+/* Fórmula sob demanda (evolução do popover já existente no circuito térmico) */
+.eng-formula-toggle { background: none; border: none; color: var(--accent); font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: 0.3rem; }
+.eng-formula-toggle:hover { text-decoration: underline; }
+.eng-formula-body { font-family: var(--font-mono); font-size: 0.85rem; background: var(--panel-alt); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-top: 0.5rem; }
+
+/* Sensor card (já prototipado como .temp-card em painel_status.html — versão reutilizável) */
+.eng-sensor { background: var(--panel); border-left: 3px solid var(--line-strong); padding: 1rem 1.05rem 0.95rem; display: flex; flex-direction: column; gap: 0.5rem; min-height: 140px; }
+.eng-sensor-head { display: flex; align-items: center; justify-content: space-between; }
+.eng-sensor-label { font-size: 0.74rem; font-weight: 600; color: var(--ink-dim); }
+.eng-sensor-value { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 600; color: var(--ink); display: flex; align-items: baseline; gap: 0.2rem; }
+.eng-sensor-meta { font-size: 0.71rem; color: var(--ink-faint); display: flex; align-items: center; gap: 0.3rem; }
+
+/* Status de leitura — pronto para quando staleness (FASE 05) existir */
+.vx-status-online { color: var(--success); }
+.vx-status-stale { color: var(--warning); }
+.vx-status-offline, .vx-status-error { color: var(--danger); }
+
+/* Container de gráfico (Plotly/Chart.js) — parece parte do produto, não widget colado */
+.eng-chart-container { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.eng-chart-container .eng-chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.6rem; }
+.eng-chart-container .eng-chart-title { font-size: 0.88rem; font-weight: 600; color: var(--ink); }
+
+/* ══════════════════ LOADING / EMPTY / ERROR ══════════════════ */
+.vx-empty { text-align: center; padding: var(--sp-8) var(--sp-4); color: var(--ink-faint); }
+.vx-empty i { font-size: 2rem; margin-bottom: var(--sp-3); color: var(--line-strong); }
+
+/* ══════════════════ MOTION: um único momento de entrada orquestrado ══════════════════ */
+@keyframes vx-rise-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.vx-enter { animation: vx-rise-in var(--dur-slow) var(--ease) both; }
+.vx-enter-d1 { animation-delay: 60ms; }
+.vx-enter-d2 { animation-delay: 120ms; }
+.vx-enter-d3 { animation-delay: 180ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-enter, .vx-enter-d1, .vx-enter-d2, .vx-enter-d3 { animation: none; }
+  .vx-badge-live .vx-badge-dot { animation: none; }
+}
+
+/* ══════════════════ IDENTIDADE TÉRMICA — passada de identidade V30-UXUI-03C ══════════════════
+   Componentes opt-in via classe extra: não alteram .page-head/.main-area já usados por outras
+   páginas. Reaproveita a linguagem gráfica da index (blueprint + glow quente/frio + badge mono),
+   mais discreta, para as páginas funcionais (tipos_aletas, sele_aleta, calculadora_convectivo). */
+.eng-scope-bg {
+  background-color: #e7ebf1;
+  background-image: linear-gradient(var(--line-strong) 1px, transparent 1px), linear-gradient(90deg, var(--line-strong) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.page-head--thermal { position: relative; z-index: 1; }
+.page-head--thermal::before {
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  top: -1.6rem; left: -2.2rem; right: -2.2rem; height: 10rem;
+  background:
+    radial-gradient(ellipse 68% 100% at 88% 0%, var(--cool-soft), transparent 82%),
+    radial-gradient(ellipse 68% 100% at 4% 100%, var(--heat-soft), transparent 82%);
+}
+.page-kicker {
+  font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-dim);
+  display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 0.7rem;
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.25rem 0.7rem 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+.page-kicker i { color: var(--heat); font-size: 0.8rem; }
+.eng-scale-rule {
+  height: 8px; margin: 0.3rem 0 1.6rem; max-width: 340px;
+  background:
+    repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 22px) left bottom / 100% 7px no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) left bottom / 100% 1px no-repeat;
+  opacity: 0.65;
+}
+.main-area--thermal {
+  background-color: #e7ebf1;
+  background-image: linear-gradient(var(--line-strong) 1px, transparent 1px), linear-gradient(90deg, var(--line-strong) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* ══════════════════ RESPONSIVO: rail vira topo em telas estreitas ══════════════════ */
+@media (max-width: 900px) {
+  .app-shell { flex-direction: column; }
+  .console-rail { width: 100%; height: auto; position: relative; flex-direction: row; flex-wrap: wrap; }
+  .rail-nav-links { margin-top: 0; }
+  .main-area { padding: 1.4rem 1.1rem 2rem; max-width: 100%; }
+}

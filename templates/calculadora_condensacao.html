@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Condensação</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
+    <style>
+        html, body { margin: 0; }
+        /* .form-control é mantido só como gancho para o jQuery existente (ver script) —
+           a aparência vem inteiramente de .vx-input/.vx-select, que sobrescrevem o Bootstrap
+           por ordem de carga (design-system.css vem depois do Bootstrap). */
+        .form-control.vx-input, .form-control.vx-select { box-shadow: none; height: auto; }
+        .form-control.vx-input:focus, .form-control.vx-select:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
+
+        .result-hero { display: flex; flex-wrap: wrap; gap: 2.2rem; margin-bottom: 1.1rem; }
+        .result-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; font-size: 0.84rem; color: var(--ink-dim); padding-top: 0.9rem; border-top: 1px solid var(--line); margin-top: 0.4rem; }
+        .result-meta strong { font-family: var(--font-mono); color: var(--ink); }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <nav class="console-rail">
+            <a href="/" class="rail-brand">
+                <div class="rail-brand-mark"><i class="fa-solid fa-fire-flame-simple"></i></div>
+                <div>
+                    <div class="rail-brand-title">V30</div>
+                    <div class="rail-brand-sub">Laboratório térmico</div>
+                </div>
+            </a>
+            <div class="rail-nav-links">
+                <a href="/" class="rail-link"><i class="fa-solid fa-house"></i> Início</a>
+                <a href="{{ url_for('calculadora_convectivo') }}" class="rail-link is-active"><i class="fa-solid fa-wind"></i> Convecção</a>
+                <a href="{{ url_for('painel_status') }}" class="rail-link"><i class="fa-solid fa-gauge-high"></i> Painel</a>
+                <a href="{{ url_for('circuito_termico') }}" class="rail-link"><i class="fa-solid fa-diagram-project"></i> Circuito térmico</a>
+            </div>
+        </nav>
+
+        <main class="main-area main-area--thermal">
+            <div class="page-head page-head--thermal">
+                <div class="page-kicker"><i class="fa-solid fa-droplet"></i> Mudança de fase · vapor → líquido</div>
+                <h1><i class="fa-solid fa-droplet" style="color:var(--accent); margin-right:0.4rem;"></i>Condensação</h1>
+                <p>Coeficiente de transferência de calor durante a mudança de fase vapor → líquido em superfícies frias.</p>
+            </div>
+            <div class="eng-scale-rule"></div>
+
+            {% if resultado %}
+            <div class="panel vx-enter">
+                <div class="panel-head">
+                    <h2>Resultado</h2>
+                    <span class="panel-sub">Regime: {{ resultado.regime }}</span>
+                </div>
+                <div class="panel-body">
+                    <div class="result-hero">
+                        <div class="eng-result">
+                            <span class="eng-result-label">Coeficiente convectivo</span>
+                            <span class="eng-result-value">{{ "%.1f"|format(resultado.h) }}<span class="eng-result-unit">W/m²·K</span></span>
+                        </div>
+                        <div class="eng-result is-secondary">
+                            <span class="eng-result-label">Número de Nusselt</span>
+                            <span class="eng-result-value">{{ "%.1f"|format(resultado.Nu) }}<span class="eng-result-unit">Nu</span></span>
+                        </div>
+                    </div>
+                    <div class="result-meta">
+                        <span>ΔT <strong>{{ "%.1f"|format(resultado.Delta_T) }} °C</strong></span>
+                        <span>Fluxo de calor <strong>{{ "%.0f"|format(resultado.q_fluxo) }} W/m²</strong></span>
+                    </div>
+                    <div style="margin-top:1.1rem;">
+                        <button type="button" onclick="usarCoeficienteCalculado({{ resultado.h }})" class="vx-btn vx-btn-primary">
+                            <i class="fa-solid fa-check"></i> Usar na simulação de aletas
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Entradas</h2>
+                    <button type="button" class="eng-formula-toggle" onclick="document.getElementById('formulaBody').hidden = !document.getElementById('formulaBody').hidden;">
+                        <i class="fa-solid fa-square-root-variable"></i> Ver correlação usada
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div id="formulaBody" class="eng-formula-body" hidden>
+                        <strong>Placa vertical</strong> — Nu<sub>L</sub> = 0,943 · [Ga·Pr / (4+Pr)]<sup>1/4</sup>,
+                        onde Ga = gρ<sub>l</sub>(ρ<sub>l</sub>−ρ<sub>v</sub>)h<sub>fg</sub>L³ / μ<sub>l</sub>²ΔT.<br><br>
+                        <strong>Tubo horizontal</strong> — Nu<sub>D</sub> = 0,729 · [Ga·Pr / (4+Pr)]<sup>1/4</sup>,
+                        mesma definição de Ga com D no lugar de L.<br><br>
+                        Válido para Re &lt; 1800 (filme laminar). Fluxo: q&quot; = h·ΔT, ΔT = T<sub>saturação</sub> − T<sub>parede</sub>.
+                    </div>
+
+                    <form method="POST" action="{{ url_for('calculadora_condensacao_calcular') }}">
+                        <fieldset class="vx-fieldset">
+                            <legend>Geometria e fluido</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="vx-field">
+                                        <label class="vx-field-label" for="geometria">Geometria</label>
+                                        <select class="form-control vx-select" id="geometria" name="geometria" required>
+                                            <option value="">Selecione a geometria...</option>
+                                            <option value="placa_vertical">Placa vertical (filme laminar)</option>
+                                            <option value="tubo_horizontal">Tubo horizontal (filme laminar)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="vx-field">
+                                        <label class="vx-field-label" for="fluido">Fluido</label>
+                                        <select class="form-control vx-select" id="fluido" name="fluido" required>
+                                            <option value="">Selecione o fluido...</option>
+                                            <option value="agua">Água (mais comum)</option>
+                                            <option value="r134a">R-134a (refrigerante)</option>
+                                            <option value="amonia">Amônia (NH₃)</option>
+                                            <option value="r22">R-22 (refrigerante)</option>
+                                            <option value="r410a">R-410A (refrigerante)</option>
+                                            <option value="vapor_mercurio">Vapor de mercúrio</option>
+                                            <option value="etanol">Etanol</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="vx-fieldset">
+                            <legend>Condição de contorno</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="vx-field">
+                                        <label class="vx-field-label" for="T_sat">Temperatura de saturação <span class="vx-symbol">T_sat</span></label>
+                                        <div class="vx-input-unit-row">
+                                            <input type="number" step="0.1" class="form-control vx-input" id="T_sat" name="T_sat" placeholder="100" required>
+                                            <span class="vx-unit">°C</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="vx-field">
+                                        <label class="vx-field-label" for="T_parede">Temperatura da parede <span class="vx-symbol">T_parede</span></label>
+                                        <div class="vx-input-unit-row">
+                                            <input type="number" step="0.1" class="form-control vx-input" id="T_parede" name="T_parede" placeholder="90" required>
+                                            <span class="vx-unit">°C</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="campos_placa" style="display: none;">
+                                <div class="vx-field">
+                                    <label class="vx-field-label" for="altura">Altura da placa <span class="vx-symbol">L</span></label>
+                                    <div class="vx-input-unit-row">
+                                        <input type="number" step="0.001" class="form-control vx-input" id="altura" name="altura" placeholder="1.0">
+                                        <span class="vx-unit">m</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="campos_tubo" style="display: none;">
+                                <div class="vx-field">
+                                    <label class="vx-field-label" for="diametro">Diâmetro externo do tubo <span class="vx-symbol">D</span></label>
+                                    <div class="vx-input-unit-row">
+                                        <input type="number" step="0.001" class="form-control vx-input" id="diametro" name="diametro" placeholder="0.025">
+                                        <span class="vx-unit">m</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <div style="text-align:center; margin-top:1.5rem;">
+                            <button type="submit" class="vx-btn vx-btn-primary vx-btn-lg">
+                                <i class="fa-solid fa-calculator"></i> Calcular coeficiente
+                            </button>
+                            <a href="{{ url_for('calculadora_convectivo') }}" class="vx-btn vx-btn-ghost vx-btn-lg" style="margin-left:0.6rem;">
+                                Voltar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        {% if resultado %}
+        try {
+            localStorage.setItem('coeficiente_convectivo', '{{ resultado.h }}');
+            localStorage.setItem('ultimo_h_calculado', '{{ resultado.h }}');
+        } catch(e) {}
+        {% endif %}
+
+        function usarCoeficienteCalculado(hValue) {
+            try {
+                localStorage.setItem('coeficiente_convectivo', hValue);
+                localStorage.setItem('ultimo_h_calculado', hValue);
+            } catch(e) {}
+            window.location.href = "/";
+        }
+
+        $('#geometria').change(function() {
+            var geometria = $(this).val();
+            $('#campos_placa, #campos_tubo').hide();
+            $('.form-control').not('#T_sat, #T_parede, #fluido, #geometria').attr('required', false);
+
+            if (geometria === 'placa_vertical') {
+                $('#campos_placa').show();
+                $('#altura').attr('required', true);
+            } else if (geometria === 'tubo_horizontal') {
+                $('#campos_tubo').show();
+                $('#diametro').attr('required', true);
+            }
+
+            $('#T_sat, #T_parede, #fluido, #geometria').attr('required', true);
+        });
+    </script>
+</body>
+</html>
