@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
@@ -249,7 +250,7 @@
     // Nada de conjunto fixo criado uma vez: spawnAleta() cria UMA partícula, que se
     // autorremove no fim da própria animação (animationend, 1 iteração só). Um timer
     // mantém a contagem de ativas perto de MAX_ACTIVE_ALETAS, repondo continuamente.
-    const MAX_ACTIVE_ALETAS = 120;
+    const MAX_ACTIVE_ALETAS = 40;
     window.__aletaParticles = new Set(); // exposto para inspeção/QA (ver ACTIVE_ALETAS)
 
     function spawnAleta(initialProgress) {
@@ -275,7 +276,7 @@
       img.alt = '';
       // Correlação simples de profundidade: aletas maiores = mais opacas/"perto";
       // menores = mais discretas/"longe" — sem tiers separados, sem blur.
-      img.style.opacity = (0.72 + 0.24 * ((size - 70) / 80)).toFixed(2);
+      img.style.opacity = (0.28 + 0.30 * ((size - 70) / 80)).toFixed(2);
       wrap.appendChild(img);
 
       const particle = { wrap, img, repelled: false };
@@ -293,9 +294,9 @@
     // (menos partículas, reposição mais lenta) em vez de desligar tudo. Isso evita o
     // problema anterior: com o SO/navegador reportando "reduzir movimento", a página
     // não mostrava nenhuma aleta, mesmo sendo esse o efeito principal pedido.
-    const activeMax = reducedMotion ? 45 : MAX_ACTIVE_ALETAS;
-    const initialFill = reducedMotion ? 24 : 60;
-    const spawnEveryMs = reducedMotion ? 650 : 160;
+    const activeMax = reducedMotion ? 20 : MAX_ACTIVE_ALETAS;
+    const initialFill = reducedMotion ? 10 : 18;
+    const spawnEveryMs = reducedMotion ? 750 : 380;
 
     // Preenchimento inicial: parte das aletas já em progresso variado da travessia.
     for (let i = 0; i < initialFill; i++) spawnAleta(Math.random());
