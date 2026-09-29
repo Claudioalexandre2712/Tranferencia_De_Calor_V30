@@ -280,6 +280,7 @@
         vy: 0,
         rot: 0,
         bounced: false,
+        hasInteracted: false,
         size: size
       };
 
@@ -359,10 +360,20 @@
         const halfH = r.height / 2;
         const cx = r.left + halfW + p.ox;
         const cy = r.top + halfH + p.oy;
-
-        // Problema 1: Exclusão estritamente fora da tela (acima do topo)
+        const aletaLeft   = cx - halfW;
+        const aletaRight  = cx + halfW;
+        const aletaTop    = cy - halfH;
         const aletaBottom = cy + halfH;
-        if (aletaBottom < -40) {
+
+        // Se a aleta não foi interagida e encostar no topo da página (aletaTop <= 2),
+        // ela deve sumir imediatamente para não ficar presa no topo.
+        if (!p.hasInteracted && aletaTop <= 2) {
+          toRemove.push(p);
+          continue;
+        }
+
+        // Qualquer aleta que já ultrapassou totalmente o topo da tela é removida
+        if (aletaBottom < -20) {
           toRemove.push(p);
           continue;
         }
@@ -379,6 +390,7 @@
         const radius = Math.max(PUSH_RADIUS, halfW + 65);
 
         if (dist < radius && dist > 0.5) {
+          p.hasInteracted = true; // Marca que o usuário interagiu com esta aleta
           const ux = dx / dist;
           const uy = dy / dist;
           const t = Math.max(0, 1 - dist / radius);
@@ -405,11 +417,8 @@
         p.ox += p.vx * dtNorm;
         p.oy += p.vy * dtNorm;
 
-        // Limites com as 4 paredes da página
-        const aletaLeft   = cx - halfW;
-        const aletaRight  = cx + halfW;
-        const aletaTop    = cy - halfH;
-
+        // Limites com as paredes da página (Laterais e Fundo)
+        // Nota: O topo fica livre para o fluxo térmico subir e sair da tela sem prender
         if (aletaLeft < minX) {
           p.ox += (minX - aletaLeft);
           if (p.vx < 0) {
@@ -424,13 +433,6 @@
             p.vx = Math.max(-p.vx * BOUNCE_RESTITUTION, -MAX_BOUNCE_SPEED);
             p.bounced = true;
             p.rot = Math.min(5, p.rot + 2.0);
-          }
-        }
-        if (aletaTop < minY) {
-          p.oy += (minY - aletaTop);
-          if (p.vy < 0) {
-            p.vy = Math.min(-p.vy * BOUNCE_RESTITUTION, MAX_BOUNCE_SPEED);
-            p.bounced = true;
           }
         }
         if (aletaBottom > maxY) {
