@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Status — Monitoramento Térmico em Tempo Real</title>
     <!-- Google Fonts & FontAwesome -->
@@ -10,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
@@ -656,10 +657,10 @@
             <div class="rail-label">Tempo de ensaio</div>
             <div class="rail-timer" id="cronometro-display">00:00:00</div>
             <div class="rail-btn-row">
-                <button type="button" class="rail-btn" id="btn-cronometro-toggle" onclick="toggleCronometro()" style="flex:1;">
+                <button type="button" class="rail-btn" id="btn-cronometro-toggle" data-onclick="toggleCronometro()" style="flex:1;">
                     <i class="fas fa-play" id="cronometro-icon"></i><span id="cronometro-btn-text">Iniciar Tempo</span>
                 </button>
-                <button type="button" class="rail-btn rail-btn-ghost" id="btn-cronometro-reset" onclick="resetarCronometro()" title="Zerar cronômetro">
+                <button type="button" class="rail-btn rail-btn-ghost" id="btn-cronometro-reset" data-onclick="resetarCronometro()" title="Zerar cronômetro">
                     <i class="fas fa-rotate-left"></i>
                 </button>
             </div>
@@ -668,10 +669,10 @@
         <div class="rail-section">
             <div class="rail-label">Temperatura-alvo do ensaio</div>
             <div class="rail-target-row">
-                <input type="text" id="input-temperatura-alvo" class="rail-input" placeholder="Ex: 50,0" onkeydown="if(event.key==='Enter') definirTemperaturaAlvo()">
+                <input type="text" id="input-temperatura-alvo" class="rail-input" placeholder="Ex: 50,0" data-onkeydown="definirTemperaturaAlvoComEnter(event)">
                 <span class="rail-input-unit">°C</span>
             </div>
-            <button type="button" class="rail-btn rail-btn-accent w-100" id="btn-definir-alvo" onclick="definirTemperaturaAlvo()">
+            <button type="button" class="rail-btn rail-btn-accent w-100" id="btn-definir-alvo" data-onclick="definirTemperaturaAlvo()">
                 Definir temperatura
             </button>
             <div class="rail-target-value" id="display-alvo-configurado">
@@ -686,22 +687,22 @@
 
         <div class="rail-section rail-actions">
             <div class="rail-label">Ações</div>
-            <button type="button" class="rail-btn rail-btn-accent w-100" onclick="atualizarAgora()">
+            <button type="button" class="rail-btn rail-btn-accent w-100" data-onclick="atualizarAgora()">
                 <i class="fas fa-sync-alt"></i> Atualizar agora
             </button>
-            <button type="button" class="rail-btn w-100" onclick="exportarGraficoPNG()" title="Baixar imagem PNG em alta resolução do gráfico">
+            <button type="button" class="rail-btn w-100" data-onclick="exportarGraficoPNG()" title="Baixar imagem PNG em alta resolução do gráfico">
                 <i class="fas fa-file-image"></i> Exportar gráfico (PNG)
             </button>
-            <button type="button" class="rail-btn w-100" onclick="exportarHistoricoCSV()" title="Salvar planilha CSV com todos os dados do ensaio">
+            <button type="button" class="rail-btn w-100" data-onclick="exportarHistoricoCSV()" title="Salvar planilha CSV com todos os dados do ensaio">
                 <i class="fas fa-file-csv"></i> Salvar CSV
             </button>
-            <button type="button" class="rail-btn w-100" id="btn-toggle-tratamento" onclick="togglePainelTratamento()" title="Remover curvas de erro do termostato W3002, recortar intervalos e estabilizar o gráfico">
+            <button type="button" class="rail-btn w-100" id="btn-toggle-tratamento" data-onclick="togglePainelTratamento()" title="Remover curvas de erro do termostato W3002, recortar intervalos e estabilizar o gráfico">
                 <i class="fas fa-sliders"></i> Tratar / recortar dados
             </button>
-            <button type="button" class="rail-btn w-100" id="btn-pause-toggle" onclick="togglePauseMonitoramento()">
+            <button type="button" class="rail-btn w-100" id="btn-pause-toggle" data-onclick="togglePauseMonitoramento()">
                 <i class="fas fa-pause"></i> Pausar
             </button>
-            <button type="button" class="rail-btn rail-btn-danger w-100" onclick="limparHistoricoGrafico()">
+            <button type="button" class="rail-btn rail-btn-danger w-100" data-onclick="limparHistoricoGrafico()">
                 <i class="fas fa-trash-can"></i> Limpar histórico
             </button>
         </div>
@@ -865,7 +866,7 @@
 
             <div class="drag-hint">
                 <span><i class="fas fa-grip-vertical" style="margin-right: 0.4rem; color: var(--ink-faint);"></i>Arraste os canais pelas alças para reorganizar a ordem na bancada.</span>
-                <button type="button" class="text-btn" onclick="restaurarMapeamentoPadrao()" title="Restaurar mapeamento físico original (T1 a T6)">
+                <button type="button" class="text-btn" data-onclick="restaurarMapeamentoPadrao()" title="Restaurar mapeamento físico original (T1 a T6)">
                     Restaurar ordem padrão (T1&ndash;T6)
                 </button>
             </div>
@@ -886,7 +887,7 @@
                             <i class="fas fa-sliders text-warning"></i>
                             Tratamento Térmico de Dados & Recorte de Curvas (Controle W3002 / Ebulidor)
                         </h6>
-                        <button type="button" class="btn-close btn-sm" onclick="togglePainelTratamento()"></button>
+                        <button type="button" class="btn-close btn-sm" data-onclick="togglePainelTratamento()"></button>
                     </div>
 
                     <div class="treat-grid">
@@ -912,7 +913,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn-flat btn-flat-danger w-100" onclick="removerTrechoIndesejado()">
+                            <button type="button" class="btn-flat btn-flat-danger w-100" data-onclick="removerTrechoIndesejado()">
                                 <i class="fas fa-trash-can mr-1"></i> Excluir trecho e unir
                             </button>
                         </div>
@@ -939,7 +940,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn-flat btn-flat-accent w-100" onclick="manterApenasFaixa()">
+                            <button type="button" class="btn-flat btn-flat-accent w-100" data-onclick="manterApenasFaixa()">
                                 <i class="fas fa-check mr-1"></i> Isolar esta faixa
                             </button>
                         </div>
@@ -954,16 +955,16 @@
                                     Suavize ruídos térmicos ou carregue um arquivo CSV salvo.
                                 </span>
                                 <div class="d-flex gap-2 mb-2">
-                                    <button type="button" class="btn-flat flex-fill" onclick="aplicarSuavizacaoMediaMovel()" title="Média móvel de 5 pontos para filtrar ruídos">
+                                    <button type="button" class="btn-flat flex-fill" data-onclick="aplicarSuavizacaoMediaMovel()" title="Média móvel de 5 pontos para filtrar ruídos">
                                         <i class="fas fa-wave-square mr-1"></i> Suavizar
                                     </button>
                                     <label class="btn-flat flex-fill mb-0" style="text-align:center; display:inline-flex; align-items:center; justify-content:center;" title="Carregar arquivo CSV gravado anteriormente para tratar">
                                         <i class="fas fa-upload mr-1"></i> Carregar CSV
-                                        <input type="file" id="input-carregar-csv" accept=".csv" style="display: none;" onchange="carregarArquivoCSV(event)">
+                                        <input type="file" id="input-carregar-csv" accept=".csv" style="display: none;" data-onchange="carregarArquivoCSV(event)">
                                     </label>
                                 </div>
                             </div>
-                            <button type="button" class="btn-flat w-100" onclick="restaurarDadosOriginais()" id="btn-restaurar" title="Restaura os dados originais brutos da coleta" disabled>
+                            <button type="button" class="btn-flat w-100" data-onclick="restaurarDadosOriginais()" id="btn-restaurar" title="Restaura os dados originais brutos da coleta" disabled>
                                 <i class="fas fa-rotate-left mr-1"></i> Restaurar original (<span id="count-pontos-backup">0</span> pts)
                             </button>
                         </div>
@@ -1019,7 +1020,7 @@
 </div>
 
     <!-- ── Scripts e Lógica Reativa ── -->
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // ── Cronômetro de Avaliação do Tempo de Ensaio / Simulação ─────────────
         let cronometroInterval = null;
         let cronometroSegundos = 0;
@@ -1838,7 +1839,9 @@
                 }
                 const status = document.getElementById('status-tratamento');
                 if (status) {
-                    status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Arquivo <strong>${file.name}</strong> carregado (${novosDados.length} pontos). O monitoramento ao vivo foi pausado para edição.`;
+                    status.innerHTML = `<i class="fas fa-check-circle text-success mr-1"></i> Arquivo <strong></strong> carregado (${novosDados.length} pontos). O monitoramento ao vivo foi pausado para edição.`;
+                    // Nome do arquivo entra como texto (não como HTML)
+                    status.querySelector('strong').textContent = file.name;
                 }
 
                 if (idxAlvo >= 0) {
@@ -2254,6 +2257,10 @@
             } catch (err) {
                 console.warn('[ALVO] Falha ao consultar temperatura-alvo inicial:', err);
             }
+        }
+
+        function definirTemperaturaAlvoComEnter(event) {
+            if (event.key === 'Enter') definirTemperaturaAlvo();
         }
 
         async function definirTemperaturaAlvo() {

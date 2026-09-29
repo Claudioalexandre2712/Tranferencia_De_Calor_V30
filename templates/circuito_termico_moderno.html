@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Circuito Térmico</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
@@ -1494,10 +1495,18 @@
         }
         /* boundary-temps-box precisa de position:relative para o popup se ancorar */
         .boundary-temps-box { position: relative; }
+        /* Efeitos de hover das tabelas (antes feitos com onmouseover, bloqueado pela CSP) */
+        .linha-hover-azul:hover { background-color: #e3f2fd !important; }
+        .linha-hover-laranja:hover { background-color: #fff3e0 !important; }
+        .linha-hover-detalhe:hover {
+            background: var(--hover-bg) !important;
+            transform: translateX(2px) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        }
     </style>
 </head>
 <body>
-    <script>
+    <script nonce="{{ csp_nonce }}">
     window.clearAll = function clearAll(){
         if(!window.layers || !Array.isArray(window.layers)) { window.layers = []; }
         if(!confirm('Tem certeza que deseja limpar todas as camadas?')) return;
@@ -1817,7 +1826,7 @@
                         Calculadora de Circuito Térmico
                     </h1>
                     <div class="btn-voltar-mini-wrap">
-                        <button class="btn-voltar-mini" onclick="window.location.href='/'" title="Voltar ao Menu Principal">
+                        <button class="btn-voltar-mini" data-onclick="irPara('/')" title="Voltar ao Menu Principal">
                             <i class="fas fa-home"></i>
                             <span>Menu</span>
                         </button>
@@ -1838,14 +1847,14 @@
                     Selecione a Geometria
                 </h2>
                 <div class="geometry-grid">
-                    <div class="geometry-card active" data-geometry="planar" onclick="selectGeometry('planar')">
+                    <div class="geometry-card active" data-geometry="planar" data-onclick="selectGeometry('planar')">
                         <div class="geometry-icon">
                             <i class="fas fa-square"></i>
                         </div>
                         <h3 class="geometry-title">Geometria Planar</h3>
                         <p class="geometry-desc">Transferência de calor em placas planas</p>
                     </div>
-                    <div class="geometry-card" data-geometry="cylindrical" onclick="selectGeometry('cylindrical')">
+                    <div class="geometry-card" data-geometry="cylindrical" data-onclick="selectGeometry('cylindrical')">
                         <div class="geometry-icon">
                             <i class="fas fa-circle"></i>
                         </div>
@@ -1864,28 +1873,28 @@
                         Construção de Camadas
                     </h3>
                     <div class="layer-buttons">
-                        <button class="layer-btn" type="button" onclick="addLayer('Sólido')">
+                        <button class="layer-btn" type="button" data-onclick="addLayer('Sólido')">
                             <i class="fas fa-cube"></i>
                             <div>
                                 <strong>Camada Sólida</strong><br>
                                 <small>Material com condutividade térmica</small>
                             </div>
                         </button>
-                        <button class="layer-btn" type="button" onclick="addLayer('Fluido')">
+                        <button class="layer-btn" type="button" data-onclick="addLayer('Fluido')">
                             <i class="fas fa-tint"></i>
                             <div>
                                 <strong>Camada de Fluido</strong><br>
                                 <small>Convecção forçada ou natural</small>
                             </div>
                         </button>
-                        <button class="layer-btn" type="button" onclick="addParallelBlock()">
+                        <button class="layer-btn" type="button" data-onclick="addParallelBlock()">
                             <i class="fas fa-code-branch"></i>
                             <div>
                                 <strong>Adicionar Paralelo</strong><br>
                                 <small>Cria um bloco paralelo (2 ramos por padrão)</small>
                             </div>
                         </button>
-                        <button class="layer-btn" type="button" onclick="addFinnedSurface()">
+                        <button class="layer-btn" type="button" data-onclick="addFinnedSurface()">
                             <i class="fas fa-fan"></i>
                             <div>
                                 <strong>Superfície Aletada</strong><br>
@@ -1927,7 +1936,7 @@
                             <small style="color:#607d8b;">Usado para calcular q e temperaturas nas interfaces (primeiro e último fluido).</small>
 
                             <!-- Botão sensores ao vivo -->
-                            <button class="btn-ver-sensores" onclick="toggleSensorPopup()">
+                            <button class="btn-ver-sensores" data-onclick="toggleSensorPopup()">
                                 <span class="sensor-popup-dot"></span>
                                 <i class="fas fa-thermometer-half"></i>
                                 Ver Sensores ao Vivo
@@ -1937,7 +1946,7 @@
                             <div id="sensor-temp-popup">
                                 <div class="sensor-popup-header">
                                     <span><i class="fas fa-broadcast-tower" style="margin-right:5px;"></i>Temperaturas em Tempo Real</span>
-                                    <button class="btn-popup-close" onclick="fecharSensorPopup()" title="Fechar">&times;</button>
+                                    <button class="btn-popup-close" data-onclick="fecharSensorPopup()" title="Fechar">&times;</button>
                                 </div>
                                 <div class="sensor-row">
                                     <span class="s-label">T1 — Início da Chama</span>
@@ -2006,11 +2015,11 @@
                                 <div style="color:#607d8b; font-size:0.92rem;">Usado apenas na geometria planar</div>
                             </div>
                         </div>
-                        <button class="btn-calculate" onclick="calculateThermalCircuit()">
+                        <button class="btn-calculate" data-onclick="calculateThermalCircuit()">
                             <i class="fas fa-play"></i>
                             Calcular Circuito Térmico
                         </button>
-                        <button class="btn-clear" onclick="clearAll()">
+                        <button class="btn-clear" data-onclick="clearAll()">
                             <i class="fas fa-trash"></i>
                             Limpar Tudo
                         </button>
@@ -2029,7 +2038,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
 
   
     if (typeof window.summarizeParallelBlock !== 'function') {
@@ -2708,7 +2717,7 @@
                 // Encontrar e ativar o card correto
                 const cards = document.querySelectorAll('.geometry-card');
                 cards.forEach(card => {
-                    const onclick = card.getAttribute('onclick');
+                    const onclick = card.getAttribute('data-onclick');
                     if (onclick && onclick.includes(geometry)) {
                         card.classList.add('active');
                     }
@@ -3242,7 +3251,7 @@
         window.toggleAutoSortBranches = function(){
             autoSortBranches = !autoSortBranches;
             updateLayersList();
-            const btn = document.querySelector('#layers-toolbar button[onclick*="toggleAutoSortBranches"]');
+            const btn = document.querySelector('#layers-toolbar button[data-onclick*="toggleAutoSortBranches"]');
             if(btn) btn.textContent = 'Ordenar Ramos: '+(autoSortBranches?'Ligado':'Desligado');
         }
 
@@ -3603,16 +3612,16 @@
                     if(isFluid){
                         inlineControls = `<div class='inline-edit-row'>
                             <input type='number' step='0.01' value='${li.convection||''}' title='h (W/m²K)' 
-                                oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'h',this.value,this)" />
+                                data-oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'h',this.value,this)" />
                             <input type='number' step='0.01' value='${li.emissivity||''}' title='ε emissividade'
-                                oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'eps',this.value,this)" />
+                                data-oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'eps',this.value,this)" />
                         </div>`;
                     } else {
                         inlineControls = `<div class='inline-edit-row'>
                             <input type='number' step='0.0001' value='${li.thickness||''}' title='Espessura (m)'
-                                oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'L',this.value,this)" />
+                                data-oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'L',this.value,this)" />
                             <input type='number' step='0.01' value='${li.conductivity||''}' title='k (W/mK)'
-                                oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'k',this.value,this)" />
+                                data-oninput="inlineUpdateBranchValue(${blockIndex},${branchIndex},${liIdx},'k',this.value,this)" />
                         </div>`;
                     }
                 }
@@ -3641,9 +3650,9 @@
                                 <div style='font-size:10px;color:#555;'>R_b = ${Rb}</div>
                             </div>
                             <div class='n-actions'>
-                                <button type='button' class='btn-mini' title='Add Sólido' onclick="addNestedBranchLayer(${blockIndex},${branchIndex},${liIdx},${bi},'Sólido'); return false;">+S</button>
-                                <button type='button' class='btn-mini' title='Add Fluido' onclick="addNestedBranchLayer(${blockIndex},${branchIndex},${liIdx},${bi},'Fluido'); return false;">+F</button>
-                                <button type='button' class='btn-mini btn-del' title='Remover ramo' onclick="removeNestedBranch(${blockIndex},${branchIndex},${liIdx},${bi}); event.stopPropagation();">−</button>
+                                <button type='button' class='btn-mini' title='Add Sólido' data-onclick="addNestedBranchLayer(${blockIndex},${branchIndex},${liIdx},${bi},'Sólido'); return false;">+S</button>
+                                <button type='button' class='btn-mini' title='Add Fluido' data-onclick="addNestedBranchLayer(${blockIndex},${branchIndex},${liIdx},${bi},'Fluido'); return false;">+F</button>
+                                <button type='button' class='btn-mini btn-del' title='Remover ramo' data-onclick="removeNestedBranch(${blockIndex},${branchIndex},${liIdx},${bi}); event.stopPropagation();">−</button>
                             </div>
                         </div>`;
                     }).join('');
@@ -3651,9 +3660,9 @@
                         <div class='n-head'>
                             <strong>Paralelo Interno</strong>
                             <div class='n-actions'>
-                                <button type='button' class='btn-mini' title='Novo ramo' onclick="addNestedBranch(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">+Ramo</button>
-                                <button type='button' class='btn-mini' title='Duplicar nested' onclick="duplicateNestedParallel(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">⧉</button>
-                                <button type='button' class='btn-mini btn-del' title='Remover nested' onclick="removeNestedParallel(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">×</button>
+                                <button type='button' class='btn-mini' title='Novo ramo' data-onclick="addNestedBranch(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">+Ramo</button>
+                                <button type='button' class='btn-mini' title='Duplicar nested' data-onclick="duplicateNestedParallel(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">⧉</button>
+                                <button type='button' class='btn-mini btn-del' title='Remover nested' data-onclick="removeNestedParallel(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">×</button>
                             </div>
                         </div>
                         <!-- Cálculos internos ocultados conforme solicitação -->
@@ -3664,8 +3673,8 @@
                     <div class='branch-layer-head'>
                         <div class='branch-layer-meta'><span class='layer-type' style='color:${color};'>${li.type}</span><span class='layer-info-text'>${info}</span></div>
                         <div style='display:flex; gap:4px;'>
-                            ${!isPar?`<button type='button' class='btn-mini' title='Inserir paralelo interno após esta camada' onclick="insertNestedParallel(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">Par↺</button>`:''}
-                            <button type='button' class='btn-mini btn-del' title='Remover camada' onclick="event.stopPropagation(); removeBranchLayer(${blockIndex},${branchIndex},${liIdx}); try{pushHistory('remove branch layer')}catch{}">✕</button>
+                            ${!isPar?`<button type='button' class='btn-mini' title='Inserir paralelo interno após esta camada' data-onclick="insertNestedParallel(${blockIndex},${branchIndex},${liIdx}); event.stopPropagation();">Par↺</button>`:''}
+                            <button type='button' class='btn-mini btn-del' title='Remover camada' data-onclick="event.stopPropagation(); removeBranchLayer(${blockIndex},${branchIndex},${liIdx}); try{pushHistory('remove branch layer')}catch{}">✕</button>
                         </div>
                     </div>
                     ${inlineControls}
@@ -3731,17 +3740,17 @@
                 <div class='branch-color-bar' style='background:${colorBar};'></div>
                 <div class='branch-head'>
                     <div class='branch-left'>
-                        <button type='button' class='btn-mini btn-del' style='padding:2px 6px;' title='Remover ramo' onclick="removeBranch(${blockIndex},${branchIndex}); event.stopPropagation();">×</button>
-                        <span class='collapse-btn ${collapsed?'collapsed':''}' onclick="toggleBranchCollapse(${blockIndex},${branchIndex}); event.stopPropagation();">${collapsed?'+':'−'}</span>
+                        <button type='button' class='btn-mini btn-del' style='padding:2px 6px;' title='Remover ramo' data-onclick="removeBranch(${blockIndex},${branchIndex}); event.stopPropagation();">×</button>
+                        <span class='collapse-btn ${collapsed?'collapsed':''}' data-onclick="toggleBranchCollapse(${blockIndex},${branchIndex}); event.stopPropagation();">${collapsed?'+':'−'}</span>
                         <span class='branch-label'>Ramo ${branchIndex+1} ⠿</span>
                         <span class='branch-R ${(!hasLayers||!isFinite(Rb))? 'invalid':'valid'}">R_b${branchIndex+1} = ${isFinite(Rb)? fmtNum(Rb): (hasLayers? 'Inválido':'—')} ${isFinite(Rb)?'K/W':''} ${weightFrac>0?`(${(weightFrac*100).toFixed(1)}%)`:''}</span>
                         ${buildSparkline(summary)}
                     </div>
                     <div class='branch-actions'>
-                        <button type='button' class='btn-mini' title='Duplicar ramo' onclick="duplicateBranch(${blockIndex},${branchIndex}); try{pushHistory('duplicate branch')}catch{}; event.stopPropagation();">⧉</button>
-                        <button type='button' class='btn-mini' onclick="addBranchLayer(${blockIndex},${branchIndex},'Sólido'); try{pushHistory('add solid branch layer')}catch{}; event.stopPropagation();">+ Sólido</button>
-                        <button type='button' class='btn-mini' onclick="addBranchLayer(${blockIndex},${branchIndex},'Fluido'); try{pushHistory('add fluid branch layer')}catch{}; event.stopPropagation();">+ Fluido</button>
-                        <button type='button' class='btn-mini' onclick="distributeHInParallel(${blockIndex}); event.stopPropagation();">h⇲</button>
+                        <button type='button' class='btn-mini' title='Duplicar ramo' data-onclick="duplicateBranch(${blockIndex},${branchIndex}); try{pushHistory('duplicate branch')}catch{}; event.stopPropagation();">⧉</button>
+                        <button type='button' class='btn-mini' data-onclick="addBranchLayer(${blockIndex},${branchIndex},'Sólido'); try{pushHistory('add solid branch layer')}catch{}; event.stopPropagation();">+ Sólido</button>
+                        <button type='button' class='btn-mini' data-onclick="addBranchLayer(${blockIndex},${branchIndex},'Fluido'); try{pushHistory('add fluid branch layer')}catch{}; event.stopPropagation();">+ Fluido</button>
+                        <button type='button' class='btn-mini' data-onclick="distributeHInParallel(${blockIndex}); event.stopPropagation();">h⇲</button>
                     </div>
                 </div>
                 <div class='branch-body' style='${collapsed?'display:none;':''}'>${parallelCompactMode?`<div class='compact-hint'>(Modo compacto – expandir ramo para editar)</div>`: (innerHTML || `<div class='empty-branch'>Ramo vazio</div>`)}</div>
@@ -3763,7 +3772,7 @@
                             <small>${branchCount} ramos • R_eq ${ReqStr}</small>
                         </div>
                     </div>
-                    <button type='button' class='layer-delete' onclick="event.stopPropagation(); removeParallelBlock(${index});" title='Remover bloco paralelo'><i class="fas fa-trash"></i></button>
+                    <button type='button' class='layer-delete' data-onclick="event.stopPropagation(); removeParallelBlock(${index});" title='Remover bloco paralelo'><i class="fas fa-trash"></i></button>
                 </div>
             `;
         }
@@ -3848,8 +3857,8 @@
                                 <div class="layer-card-status${statusClass}">${statusText}</div>
                             </div>
                             <div class="layer-card-actions">
-                                <button class="layer-card-action" type="button" title="Editar" onclick="event.stopPropagation(); if(typeof window.openPropertyPopover === 'function'){ window.openPropertyPopover(event, ${index}); }"><i class="fas fa-pen"></i></button>
-                                <button class="layer-card-action layer-delete" type="button" title="Excluir" onclick="event.stopPropagation(); removeLayer(${index});"><i class="fas fa-trash"></i></button>
+                                <button class="layer-card-action" type="button" title="Editar" data-onclick="event.stopPropagation(); openPropertyPopover(event, ${index})"><i class="fas fa-pen"></i></button>
+                                <button class="layer-card-action layer-delete" type="button" title="Excluir" data-onclick="event.stopPropagation(); removeLayer(${index});"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                         ${index < layers.length - 1 ? '<div class="layer-flow-connector">↓</div>' : ''}
@@ -3888,8 +3897,8 @@
                             <div class="layer-card-status${statusClass}">${statusText}</div>
                         </div>
                         <div class="layer-card-actions">
-                            <button class="layer-card-action" type="button" title="Editar" onclick="event.stopPropagation(); if(typeof window.openPropertyPopover === 'function'){ window.openPropertyPopover(event, ${index}); }"><i class="fas fa-pen"></i></button>
-                            <button class="layer-card-action layer-delete" type="button" title="Excluir" onclick="event.stopPropagation(); removeLayer(${index});"><i class="fas fa-trash"></i></button>
+                            <button class="layer-card-action" type="button" title="Editar" data-onclick="event.stopPropagation(); openPropertyPopover(event, ${index})"><i class="fas fa-pen"></i></button>
+                            <button class="layer-card-action layer-delete" type="button" title="Excluir" data-onclick="event.stopPropagation(); removeLayer(${index});"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     ${index < layers.length - 1 ? '<div class="layer-flow-connector">↓</div>' : ''}
@@ -4123,7 +4132,7 @@
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 5px;">Coeficiente de Convecção (W/m²·K)</label>
                             <input type="number" value="${layer.convection || 100}" 
-                                   onchange="updateLayerProperty(${selectedLayerIndex}, 'convection', this.value)"
+                                   data-onchange="updateLayerProperty(${selectedLayerIndex}, 'convection', this.value)"
                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
                         </div>
                     </div>
@@ -4132,13 +4141,13 @@
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 5px;">Emissividade ε (0–1, opcional)</label>
                             <input type="number" value="${layer.emissivity || 0}" min="0" max="1" step="0.01"
-                                   onchange="updateLayerProperty(${selectedLayerIndex}, 'emissivity', this.value)"
+                                   data-onchange="updateLayerProperty(${selectedLayerIndex}, 'emissivity', this.value)"
                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
                         </div>
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 5px;">Temperatura do Fluido (°C)</label>
                             <input type="number" value="${layer.temperature || 25}" 
-                                   onchange="updateLayerProperty(${selectedLayerIndex}, 'temperature', this.value)"
+                                   data-onchange="updateLayerProperty(${selectedLayerIndex}, 'temperature', this.value)"
                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
                         </div>
                     </div>
@@ -4146,7 +4155,7 @@
                     <div style="margin-bottom: 15px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
                             <input type="checkbox" ${layer.include_radiation ? 'checked' : ''} 
-                                   onchange="updateLayerProperty(${selectedLayerIndex}, 'include_radiation', this.checked)">
+                                   data-onchange="updateLayerProperty(${selectedLayerIndex}, 'include_radiation', this.checked)">
                             Incluir Radiação (paralelo com convecção)
                         </label>
                     </div>
@@ -4155,15 +4164,15 @@
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 5px;">T_viz (°C, para radiação)</label>
                             <input type="number" value="${layer.T_viz || 25}" 
-                                   onchange="updateLayerProperty(${selectedLayerIndex}, 'T_viz', this.value)"
+                                   data-onchange="updateLayerProperty(${selectedLayerIndex}, 'T_viz', this.value)"
                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
                         </div>
                     ` : ''}
                 `;
                 formHTML += `
                     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
-                        <button type="button" onclick="cancelGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#fafafa; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-weight:600;">Cancelar</button>
-                        <button type="button" onclick="saveGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#1976d2; border:1px solid #1565c0; border-radius:6px; cursor:pointer; font-weight:600; color:#fff;">Salvar</button>
+                        <button type="button" data-onclick="cancelGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#fafafa; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-weight:600;">Cancelar</button>
+                        <button type="button" data-onclick="saveGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#1976d2; border:1px solid #1565c0; border-radius:6px; cursor:pointer; font-weight:600; color:#fff;">Salvar</button>
                     </div>`;
                 
             } else if (isFinned) {
@@ -4198,8 +4207,8 @@
                 `;
                 formHTML += `
                     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
-                        <button type="button" onclick="cancelGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#fafafa; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-weight:600;">Cancelar</button>
-                        <button type="button" onclick="saveGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#2e7d32; border:1px solid #1b5e20; border-radius:6px; cursor:pointer; font-weight:600; color:#fff;">Salvar</button>
+                        <button type="button" data-onclick="cancelGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#fafafa; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-weight:600;">Cancelar</button>
+                        <button type="button" data-onclick="saveGenericEdit(${selectedLayerIndex})" style="padding:6px 14px; background:#2e7d32; border:1px solid #1b5e20; border-radius:6px; cursor:pointer; font-weight:600; color:#fff;">Salvar</button>
                     </div>`;
                 
             } else if (isParallel) {
@@ -4305,21 +4314,21 @@
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px;">Espessura (m)</label>
                         <input type="number" value="${layer.thickness || 0.01}" step="0.001"
-                               onchange="updateLayerProperty(${selectedLayerIndex}, 'thickness', this.value); updatePropertiesPanel();"
+                               data-onchange="updateLayerProperty(${selectedLayerIndex}, 'thickness', this.value); updatePropertiesPanel();"
                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" />
                     </div>
                     
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px;">Condutividade Térmica (W/m·K)</label>
                         <input type="number" value="${layer.conductivity || 50}" 
-                               onchange="updateLayerProperty(${selectedLayerIndex}, 'conductivity', this.value); updatePropertiesPanel();"
+                               data-onchange="updateLayerProperty(${selectedLayerIndex}, 'conductivity', this.value); updatePropertiesPanel();"
                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" />
                     </div>
                     
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px;">R_contato (K/W, opcional)</label>
                         <input type="number" value="${layer.contact_resistance || 0}" step="0.0001"
-                               onchange="updateLayerProperty(${selectedLayerIndex}, 'contact_resistance', this.value); updatePropertiesPanel();"
+                               data-onchange="updateLayerProperty(${selectedLayerIndex}, 'contact_resistance', this.value); updatePropertiesPanel();"
                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" />
                     </div>
                 `;
@@ -6223,7 +6232,7 @@
                     else if (Lr.kind === 'parallel') typeIcon = '<i class="fa-solid fa-code-branch"></i>';
                     const resistanceColor = Lr.R < 0.001 ? '#4caf50' : Lr.R < 0.1 ? '#ff9800' : '#d32f2f';
                     
-                    html += `<tr style="${rowBg}; border-bottom: 1px solid #e0e0e0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor='${i%2===0?'#fafafa':'white'}'">`+
+                    html += `<tr style="${rowBg}; border-bottom: 1px solid #e0e0e0; transition: background-color 0.2s;" class="linha-hover-azul">`+
                             `<td style="padding:12px 16px; vertical-align:top; border-right:1px solid #e0e0e0;">` +
                             `<div style="display: flex; align-items: center; gap: 8px;">` +
                             `<span style="font-size: 1.1em;">${typeIcon}</span>` +
@@ -6503,7 +6512,7 @@
                         const deltaColor = dTi > 10 ? '#d32f2f' : dTi > 5 ? '#ff9800' : '#4caf50';
                         const typeIcon = Lr.kind === 'solid' ? '<i class="fa-solid fa-cube"></i>' : '<i class="fa-solid fa-wind"></i>';
                         
-                        html += `<tr style="${rowBg}; border-bottom: 1px solid #e0e0e0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#fff3e0'" onmouseout="this.style.backgroundColor='${i%2===0?'#fafafa':'white'}'">`+
+                        html += `<tr style="${rowBg}; border-bottom: 1px solid #e0e0e0; transition: background-color 0.2s;" class="linha-hover-laranja">`+
                                 `<td style="padding:12px 16px; vertical-align:top; border-right:1px solid #e0e0e0;">` +
                                 `<div style="display: flex; align-items: center; gap: 8px;">` +
                                 `<span style="font-size: 1.1em;">${typeIcon}</span>` +
@@ -7716,20 +7725,12 @@
                 html += `
                     <tr style='
                         background: ${rowBg}; 
+                        --hover-bg: ${hoverBg};
                         border-bottom: 1px solid #e0e0e0; 
                         transition: all 0.3s ease;
                         transform: translateX(0);
                     ' 
-                    onmouseover="
-                        this.style.backgroundColor='${hoverBg}'; 
-                        this.style.transform='translateX(2px)';
-                        this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';
-                    " 
-                    onmouseout="
-                        this.style.backgroundColor='${rowBg}';
-                        this.style.transform='translateX(0)';
-                        this.style.boxShadow='none';
-                    ">
+                    class="linha-hover-detalhe">
                         <td style='
                             padding: 14px 12px; 
                             vertical-align: top;
@@ -11963,7 +11964,7 @@
                     window.selectedGeometry = geometry || 'planar';
                     if(document && document.querySelectorAll){
                         document.querySelectorAll('.geometry-card').forEach(card=>{
-                            const oc = card.getAttribute('onclick')||'';
+                            const oc = card.getAttribute('data-onclick')||'';
                             if(oc.includes(geometry)) card.classList.add('active'); else card.classList.remove('active');
                         });
                     }
@@ -12051,11 +12052,11 @@
     })();
 
     </script>
-    <script src="/static/js/side_popover_helper.js"></script>
-    <script src="/static/js/popover_content.js"></script>
-    <script src="/static/js/popover_avancado.js"></script>
+    <script nonce="{{ csp_nonce }}" src="/static/js/side_popover_helper.js"></script>
+    <script nonce="{{ csp_nonce }}" src="/static/js/popover_content.js"></script>
+    <script nonce="{{ csp_nonce }}" src="/static/js/popover_avancado.js"></script>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
     // === POPUP DE SENSORES AO VIVO ===
     (function() {
         var popup = null;

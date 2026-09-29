@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora - Condensação</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
@@ -71,7 +72,7 @@
                         <span>Fluxo de calor <strong>{{ "%.0f"|format(resultado.q_fluxo) }} W/m²</strong></span>
                     </div>
                     <div style="margin-top:1.1rem;">
-                        <button type="button" onclick="usarCoeficienteCalculado({{ resultado.h }})" class="vx-btn vx-btn-primary">
+                        <button type="button" data-onclick="usarCoeficienteCalculado({{ resultado.h }})" class="vx-btn vx-btn-primary">
                             <i class="fa-solid fa-check"></i> Usar na simulação de aletas
                         </button>
                     </div>
@@ -82,7 +83,7 @@
             <div class="panel">
                 <div class="panel-head">
                     <h2>Entradas</h2>
-                    <button type="button" class="eng-formula-toggle" onclick="document.getElementById('formulaBody').hidden = !document.getElementById('formulaBody').hidden;">
+                    <button type="button" class="eng-formula-toggle" data-onclick="alternarVisibilidade('formulaBody')">
                         <i class="fa-solid fa-square-root-variable"></i> Ver correlação usada
                     </button>
                 </div>
@@ -185,9 +186,9 @@
         </main>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script nonce="{{ csp_nonce }}">
         {% if resultado %}
         try {
             localStorage.setItem('coeficiente_convectivo', '{{ resultado.h }}');

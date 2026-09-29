@@ -1,8 +1,14 @@
 import os
 import json
+import math
+import re
+import secrets
 os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, g
+from jinja2.utils import htmlsafe_json_dumps
+from markupsafe import escape
+from werkzeug.exceptions import BadRequest, HTTPException
 from modelo3 import calcular_eficiencia, mostrar_formula, salvar_resultados, salvar_sresultados, normalizar_tipo_aleta
 from visualizacao_plotly import (
     gerar_grafico_temperatura_interativo, 
@@ -45,7 +51,20 @@ app = handler = Flask(
     template_folder=template_dir,
     static_url_path='/static'
 )
-app.secret_key = 'transferencia-calor-laboratorio-flask-2025'
+# A chave vem da variável de ambiente FLASK_SECRET_KEY (configure na Vercel).
+# Sem ela, gera uma chave aleatória a cada início do servidor: nada fica fixo no código.
+app.secret_key = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
+
+# A Vercel define VERCEL=1 automaticamente no site publicado.
+EM_VERCEL = bool(os.environ.get('VERCEL'))
+
+# Endereço público usado nas tags de prévia do link (og:image precisa de URL absoluta).
+SITE_URL = os.environ.get('SITE_URL', 'https://tranferencia-de-calor-v30.vercel.app').rstrip('/')
+
+# Domínios externos liberados na Content-Security-Policy (só os que as páginas usam).
+CSP_SCRIPT_CDNS = 'https://cdn.jsdelivr.net https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdn.plot.ly'
+CSP_STYLE_CDNS = 'https://fonts.googleapis.com https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net'
+CSP_FONT_CDNS = 'https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net'
 
 @app.route('/favicon.ico')
 def favicon():
@@ -53,23 +72,65 @@ def favicon():
 
 @app.errorhandler(Exception)
 def handle_all_exceptions(e):
+    # Erros HTTP (404, 405, 400...) seguem com a página padrão e o código certo.
+    if isinstance(e, HTTPException):
+        return e
     import traceback
     err_tb = traceback.format_exc()
     print(f"[ERRO 500 SERVER]: {err_tb}")
+    # O traceback só aparece na tela com FLASK_DEBUG=1 (uso local); o público vê uma mensagem genérica.
+    detalhes = ''
+    if app.debug:
+        detalhes = (f'<p><strong>Exceção:</strong> {escape(type(e).__name__)}: {escape(str(e))}</p>'
+                    f'<pre style="background: #1e1e1e; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.4;">{escape(err_tb)}</pre>')
     return f'''
     <!DOCTYPE html>
     <html lang="pt-br">
-    <head><meta charset="utf-8"><title>Erro no Servidor</title></head>
+    <head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>Erro no Servidor</title></head>
     <body style="font-family: sans-serif; background: #fdf2f2; padding: 30px;">
         <div style="max-width: 800px; margin: 0 auto; background: white; border: 2px solid #e53935; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <h2 style="color: #c62828; margin-top: 0;">⚠️ Detalhes do Erro Interno (500)</h2>
-            <p><strong>Exceção:</strong> {type(e).__name__}: {str(e)}</p>
-            <pre style="background: #1e1e1e; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.4;">{err_tb}</pre>
+            <h2 style="color: #c62828; margin-top: 0;">⚠️ Erro interno (500)</h2>
+            <p>Não foi possível concluir o cálculo. Confira os valores informados e tente novamente.</p>
+            {detalhes}
             <a href="/" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #1976d2; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">← Voltar para o Início</a>
         </div>
     </body>
     </html>
     ''', 500
+
+@app.before_request
+def gerar_nonce_csp():
+    """Código aleatório por requisição: só scripts com este nonce podem rodar na página."""
+    g.csp_nonce = secrets.token_urlsafe(16)
+
+@app.context_processor
+def injetar_variaveis_seguranca():
+    return {'csp_nonce': g.get('csp_nonce', ''), 'site_url': SITE_URL}
+
+def com_nonce(html):
+    """Adiciona o nonce da CSP às tags <script> de HTML gerado no servidor (ex.: gráfico Plotly)."""
+    return re.sub(r'<script(?=[\s>])', f'<script nonce="{g.csp_nonce}"', html)
+
+def numero_param(valor, nome):
+    """Converte um parâmetro recebido para float finito; valor inválido vira erro 400 (sem ecoar o texto)."""
+    try:
+        numero = float(valor)
+    except (TypeError, ValueError):
+        raise BadRequest(f"Parâmetro '{nome}' inválido: informe um número.")
+    if not math.isfinite(numero):
+        raise BadRequest(f"Parâmetro '{nome}' inválido: informe um número finito.")
+    return numero
+
+def escrita_bloqueada():
+    """No site público (Vercel) ninguém de fora pode gravar leituras de sensores."""
+    if EM_VERCEL:
+        return jsonify({
+            'success': False,
+            'status': 'erro',
+            'message': 'Gravação desativada no site público.',
+            'mensagem': 'Gravação desativada no site público. Use o servidor local do laboratório (py app.py).'
+        }), 403
+    return None
 
 @app.after_request
 def add_no_cache_headers(resp):
@@ -77,6 +138,28 @@ def add_no_cache_headers(resp):
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'
+    return resp
+
+@app.after_request
+def add_security_headers(resp):
+    """Cabeçalhos de segurança. A CSP usa o nonce desta requisição, por isso sai daqui e não do vercel.json."""
+    nonce = g.get('csp_nonce', '')
+    resp.headers['Content-Security-Policy'] = (
+        "default-src 'none'; "
+        f"script-src 'self' 'nonce-{nonce}' {CSP_SCRIPT_CDNS}; "
+        f"style-src 'self' 'unsafe-inline' {CSP_STYLE_CDNS}; "
+        f"font-src 'self' data: {CSP_FONT_CDNS}; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "base-uri 'none'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"
+    )
+    # Na Vercel os demais cabeçalhos vêm do vercel.json; aqui só para o servidor local.
+    if not EM_VERCEL:
+        resp.headers['X-Frame-Options'] = 'DENY'
+        resp.headers['X-Content-Type-Options'] = 'nosniff'
+        resp.headers['Referrer-Policy'] = 'no-referrer'
+        resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
+        resp.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     return resp
 
 # Configurações globais extras disponíveis nos templates
@@ -380,8 +463,8 @@ def resultados_sele():
 
     sele_aleta = [normalizar_tipo_aleta(t) for t in sele_aleta_param.split(',') if t.strip()] if sele_aleta_param else []
     smateriais = smateriais_param.split(',') if smateriais_param else []
-    h = float(h_param)
-    k = [float(valor_k) for valor_k in k_param.split(',')] if k_param else []
+    h = numero_param(h_param, 'h')
+    k = [numero_param(valor_k, 'k') for valor_k in k_param.split(',')] if k_param else []
     
     t = request.args.get('t', type=float)
     w = request.args.get('w', type=float)
@@ -395,8 +478,8 @@ def resultados_sele():
     else:
         l = l_param if l_param and l_param > 0 else 0.05
         
-    T_b = float(T_b_param)
-    T_inf = float(T_inf_param)
+    T_b = numero_param(T_b_param, 'T_b')
+    T_inf = numero_param(T_inf_param, 'T_inf')
     condicao_ponta = request.args.get('condicao_ponta', 'adiabatica')
     T_L = request.args.get('T_L', type=float)
 
@@ -432,7 +515,7 @@ def resultados_sele():
     grafico_html, dados_base = gerar_grafico_temperatura_multiplos_materiais(
         sele_aleta, smateriais, h, k, l, t=t, w=w, D=D, r1=r1, r2=r2, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta
     )
-    dados_grafico_json = json.dumps(dados_base)
+    dados_grafico_json = htmlsafe_json_dumps(dados_base)
 
     os.makedirs(app.static_folder, exist_ok=True)
     filepath = os.path.join(app.static_folder, 'selerelatorio.txt')
@@ -445,7 +528,7 @@ def resultados_sele():
                          resultados=resultados_sele, 
                          materiais=smateriais, 
                          relatorio_path='selerelatorio.txt', 
-                         grafico_html=grafico_html, 
+                         grafico_html=com_nonce(grafico_html), 
                          dados_grafico_json=dados_grafico_json,
                          condicao_ponta=condicao_ponta, 
                          T_L=T_L,
@@ -588,9 +671,9 @@ def resultado():
     tipos_aletas = [normalizar_tipo_aleta(t) for t in tipos_aletas_str.split(',') if t.strip()] if tipos_aletas_str else []
     material = request.args.get('material')
     h_str = request.args.get('h')
-    h = float(h_str) if h_str else 0.0
+    h = numero_param(h_str, 'h') if h_str else 0.0
     k_str = request.args.get('k')
-    k = float(k_str) if k_str else 0.0
+    k = numero_param(k_str, 'k') if k_str else 0.0
     
     t = request.args.get('t', type=float)
     w = request.args.get('w', type=float)
@@ -599,16 +682,16 @@ def resultado():
     D = request.args.get('D', type=float)
     
     l_str = request.args.get('l')
-    l = float(l_str) if l_str else 0.0
+    l = numero_param(l_str, 'l') if l_str else 0.0
     if l <= 0 and r1 is not None and r2 is not None and r2 > r1:
         l = r2 - r1
     if l <= 0:
         l = 0.05
         
     T_b_str = request.args.get('T_b')
-    T_b = float(T_b_str) if T_b_str else 0.0
+    T_b = numero_param(T_b_str, 'T_b') if T_b_str else 0.0
     T_inf_str = request.args.get('T_inf')
-    T_inf = float(T_inf_str) if T_inf_str else 0.0
+    T_inf = numero_param(T_inf_str, 'T_inf') if T_inf_str else 0.0
     condicao_ponta = request.args.get('condicao_ponta', 'adiabatica')
     T_L = request.args.get('T_L', type=float)
 
@@ -642,7 +725,7 @@ def resultado():
     grafico_html, dados_base = gerar_grafico_temperatura_interativo(
         tipos_aletas, h, k, l, t=t, w=w, D=D, r1=r1, r2=r2, T_b=T_b, T_inf=T_inf, condicao_ponta=condicao_ponta, material=material
     )
-    dados_grafico_json = json.dumps(dados_base)
+    dados_grafico_json = htmlsafe_json_dumps(dados_base)
 
     # Salvar os resultados em um arquivo de forma segura
     os.makedirs(app.static_folder, exist_ok=True)
@@ -656,7 +739,7 @@ def resultado():
                          resultados=resultados, 
                          material=material, 
                          relatorio_path='relatorio.txt', 
-                         grafico_html=grafico_html, 
+                         grafico_html=com_nonce(grafico_html), 
                          dados_grafico_json=dados_grafico_json,
                          condicao_ponta=condicao_ponta, 
                          T_L=T_L,
@@ -1553,6 +1636,9 @@ def api_monitoramento():
     global monitoring_cache
     
     if request.method == 'POST':
+        bloqueio = escrita_bloqueada()
+        if bloqueio:
+            return bloqueio
         try:
             data = request.get_json()
             if data:
@@ -1612,6 +1698,9 @@ def api_temperaturas():
     
     try:
         if request.method == 'POST':
+            bloqueio = escrita_bloqueada()
+            if bloqueio:
+                return bloqueio
             if request.is_json:
                 data = request.get_json()
                 
@@ -1689,6 +1778,9 @@ def api_temperatura_alvo():
     global temperatura_alvo_data
     
     if request.method == 'POST':
+        bloqueio = escrita_bloqueada()
+        if bloqueio:
+            return bloqueio
         try:
             data = request.get_json(silent=True)
             if not data and request.form:
@@ -1773,5 +1865,6 @@ def api_temperatura_alvo():
         }), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', use_reloader=True, threaded=True)
+    # Debugger do Werkzeug só com FLASK_DEBUG=1: com host 0.0.0.0 ele ficaria exposto na rede.
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1', host='0.0.0.0', use_reloader=True, threaded=True)
 
