@@ -273,6 +273,59 @@ def interpolar_propriedades(fluido, T_kelvin):
     else:
         raise ValueError(f"Fluido '{fluido}' não implementado. Fluidos disponíveis: ar, agua, mercurio, oleo")
 
+
+def obter_beta_expansao_termica(fluido, T_kelvin):
+    """
+    Coeficiente de expansão volumétrica térmica, beta [K⁻¹].
+
+    Para gás ideal (ar): beta = 1/T (Çengel & Ghajar; Incropera Cap.9).
+    Para líquidos, 1/T NÃO é válido — beta = -(1/rho)(d(rho)/dT)_p é uma propriedade
+    própria do fluido, obtida de dado tabelado (não de uma lei geral). Fontes:
+      - água: Çengel & Ghajar 4ª ed., Tabela A-9 (coluna "coeficiente de expansão
+        volumétrica, 1/K líquido") — mesmos breakpoints (15/20/40/65°C) usados por
+        interpolar_propriedades() para as demais propriedades da água nesta função.
+        Constante fora de [15,65]°C (mesma convenção de "segurar" o valor de borda já
+        usada para rho/mu/k/cp abaixo de 15°C nesta mesma função).
+      - óleo: Incropera 7ª ed., Tabela A.5, "Óleo de Motor (Não Usado)" — beta
+        praticamente constante (0,70×10⁻³ K⁻¹) em toda a faixa tabulada (273-430K).
+      - mercúrio: Incropera 7ª ed., Tabela A.5 — beta ≈0,181×10⁻³ K⁻¹, variação <1%
+        entre 273-350K (confirmado na fonte); usado como constante.
+
+    Válido só para as faixas de temperatura citadas acima — fora delas, retorna o
+    valor de borda (não extrapola). Ver achado C.11 em V30 - Estado Mestre.md.
+    """
+    fluido_l = fluido.lower()
+    T_c = T_kelvin - 273.15
+
+    if fluido_l == 'ar':
+        return 1 / T_kelvin
+
+    elif fluido_l in ('agua', 'água'):
+        # beta tabelado (Cengel & Ghajar, Tab. A-9), 1/K, mesmos breakpoints de interpolar_propriedades()
+        if T_c <= 15:
+            return 1.38e-4
+        elif T_c <= 20:
+            f = (T_c - 15) / 5
+            return 1.38e-4 + f * (1.95e-4 - 1.38e-4)
+        elif T_c <= 40:
+            f = (T_c - 20) / 20
+            return 1.95e-4 + f * (3.77e-4 - 1.95e-4)
+        elif T_c <= 65:
+            f = (T_c - 40) / 25
+            return 3.77e-4 + f * (5.48e-4 - 3.77e-4)
+        else:
+            return 5.48e-4  # fora da faixa tabulada nestes breakpoints (>65°C) - valor de borda, não extrapolado
+
+    elif fluido_l in ('oleo', 'óleo'):
+        return 7.0e-4  # Incropera Tab.A.5, oleo de motor não usado - constante 273-430K (0-157°C)
+
+    elif fluido_l in ('mercurio', 'mercúrio'):
+        return 1.81e-4  # Incropera Tab.A.5 - constante (variação <1% entre 273-350K)
+
+    else:
+        raise ValueError(f"Fluido '{fluido}' não implementado para beta. Fluidos disponíveis: ar, agua, mercurio, oleo")
+
+
 # CONVECÇÃO FORÇADA - PLACA PLANA
 
 def conveccao_forcada_placa_plana(L, v=None, T_s=20, T_inf=25, fluido='ar', m_dot=None, w=1.0):
@@ -646,13 +699,13 @@ def conveccao_natural_placa_vertical(L, T_s, T_inf, fluido='ar'):
     """
     🌡️ CONVECÇÃO NATURAL - PLACA VERTICAL
     ====================================
-    
-    Cálculo otimizado do coeficiente de transferência de calor para 
+
+    Cálculo do coeficiente de transferência de calor para
     convecção natural em placa vertical aquecida.
-    
-    ✅ Validado com Exemplo 9-9 Çengel (pág. 514)
-    📊 Correlação otimizada para Ra = 8.54e7
-    
+
+    Correlação de Churchill-Chu (Incropera 7ª ed., Cap.9, Seç.9.6.1, Eq.9.26),
+    sem multiplicador de calibração.
+
     Args:
         L (float): Altura da placa [m]
         T_s (float): Temperatura da superfície [°C]
@@ -666,29 +719,16 @@ def conveccao_natural_placa_vertical(L, T_s, T_inf, fluido='ar'):
     T_filme = (T_s + T_inf) / 2 + 273.15
     props = interpolar_propriedades(fluido, T_filme)
     
-    # Coeficiente de expansão térmica 
-    # Para ar: usar valor mais preciso baseado no Çengel
-    if fluido.lower() == 'ar':
-        beta = 3.21e-4  # K⁻¹ - Valor do exemplo Çengel p.514 (T=323K)
-    else:
-        beta = 1 / T_filme  # Aproximação para outros gases ideais
+    # Coeficiente de expansão térmica - modelo apropriado por fluido (ver obter_beta_expansao_termica)
+    beta = obter_beta_expansao_termica(fluido, T_filme)
     
     # Número de Rayleigh
     g = 9.81  # aceleração da gravidade
     Ra = g * beta * abs(T_s - T_inf) * L**3 / (props['nu'] * props['alpha'])
     
-    # Correlações para convecção natural - Churchill-Chu otimizada
+    # Correlação de Churchill-Chu para placa vertical (Incropera Cap.9 Eq.9.26)
     if Ra < 1e9:  # Regime laminar
-        # Correlação Churchill-Chu para placa vertical
         Nu = (0.825 + (0.387 * Ra**(1/6)) / (1 + (0.492/props['Pr'])**(9/16))**(8/27))**2
-        
-        # Fator de calibração específico baseado no exemplo Çengel p.514
-        # Para Ra≈9e7, Nu deve ser 92.9 (fator testado = 1.57)
-        if 8e7 <= Ra <= 1e8:
-            Nu = Nu * 1.57  # Fator validado para o exemplo específico
-        else:
-            Nu = Nu * 1.20  # Fator mais conservador para outros casos
-        
         regime = "Laminar"
     else:  # Regime turbulento
         # Correlação para regime turbulento (Ra > 1e9)
@@ -730,7 +770,7 @@ def conveccao_natural_placa_horizontal(Lc, T_s, T_inf, orientacao='superior', fl
     """
     T_filme = (T_s + T_inf) / 2 + 273.15
     props = interpolar_propriedades(fluido, T_filme)
-    beta = 1 / T_filme  # K⁻¹ para gás ideal
+    beta = obter_beta_expansao_termica(fluido, T_filme)  # modelo apropriado por fluido (ver C.11)
 
     g = 9.81
     Ra = g * beta * abs(T_s - T_inf) * Lc**3 / (props['nu'] * props['alpha'])
@@ -751,13 +791,14 @@ def conveccao_natural_placa_horizontal(Lc, T_s, T_inf, orientacao='superior', fl
             Nu = 0.15 * Ra**(1/3)
             regime = "Turbulento (Ra > 1×10¹¹ — extrapolado)"
     else:
-        # Face quente para baixo — correlação McAdams (3×10⁵ ≤ Ra ≤ 3×10¹⁰, Incropera/Çengel)
-        if Ra <= 3e10:
-            Nu = 0.27 * Ra**(1/4)
-            regime = "Laminar — face inferior (3×10⁵ ≤ Ra ≤ 3×10¹⁰)"
+        # Face quente para baixo — correlação McAdams (1×10⁵ ≤ Ra ≤ 1×10¹¹, Çengel & Ghajar
+        # Tab.9-1/14-13 — ver achado C.16). Fórmula única, sem ramo por faixa (o livro não
+        # divide essa correlação em sub-faixas como faz para a face superior).
+        Nu = 0.27 * Ra**(1/4)
+        if Ra <= 1e11:
+            regime = "Laminar — face inferior (1×10⁵ ≤ Ra ≤ 1×10¹¹)"
         else:
-            Nu = 0.27 * Ra**(1/4)
-            regime = "Regime estendido — face inferior (Ra > 3×10¹⁰)"
+            regime = "Face inferior (Ra > 1×10¹¹ — extrapolado)"
 
     h = Nu * props['k'] / Lc
 
@@ -785,13 +826,13 @@ def conveccao_natural_esfera(D, T_s, T_inf, fluido='ar'):
     T_filme = (T_s + T_inf) / 2 + 273.15
     props = interpolar_propriedades(fluido, T_filme)
     
-    # Coeficiente de expansão térmica (aproximação para gases ideais)
-    beta = 1 / T_filme
-    
+    # Coeficiente de expansão térmica - modelo apropriado por fluido (ver C.11)
+    beta = obter_beta_expansao_termica(fluido, T_filme)
+
     # Número de Rayleigh baseado no diâmetro
     g = 9.81  # aceleração da gravidade
     Ra = g * beta * abs(T_s - T_inf) * D**3 / (props['nu'] * props['alpha'])
-    
+
     # Correlação de Churchill e Chu para esfera
     if Ra < 1e12:
         Nu = 2 + (0.589 * Ra**(1/4)) / (1 + (0.469/props['Pr'])**(9/16))**(4/9)
@@ -829,13 +870,13 @@ def conveccao_natural_cilindro_horizontal(D, T_s, T_inf, fluido='ar'):
     T_filme = (T_s + T_inf) / 2 + 273.15
     props = interpolar_propriedades(fluido, T_filme)
     
-    # Coeficiente de expansão térmica (aproximação para gases ideais)
-    beta = 1 / T_filme
-    
+    # Coeficiente de expansão térmica - modelo apropriado por fluido (ver C.11)
+    beta = obter_beta_expansao_termica(fluido, T_filme)
+
     # Número de Rayleigh baseado no diâmetro
     g = 9.81  # aceleração da gravidade
     Ra = g * beta * abs(T_s - T_inf) * D**3 / (props['nu'] * props['alpha'])
-    
+
     # Correlação corrigida de Churchill e Chu para cilindro horizontal
     if Ra < 1e12:
         Nu = (0.60 + (0.387 * Ra**(1/6)) / (1 + (0.559/props['Pr'])**(9/16))**(8/27))**2

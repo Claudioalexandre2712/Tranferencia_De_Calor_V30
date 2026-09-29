@@ -1,29 +1,29 @@
 Resultados das Aletas
-Seleção de Aletas: 1)aletas retangulares retas
-Tipo de Aleta: 1)aletas retangulares retas
-Material: Alumínio
-k: 240.0
-Eficiência da Aleta: 0.919953
-Taxa de Transferência de Calor: 17.594096 W
-Área da Aleta: 0.010000 m²
-Efetividade (epsilon_a): 46.917589
-Parâmetro m: 10.307764 m^-1
-Perímetro P: 0.204000 m
-Área Transversal A_tr: 0.000200000 m^2
+Seleção de Aletas: 5)aletas de pino de perfil retangular
+Tipo de Aleta: 5)aletas de pino de perfil retangular
+Material: Cobre
+k: 386.0
+Eficiência da Aleta: 0.978956
+Taxa de Transferência de Calor: 2.883264 W
+Área da Aleta: 0.001571 m²
+Efetividade (epsilon_a): 19.579121
+Parâmetro m: 5.089866 m^-1
+Perímetro P: 0.031416 m
+Área Transversal A_tr: 0.000078540 m^2
 Comprimento (m) x Temperatura (°C):
 0.000000 m: 100.000000 °C
-0.003571 m: 98.741447 °C
-0.007143 m: 97.582841 °C
-0.010714 m: 96.522613 °C
-0.014286 m: 95.559326 °C
-0.017857 m: 94.691673 °C
-0.021429 m: 93.918479 °C
-0.025000 m: 93.238697 °C
-0.028571 m: 92.651403 °C
-0.032143 m: 92.155804 °C
-0.035714 m: 91.751226 °C
-0.039286 m: 91.437121 °C
-0.042857 m: 91.213065 °C
-0.046429 m: 91.078752 °C
-0.050000 m: 91.034001 °C
+0.003571 m: 99.672710 °C
+0.007143 m: 99.370095 °C
+0.010714 m: 99.092056 °C
+0.014286 m: 98.838501 °C
+0.017857 m: 98.609346 °C
+0.021429 m: 98.404515 °C
+0.025000 m: 98.223941 °C
+0.028571 m: 98.067565 °C
+0.032143 m: 97.935333 °C
+0.035714 m: 97.827203 °C
+0.039286 m: 97.743139 °C
+0.042857 m: 97.683113 °C
+0.046429 m: 97.647105 °C
+0.050000 m: 97.635104 °C
 

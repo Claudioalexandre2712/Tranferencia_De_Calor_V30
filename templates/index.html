@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
@@ -63,8 +63,10 @@
     .aleta-particle img {
       display: block; width: 100%; height: auto;
       filter: drop-shadow(0 8px 18px rgba(13, 20, 32, 0.22));
+      /* Sem transition CSS: a interação com o cursor é controlada inteiramente
+         pelo oscilador amortecido no RAF (ver script). Isso elimina saltos
+         na borda do raio e permite inércia/overshoot precisos. */
       will-change: transform;
-      transition: transform 180ms cubic-bezier(.22,.8,.32,1);
     }
 
     /* Igual ao floatAnim antigo: translateY(110vh) → translateY(-20vh), giro completo 0→360deg.
@@ -249,7 +251,7 @@
     // Nada de conjunto fixo criado uma vez: spawnAleta() cria UMA partícula, que se
     // autorremove no fim da própria animação (animationend, 1 iteração só). Um timer
     // mantém a contagem de ativas perto de MAX_ACTIVE_ALETAS, repondo continuamente.
-    const MAX_ACTIVE_ALETAS = 120;
+    const MAX_ACTIVE_ALETAS = 40;
     window.__aletaParticles = new Set(); // exposto para inspeção/QA (ver ACTIVE_ALETAS)
 
     function spawnAleta(initialProgress) {
@@ -275,7 +277,7 @@
       img.alt = '';
       // Correlação simples de profundidade: aletas maiores = mais opacas/"perto";
       // menores = mais discretas/"longe" — sem tiers separados, sem blur.
-      img.style.opacity = (0.72 + 0.24 * ((size - 70) / 80)).toFixed(2);
+      img.style.opacity = (0.65 + 0.25 * ((size - 70) / 80)).toFixed(2);
       wrap.appendChild(img);
 
       const particle = { wrap, img, repelled: false };
@@ -293,9 +295,9 @@
     // (menos partículas, reposição mais lenta) em vez de desligar tudo. Isso evita o
     // problema anterior: com o SO/navegador reportando "reduzir movimento", a página
     // não mostrava nenhuma aleta, mesmo sendo esse o efeito principal pedido.
-    const activeMax = reducedMotion ? 45 : MAX_ACTIVE_ALETAS;
-    const initialFill = reducedMotion ? 24 : 60;
-    const spawnEveryMs = reducedMotion ? 650 : 160;
+    const activeMax = reducedMotion ? 20 : MAX_ACTIVE_ALETAS;
+    const initialFill = reducedMotion ? 10 : 18;
+    const spawnEveryMs = reducedMotion ? 750 : 380;
 
     // Preenchimento inicial: parte das aletas já em progresso variado da travessia.
     for (let i = 0; i < initialFill; i++) spawnAleta(Math.random());
@@ -309,59 +311,189 @@
       }
     }, spawnEveryMs);
 
-    // Repulsão por proximidade: um empurrão decisivo POR APROXIMAÇÃO — pode acontecer
-    // quantas vezes o cursor se aproximar (não é "uma vez na vida"), mas não fica
-    // recalculando a cada frame enquanto o cursor permanece perto (é isso que causava
-    // a "vibração"). particle.repelled funciona como uma trava que só rearma quando o
-    // cursor sai do raio de novo — cada nova aproximação dispara um novo empurrão.
-    // Nunca volta suavemente à trajetória original (sem reset de transform). Roda num
-    // loop próprio, separado da animação de voo — só escreve em img.style.transform
-    // (translate puro), nunca no wrap que gira/sobe, então o voo contínuo nunca é
-    // interrompido pela repulsão.
-    const REPEL_RADIUS = reducedMotion ? 100 : 140;    // px — raio que dispara a fuga
-    const REPEL_STRENGTH = reducedMotion ? 70 : 120;   // px — deslocamento de cada empurrão
-    let mouseX = -9999, mouseY = -9999;
-    let repelRafId = null;
-    let repelFrameSkip = false;
+    // ══════════════════════════════════════════════════════════════════════════
+    // CORRENTE DE AR — Oscilador spring amortecido por partícula
+    // ══════════════════════════════════════════════════════════════════════════
+    //
+    // Princípios de composição:
+    //   • wrap.transform  → animação CSS vx-rise (voo, giro, deriva) — NUNCA tocado aqui.
+    //   • img.transform   → exclusivo da interação com o cursor (spring JS).
+    //   As duas camadas são independentes; o navegador as compõe sem conflito.
+    //
+    // Modelo de movimento (spring criticamente subamortecido):
+    //   Cada partícula tem estado próprio: posição (px, py) e velocidade (vx, vy).
+    //   A cada frame, calculamos uma força-alvo baseada em:
+    //     1. Campo de distância: smoothstep do raio → deslocamento suave sem salto de borda.
+    //     2. Impulso de velocidade: a velocidade do cursor adiciona energia proporcional
+    //        à sua rapidez (limitada para não lançar aletas para fora da tela).
+    //   Aplicamos amortecimento α < 1 ligeiramente subamortecido → um overshoot
+    //   muito discreto ao retornar → aparência física de inércia real.
+    //   Tudo compensado por deltaTime para ser consistente em 60, 120 e 144 Hz.
+    //
+    // ── PARÂMETROS DE AJUSTE ─────────────────────────────────────────────────
+    //   Para efeito MAIS DISCRETO: reduza WIND_RADIUS, WIND_MAX_DISP, WIND_VEL_BOOST.
+    //   Para efeito MAIS EXPRESSIVO: aumente-os. WIND_DAMPING controla o overshoot
+    //   (0.88 = um toque de overshoot; ~0.95 = sem overshoot, retorno morto).
+    const WIND_RADIUS    = 200;   // px  — raio de influência do cursor
+    const WIND_MAX_DISP  = 62;    // px  — deslocamento máximo (campo puro, sem velocidade)
+    const WIND_MAX_ROT   = 4.5;   // °   — inclinação máxima proporcional ao deslocamento X
+    const WIND_VEL_BOOST = 0.18;  // fator — contribuição da velocidade do cursor (0 = off)
+    const WIND_VEL_CAP   = 28;    // px  — impulso máximo de velocidade (teto para movimentos bruscos)
+    const WIND_STIFFNESS = 0.14;  // [0–1] — rigidez da mola (maior = reação mais rápida)
+    const WIND_DAMPING   = 0.88;  // [0–1] — amortecimento da velocidade (menor = mais overshoot)
+    // ─────────────────────────────────────────────────────────────────────────
 
-    function repelTick() {
-      // Throttle a ~30fps (pula 1 a cada 2 frames): getBoundingClientRect em até
-      // MAX_ACTIVE_ALETAS elementos a cada frame é o ponto mais caro do efeito —
-      // rodar a 60fps sobrecarregava em máquinas mais fracas.
-      repelFrameSkip = !repelFrameSkip;
-      if (repelFrameSkip) {
-        for (const particle of window.__aletaParticles) {
-          const r = particle.wrap.getBoundingClientRect();
-          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-          const dx = cx - mouseX, dy = cy - mouseY;
-          const dist = Math.hypot(dx, dy);
-          if (dist < REPEL_RADIUS && dist > 0.01) {
-            if (!particle.repelled) {
-              // dispara o empurrão desta aproximação; fica travado até o cursor se afastar
-              const ux = dx / dist, uy = dy / dist;
-              particle.img.style.transform = `translate(${(ux * REPEL_STRENGTH).toFixed(1)}px, ${(uy * REPEL_STRENGTH).toFixed(1)}px)`;
-              particle.repelled = true;
-            }
-          } else {
-            particle.repelled = false; // saiu do raio — rearma para a próxima aproximação
-          }
+    // Só ativa em dispositivos com ponteiro preciso + hover (mouse real).
+    // Touch e stylus sem hover ficam sem o efeito, sem nenhuma simulação de cursor.
+    const hasFinePointer = window.matchMedia('(pointer: fine) and (hover: hover)').matches;
+    const windEnabled    = hasFinePointer && !reducedMotion;
+
+    // Estado do cursor: posição atual e velocidade suavizada
+    let mouseX = -9999, mouseY = -9999;
+    let prevMouseX = -9999, prevMouseY = -9999;
+    let cursorVX = 0, cursorVY = 0; // velocidade do cursor, suavizada por EMA
+    const CURSOR_VEL_EMA = 0.25;    // peso do frame atual na média exponencial
+
+    let windRafId   = null;
+    let lastFrameTs = null;
+
+    // Smoothstep: t ∈ [0,1] → curva suave sem salto nas bordas
+    function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+    // Clamp utilitário
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+    function windTick(ts) {
+      // deltaTime em segundos, limitado a 50ms (tab em background, etc.)
+      const dt     = lastFrameTs !== null ? Math.min((ts - lastFrameTs) / 1000, 0.05) : 0.016;
+      lastFrameTs  = ts;
+      const dtNorm = dt / 0.01667; // normaliza para 60fps (factor ~1 em 60Hz, ~0.5 em 120Hz)
+
+      for (const p of window.__aletaParticles) {
+        // ── Posição de repouso = centro do WRAP (CSS anima isso, é estável) ──
+        const r  = p.wrap.getBoundingClientRect();
+        const cx = r.left + r.width  / 2;
+        const cy = r.top  + r.height / 2;
+        const dx = cx - mouseX;
+        const dy = cy - mouseY;
+        const dist = Math.hypot(dx, dy);
+
+        // ── Força-alvo: campo de distância + impulso de velocidade do cursor ──
+        let targetX = 0, targetY = 0;
+        if (dist < WIND_RADIUS && dist > 0.5) {
+          const raw       = clamp(1 - dist / WIND_RADIUS, 0, 1);
+          const intensity = smoothstep(raw);          // zero na borda → 1 no centro
+          const ux = dx / dist, uy = dy / dist;
+
+          // Campo de distância (repulsão proporcional à proximidade)
+          targetX = ux * WIND_MAX_DISP * intensity;
+          targetY = uy * WIND_MAX_DISP * intensity;
+
+          // Impulso de velocidade: cursor rápido empurra mais; limitado por WIND_VEL_CAP.
+          // Só na direção da fuga (dot product filtra o componente perpendicular).
+          const velProj = clamp(
+            (cursorVX * (-ux) + cursorVY * (-uy)) * WIND_VEL_BOOST * intensity,
+            -WIND_VEL_CAP, WIND_VEL_CAP
+          );
+          targetX -= ux * velProj;
+          targetY -= uy * velProj;
         }
+        // Fora do raio: targetX/Y = 0 → mola puxa de volta à posição de repouso.
+
+        // ── Integração spring (Euler semi-implícito, compensado por deltaTime) ──
+        // Força proporcional ao erro; amortecimento proporcional à velocidade.
+        // dtNorm mantém comportamento consistente independente da taxa de quadros.
+        p.vx = (p.vx + (targetX - p.px) * WIND_STIFFNESS * dtNorm) * Math.pow(WIND_DAMPING, dtNorm);
+        p.vy = (p.vy + (targetY - p.py) * WIND_STIFFNESS * dtNorm) * Math.pow(WIND_DAMPING, dtNorm);
+        p.px += p.vx * dtNorm;
+        p.py += p.vy * dtNorm;
+
+        // ── Rotação proporcional ao deslocamento horizontal (inclinação de fuga) ──
+        const rot = clamp(-p.px / WIND_MAX_DISP * WIND_MAX_ROT, -WIND_MAX_ROT, WIND_MAX_ROT);
+
+        // ── Aplica na img (única camada que o cursor controla) ──
+        // "translate" → deslocamento de fuga; "rotate" → inclinação sutil.
+        // O wrap continua com a animação vx-rise intacta.
+        p.img.style.transform = (Math.abs(p.px) > 0.08 || Math.abs(p.py) > 0.08)
+          ? `translate(${p.px.toFixed(2)}px,${p.py.toFixed(2)}px) rotate(${rot.toFixed(2)}deg)`
+          : '';
       }
-      repelRafId = requestAnimationFrame(repelTick);
+
+      windRafId = requestAnimationFrame(windTick);
     }
 
-    stage.addEventListener('mouseenter', function (e) {
-      mouseX = e.clientX; mouseY = e.clientY;
-      if (!repelRafId) repelRafId = requestAnimationFrame(repelTick);
-    });
-    stage.addEventListener('mousemove', function (e) {
-      mouseX = e.clientX; mouseY = e.clientY;
-    });
-    stage.addEventListener('mouseleave', function () {
-      if (repelRafId) { cancelAnimationFrame(repelRafId); repelRafId = null; }
-      mouseX = -9999; mouseY = -9999;
-      // Não reseta transform: as aletas já empurradas continuam longe, sem voltar.
-    });
+    // Inicializa estado spring em cada partícula no momento do spawn
+    // (chamado dentro de spawnAleta, após criação do objeto particle)
+    function initParticleWind(particle) {
+      particle.px = 0; particle.py = 0; // posição atual do deslocamento
+      particle.vx = 0; particle.vy = 0; // velocidade atual
+    }
+
+    if (windEnabled) {
+      stage.addEventListener('mouseenter', function (e) {
+        mouseX = prevMouseX = e.clientX;
+        mouseY = prevMouseY = e.clientY;
+        cursorVX = cursorVY = 0;
+        lastFrameTs = null;
+        if (!windRafId) windRafId = requestAnimationFrame(windTick);
+      });
+
+      stage.addEventListener('mousemove', function (e) {
+        // Velocidade do cursor: EMA sobre deslocamento bruto frame-a-frame
+        // (não dividimos por dt aqui pois os eventos são assíncronos — usamos px/evento)
+        cursorVX = cursorVX * (1 - CURSOR_VEL_EMA) + (e.clientX - prevMouseX) * CURSOR_VEL_EMA;
+        cursorVY = cursorVY * (1 - CURSOR_VEL_EMA) + (e.clientY - prevMouseY) * CURSOR_VEL_EMA;
+        prevMouseX = mouseX; prevMouseY = mouseY;
+        mouseX = e.clientX; mouseY = e.clientY;
+      });
+
+      stage.addEventListener('mouseleave', function () {
+        // Para o loop; as partículas continuam com o spring até amortecer naturalmente
+        if (windRafId) { cancelAnimationFrame(windRafId); windRafId = null; }
+        mouseX = mouseY = -9999;
+        cursorVX = cursorVY = 0;
+        lastFrameTs = null;
+        // Re-inicia o RAF por 1s apenas para deixar o amortecimento completar
+        // (as aletas voltam suavemente mesmo após o cursor sair da janela)
+        let settleFrames = 0;
+        const MAX_SETTLE = 90; // ~1.5s a 60fps
+        function settleTick(ts) {
+          const sdt     = lastFrameTs !== null ? Math.min((ts - lastFrameTs) / 1000, 0.05) : 0.016;
+          lastFrameTs   = ts;
+          const sdtNorm = sdt / 0.01667;
+          let anyActive = false;
+          for (const p of window.__aletaParticles) {
+            p.vx *= Math.pow(WIND_DAMPING, sdtNorm);
+            p.vy *= Math.pow(WIND_DAMPING, sdtNorm);
+            p.px += p.vx * sdtNorm;
+            p.py += p.vy * sdtNorm;
+            const rot = clamp(-p.px / WIND_MAX_DISP * WIND_MAX_ROT, -WIND_MAX_ROT, WIND_MAX_ROT);
+            p.img.style.transform = (Math.abs(p.px) > 0.08 || Math.abs(p.py) > 0.08)
+              ? `translate(${p.px.toFixed(2)}px,${p.py.toFixed(2)}px) rotate(${rot.toFixed(2)}deg)`
+              : '';
+            if (Math.abs(p.px) > 0.1 || Math.abs(p.py) > 0.1) anyActive = true;
+          }
+          settleFrames++;
+          if (anyActive && settleFrames < MAX_SETTLE) {
+            windRafId = requestAnimationFrame(settleTick);
+          } else {
+            windRafId = null;
+            lastFrameTs = null;
+          }
+        }
+        windRafId = requestAnimationFrame(settleTick);
+      });
+    }
+
+    // Patch em spawnAleta: inicializa o estado spring de cada nova partícula
+    // (feito aqui, após a definição de initParticleWind, sem re-declarar spawnAleta)
+    const _origAdd = window.__aletaParticles.add.bind(window.__aletaParticles);
+    window.__aletaParticles.add = function (p) {
+      initParticleWind(p);
+      return _origAdd(p);
+    };
+    // Inicializa as partículas já criadas no preenchimento inicial
+    for (const p of window.__aletaParticles) initParticleWind(p);
 
     if (!reducedMotion) {
       // Paralaxe sutil do campo inteiro (bem discreta — a interação principal é a repulsão acima).

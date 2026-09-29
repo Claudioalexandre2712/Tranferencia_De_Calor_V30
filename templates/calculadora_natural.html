@@ -499,9 +499,10 @@
                             <div class="form-group mb-0">
                                 <label class="font-weight-bold small">Orientação Térmica:</label>
                                 <select class="form-control" id="orientacao_horizontal" name="orientacao_horizontal">
-                                    <option value="superior" selected>Face quente para CIMA</option>
-                                    <option value="inferior">Face quente para BAIXO</option>
+                                    <option value="superior" selected>Face quente para CIMA (Ts &gt; T&infin;)</option>
+                                    <option value="inferior">Face quente para BAIXO (Ts &gt; T&infin;)</option>
                                 </select>
+                                <small class="text-muted">Posição da face MAIS QUENTE (Ts &gt; T&infin;). Para placa resfriada (Ts &lt; T&infin;), a correlação equivalente é a oposta — consulte Incropera/Çengel, Cap. 9.</small>
                             </div>
                             <div class="field-wide">
                                 <small class="text-primary font-weight-bold" id="lc_calculado_info">Lc = A/P = 0.0582 m &bull; Área = 0.0629 m²</small>
@@ -541,12 +542,12 @@
                         <div class="form-group mb-0">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <label class="font-weight-bold small mb-0">Correção água &rarr; chapa &mdash; X (°C):</label>
-                                <span role="button" onclick="estimarXBalanco()" class="badge badge-light border text-secondary" style="cursor: pointer; font-size: 0.68rem; font-weight: 500; padding: 2px 6px;" title="Calcular estimativa teórica de X">
-                                    <i class="fas fa-calculator mr-1" style="font-size: 0.6rem;"></i>sugerir
+                                <span role="button" onclick="estimarXBalanco()" class="badge badge-light border text-secondary" style="cursor: pointer; font-size: 0.68rem; font-weight: 500; padding: 2px 6px;" title="Estimativa aproximada de X com propriedades médias do ar (não usa o motor de cálculo do backend) — valor editável, não é resultado experimental">
+                                    <i class="fas fa-calculator mr-1" style="font-size: 0.6rem;"></i>sugerir (estimativa)
                                 </span>
                             </div>
                             <input type="number" class="form-control mono" id="X_correcao" name="X_correcao" step="0.0001" value="0.0000">
-                            <small class="text-muted d-block" id="x_info_text">T_face_inferior = T_água &minus; X</small>
+                            <small class="text-muted d-block" id="x_info_text">T_face_inferior = T_água &minus; X (X editável — "sugerir" é só uma estimativa aproximada, não é medição)</small>
                         </div>
                         <div class="form-group mb-0">
                             <label class="font-weight-bold small">Espessura (m):</label>
@@ -1057,18 +1058,17 @@
             const alpha = props.alpha || 2.544e-5;
             const beta = res.beta || (1 / Tf_K);
 
-            const b = res.balanco_exp || {
-                Q_cond: (qConv_teorico + 2.37),
-                Q_conv: qConv_teorico,
-                Q_rad: 2.37,
-                h_exp: (h_teorico * 1.116),
-                h_experimental: (h_teorico * 1.116),
-                erro_relativo: 11.6,
-                delta_T_conducao_teorico: 0.00588
-            };
-
-            const h_experimental = b.h_experimental || b.h_exp || (h_teorico * 1.116);
-            const erro_relativo = typeof b.erro_relativo === 'number' ? b.erro_relativo : 11.6;
+            // C.19: h_exp NUNCA é derivado/fabricado a partir de h_teorico. Só existe
+            // resultado experimental quando o backend retorna 'balanco_exp' com
+            // 'h_experimental' numérico — isso só acontece quando o usuário informou
+            // T_base (medição real da água do banho). Sem isso, não inventamos número:
+            // as seções que dependem de dado experimental mostram estado explícito de
+            // indisponibilidade (ver comparativoHtml/balancoTermicoHtml abaixo).
+            const bExp = res.balanco_exp;
+            const temExperimental = !!(bExp && !bExp.erro && typeof bExp.h_experimental === 'number');
+            const b = temExperimental ? bExp : null;
+            const h_experimental = temExperimental ? b.h_experimental : null;
+            const erro_relativo = temExperimental ? b.erro_relativo : null;
 
             const html = `
                 <div style="border-radius: 14px; box-shadow: 0 8px 24px -8px rgba(23,53,127,0.18); border: 1px solid var(--border-color); overflow: hidden; background: #ffffff;">
@@ -1133,27 +1133,31 @@
                                         <tr>
                                             <td class="text-left font-weight-bold">Coeficiente de Convecção (h)</td>
                                             <td class="mono font-weight-bold text-primary">${h_teorico.toFixed(2)} W/(m²·K)</td>
-                                            <td class="mono font-weight-bold text-danger">${h_experimental.toFixed(2)} W/(m²·K)</td>
+                                            <td class="mono ${temExperimental ? 'font-weight-bold text-danger' : 'text-muted'}" ${temExperimental ? '' : 'style="font-style: italic;"'}>${temExperimental ? h_experimental.toFixed(2) + ' W/(m²·K)' : 'Resultado experimental indisponível'}</td>
                                             <td class="text-muted">2 a 25 W/(m²·K)</td>
                                         </tr>
                                         <tr>
                                             <td class="text-left font-weight-bold">Taxa Convectiva Dissipada (Q̇_conv)</td>
                                             <td class="mono font-weight-bold text-primary">${qConv_teorico.toFixed(2)} W</td>
-                                            <td class="mono font-weight-bold text-danger">${b.Q_conv.toFixed(2)} W</td>
+                                            <td class="mono ${temExperimental ? 'font-weight-bold text-danger' : 'text-muted'}" ${temExperimental ? '' : 'style="font-style: italic;"'}>${temExperimental ? b.Q_conv.toFixed(2) + ' W' : 'Resultado experimental indisponível'}</td>
                                             <td class="text-muted">Q̇_cond - Q̇_rad</td>
                                         </tr>
                                         <tr>
                                             <td class="text-left font-weight-bold">Divergência Relativa (|h_teor - h_exp| / h_teor)</td>
                                             <td class="mono font-weight-bold text-muted">—</td>
-                                            <td class="mono font-weight-bold text-info">${erro_relativo.toFixed(1)} %</td>
+                                            <td class="mono ${temExperimental ? 'font-weight-bold text-info' : 'text-muted'}" ${temExperimental ? '' : 'style="font-style: italic;"'}>${temExperimental ? erro_relativo.toFixed(1) + ' %' : 'Resultado experimental indisponível'}</td>
                                             <td class="text-muted">&lt; 15% (Efeito de bordas e perdas)</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
+                            ${temExperimental ? '' : `
+                            <p class="small text-muted mt-2 mb-0"><i class="fas fa-circle-info mr-1"></i>Nenhum dado experimental foi informado (campo T_base/temperatura da água do banho). O coeficiente teórico acima é calculado de forma independente e não é usado para estimar um valor experimental — informe T_base para habilitar a coluna experimental real.</p>
+                            `}
                         </div>
 
                         <!-- Balanço Térmico da Chapa de Alumínio -->
+                        ${temExperimental ? `
                         <div class="card p-3 mb-3" style="border-radius: var(--radius-md); border: 1px solid var(--border-color); background: #ffffff;">
                             <h6 class="font-weight-bold icon-blue mb-2">
                                 <i class="fas fa-scale-balanced mr-2"></i>Conservação de Energia na Chapa de Alumínio: Q̇_condução = Q̇_convecção + Q̇_radiação
@@ -1184,6 +1188,14 @@
                                 </div>
                             </div>
                         </div>
+                        ` : `
+                        <div class="card p-3 mb-3" style="border-radius: var(--radius-md); border: 1px dashed var(--border-color); background: #f8f9fb;">
+                            <h6 class="font-weight-bold text-muted mb-2">
+                                <i class="fas fa-scale-balanced mr-2"></i>Conservação de Energia na Chapa de Alumínio
+                            </h6>
+                            <p class="small text-muted mb-0"><i class="fas fa-circle-info mr-1"></i>Resultado experimental indisponível — o balanço Q̇_condução = Q̇_convecção + Q̇_radiação só é calculado quando a temperatura da água do banho (T_base) é informada. Nenhum valor é estimado a partir do resultado teórico.</p>
+                        </div>
+                        `}
 
                         <!-- Memória de Cálculo Didática -->
                         <div class="calc-log mb-3">
@@ -1226,6 +1238,7 @@ Q_conv = h_teorico &times; As &times; (T_s &minus; T_inf) = ${h_teorico.toFixed(
                         </div>
 
                         <!-- Card de Diagnóstico Metrológico TCC -->
+                        ${temExperimental ? `
                         <div class="card p-3 mb-3" style="border-radius: var(--radius-md); border-left: 3px solid var(--warning-color); background: #fffbf0;">
                             <h6 class="font-weight-bold text-warning mb-2">
                                 <i class="fas fa-triangle-exclamation mr-2"></i>Discussão Metrológica para o TCC (p. 11 e 24)
@@ -1241,6 +1254,7 @@ Q_conv = h_teorico &times; As &times; (T_s &minus; T_inf) = ${h_teorico.toFixed(
                                 </div>
                             </div>
                         </div>
+                        ` : ''}
 
                         <!-- Botões Finais -->
                         <div class="text-center pt-2">

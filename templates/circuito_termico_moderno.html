@@ -1509,10 +1509,10 @@
         try { window.updatePropertiesPanel && window.updatePropertiesPanel(); } catch{}
         const resEl = document.getElementById('results');
         if(resEl){
-            resEl.innerHTML = '<div style="text-align:center; color:#4caf50;">\n'+
-                '<i class="fas fa-chart-line" style="font-size:2rem; margin-bottom:10px;"></i><br>\n'+
-                'Os resultados aparecerão aqui após o cálculo<br>\n'+
-                '<small>Configure as camadas e clique em &quot;Calcular&quot;</small>\n'+
+            resEl.innerHTML = '<div class="res-empty">\n'+
+                '<i class="fa-solid fa-chart-line"></i>\n'+
+                '<strong>Nenhuma análise calculada</strong>\n'+
+                '<span>Os resultados aparecerão aqui após o cálculo — resumo, perfil de temperatura, distribuição de resistências e resultados por camada.</span>\n'+
                 '</div>';
         }
     };
@@ -1601,11 +1601,13 @@
 
     body {
         font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Arial, sans-serif;
-        background-color: #f3f5fa;
+        /* Mesmo fundo de .main-area--thermal / .eng-scope-bg do design-system.css
+           (condensação, ebulição, seleção de aleta) — cor e grid idênticos. */
+        background-color: #e7ebf1;
         background-image:
-            linear-gradient(rgba(22,35,60,.035) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(22,35,60,.035) 1px, transparent 1px);
-        background-size: 28px 28px;
+            linear-gradient(#c1cadb 1px, transparent 1px),
+            linear-gradient(90deg, #c1cadb 1px, transparent 1px);
+        background-size: 44px 44px;
     }
 
     /* ---------- Tipografia técnica (valores/variáveis numéricas) ---------- */
@@ -1617,31 +1619,79 @@
         font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Arial, sans-serif;
     }
 
-    /* ---------- Header ---------- */
+    /* ---------- Header: alinhado à linguagem clara do V30 (kicker + ink + régua técnica) ----------
+       Antes: banda cheia navy + título em cápsula translúcida (glass). O resto do V30 usa fundo
+       claro, kicker técnico e título solto em ink — é isso que faltava, não outra paleta. */
     .header-section {
-        background: linear-gradient(135deg, #16233c 0%, #223569 55%, #2e4fe0 100%);
-        border-bottom-color: rgba(255,255,255,.10);
-        box-shadow: 0 4px 14px -6px rgba(22,35,60,.45);
+        background: transparent;
+        border-bottom: 1px solid var(--clr-border);
+        box-shadow: none;
     }
     .header-section:before, .header-section:after {
-        opacity: .10;
-        filter: blur(90px);
+        filter: blur(70px);
+        opacity: .5;
         animation: none;
     }
+    .header-section:before { background: radial-gradient(circle, rgba(217,118,30,.14), transparent 70%); }
+    .header-section:after  { background: radial-gradient(circle, rgba(47,155,176,.14), transparent 70%); }
+
+    .page-kicker {
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        font-size: 0.74rem;
+        color: #4c5768;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.9rem;
+        border: 1px solid var(--clr-border);
+        border-radius: 999px;
+        padding: 0.3rem 0.85rem 0.3rem 0.6rem;
+        background: rgba(255, 255, 255, 0.75);
+        position: relative;
+        z-index: 1;
+    }
+    .page-kicker i { color: #d9761e; font-size: 0.82rem; }
+
     .main-title {
-        background: rgba(255,255,255,.07);
-        border-color: rgba(255,255,255,.16);
-        box-shadow: 0 6px 20px -10px rgba(0,0,0,.4);
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        padding: 0;
+        color: var(--clr-text-strong);
         font-weight: 600;
     }
     .main-title:before { display: none; }
     .main-title i {
-        background: linear-gradient(135deg,#ffffff,#c9d4ff);
-        -webkit-background-clip: text; background-clip: text;
+        background: none;
+        -webkit-background-clip: initial;
+        background-clip: initial;
+        -webkit-text-fill-color: initial;
+        color: var(--clr-accent);
+        filter: none;
     }
-    .main-subtitle { color: rgba(255,255,255,.82); font-weight: 400; text-shadow: none; }
-    .btn-voltar-mini { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
-    .btn-voltar-mini:hover { background: rgba(255,255,255,.18); }
+    .main-subtitle { color: #4c5768; font-weight: 400; text-shadow: none; }
+
+    .eng-scale-rule {
+        height: 8px;
+        margin: 1rem auto 0.2rem;
+        max-width: 340px;
+        background:
+            repeating-linear-gradient(90deg, var(--clr-border) 0 1px, transparent 1px 22px) left bottom / 100% 7px no-repeat,
+            linear-gradient(var(--clr-border), var(--clr-border)) left bottom / 100% 1px no-repeat;
+        opacity: .7;
+    }
+
+    .btn-voltar-mini {
+        background: #ffffff;
+        border-color: var(--clr-border);
+        color: var(--clr-text-strong);
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+    .btn-voltar-mini:hover { background: #f6f8fb; box-shadow: none; }
 
     /* ---------- Títulos de seção/painel (inclui o título "Visualização do Circuito") ---------- */
     .panel-title, .section-title {
@@ -1806,11 +1856,189 @@
     }
     .prop-popover h5 { color: var(--clr-text-strong); }
     .btn-cancel { background: #eef0f3; color: var(--clr-text-strong); }
+
+    /* ============================================================
+       CHECKPOINT V30-UXUI-06C — HARMONIZAÇÃO DE PALETA (cor apenas)
+       Fecha lacunas de azul antigo (#1976d2/#1565c0/#0d47a1/#2196f3/
+       #90caf9/#e3f2fd...) que o CHECKPOINT V30-UXUI-06 ainda não
+       cobria: títulos das colunas Física/Térmica, divisor central,
+       seção de fórmulas, estado vazio do painel de camadas e o anel
+       de foco da geometria cilíndrica ativa. Mesmo escopo e mesma
+       regra de proteção do bloco acima — VISUALIZATION_PROTECTED_ZONE
+       = TRUE, .circuit-panel interno/#circuit-display inalterados.
+       ============================================================ */
+
+    /* ---------- Títulos das colunas (Representação Física / Circuito Térmico) ---------- */
+    .view-title,
+    .view-half h4 {
+        color: var(--clr-text-strong);
+        text-shadow: none;
+    }
+
+    /* ---------- Divisor central entre as duas colunas ---------- */
+    .view-divider {
+        background: linear-gradient(to bottom, transparent 20%, var(--clr-accent) 50%, transparent 80%);
+    }
+    .view-divider::after {
+        color: var(--clr-accent);
+        border-color: var(--clr-accent);
+        box-shadow: 0 2px 8px rgba(46,79,224,.2);
+    }
+
+    /* ---------- Seção de fórmulas ---------- */
+    .formulas-section { border-left-color: var(--clr-accent); }
+    .formulas-section h5 { color: var(--clr-text-strong); }
+    .formula-item strong { color: var(--clr-accent); }
+
+    /* ---------- Estado vazio do painel de camadas (sem mancha azul) ---------- */
+    .no-layers {
+        color: #4c5768;
+        background: #f6f8fb;
+        border: 2px dashed var(--clr-border);
+        box-shadow: none;
+    }
+
+    /* ---------- Anel de foco/ativo da geometria cilíndrica ---------- */
+    .geometry-card[data-geometry="cylindrical"] .geometry-icon {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2), 0 10px 24px -8px rgba(46,79,224,.35);
+    }
+    .geometry-card[data-geometry="cylindrical"].active .geometry-icon {
+        box-shadow: 0 0 0 4px rgba(46,79,224,.28), 0 0 0 1px rgba(255,255,255,0.8), 0 12px 28px -8px rgba(46,79,224,.4);
+    }
+
+    /* ============================================================
+       CHECKPOINT V30-UXUI-07 — EVOLUÇÃO DA VISUALIZAÇÃO
+       A partir daqui a Visualização do Circuito deixa de ser zona
+       protegida: cores/tipografia/composição do SVG evoluíram
+       (ver generatePlanarView / generateCylindricalView). Este
+       bloco cobre só o container e os estados que vivem em CSS —
+       a matemática de posição/proporção das camadas não mudou.
+       ============================================================ */
+    .circuit-display { background: #ffffff; }
+    .cylinder-container, .planar-container {
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(22,35,60,.05), 0 10px 28px -20px rgba(22,35,60,.18);
+    }
+    .phys-drawing text { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+    .viz-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem 1rem; margin-bottom:0.6rem; }
+    .viz-head .view-title { margin-bottom:0; }
+    .viz-subtle { font-size:0.72rem; font-weight:500; color:#8894a3; margin-left:0.4rem; }
+    .viz-legend { display:flex; flex-wrap:wrap; gap:0.2rem 0.9rem; }
+    .viz-legend-item { display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:#4c5768; }
+    .viz-swatch { width:10px; height:10px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,.12); }
+    .viz-swatch--solid { background:#fbe7d4; border-color:#c2760a; }
+    .viz-swatch--fluid { background:#eaf5f7; border-color:#1f6f82; }
+    .viz-swatch--par   { background:#efe6f7; border-color:#6b3fa0; }
+    .viz-swatch--fin   { background:#bfe6df; border-color:#0f7a68; }
+    .viz-swatch--active{ background:#eef1fb; border-color:#2e4fe0; border-width:2px; }
+
+    /* Camada ativa: halo em accent (antes era glow amarelo) */
+    .phys-drawing g.layer-active > circle:first-of-type,
+    .phys-drawing g.layer-active path[data-layer],
+    .phys-drawing g.layer-active line,
+    .phys-drawing g.layer-active rect {
+        filter: drop-shadow(0 0 3px rgba(46,79,224,.85)) drop-shadow(0 0 9px rgba(46,79,224,.45));
+        stroke-width: calc(var(--hl-mult,1) * 1.15 * var(--stroke-w, 3));
+        animation: pulseHL-v30 2.6s ease-in-out infinite;
+    }
+    @keyframes pulseHL-v30 { 0%,100% { opacity:1; } 50% { opacity:.88; } }
+    .finned-surface-group:hover .fin-line,
+    .finned-surface-group:hover .fin-blade { filter: brightness(1.1); }
+    .finned-surface-group:focus-visible { outline: 2px solid var(--clr-accent); outline-offset: 2px; }
+
+    /* ============================================================
+       CHECKPOINT V30-UXUI-08B — RESULTADOS (estrutura antiga + visual V30)
+       Escopo: só #results. A ARQUITETURA/ORDEM das seções voltou a ser a
+       de antes do V30-UXUI-08 (cabeçalho → cards de métricas → superfícies
+       aletadas → tabela de camadas → passo a passo → equações → quedas de
+       T → balanço térmico → taxa de calor → perfil T(x) no final). O que
+       mudou aqui é só a pele: paleta semântica da Visualização do Circuito
+       (sólido=âmbar, fluido=ciano, aletado=teal, paralelo=violeta),
+       tipografia técnica e superfícies limpas no lugar de gradientes.
+       ============================================================ */
+    #results { font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Arial, sans-serif; color: var(--clr-text-strong); }
+    #results .res-panel { background:#fff; border:1px solid var(--clr-border); border-radius:var(--radius); padding:1.1rem 1.3rem; margin-bottom:1rem; }
+    #results .res-panel-title { display:flex; align-items:center; gap:0.5rem; font-size:0.95rem; font-weight:700; color:var(--clr-text-strong); margin:0 0 0.2rem; }
+    #results .res-panel-title i { color: var(--clr-accent); }
+    #results .res-panel-sub { font-size:0.78rem; color:#4c5768; margin:0 0 0.9rem; }
+    #results .res-badge { display:inline-flex; align-items:center; gap:0.3rem; font-size:0.68rem; font-weight:700; padding:0.18rem 0.55rem; border-radius:999px; background:#eef1fb; color:var(--clr-accent); white-space:nowrap; }
+
+    /* Cards de métricas principais (grade — estrutura antiga) */
+    #results .res-metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0.9rem; margin-bottom:0.9rem; }
+    #results .res-metric-card { background:#fff; border:1px solid var(--clr-border); border-top:3px solid var(--clr-accent); border-radius:var(--radius); padding:1rem 1.1rem; }
+    #results .res-metric-card .metric-head { display:flex; align-items:center; gap:0.55rem; margin-bottom:0.65rem; }
+    #results .res-metric-card .metric-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:var(--clr-accent-soft); color:var(--clr-accent); font-size:0.88rem; flex:0 0 auto; }
+    #results .res-metric-label { font-size:0.68rem; font-weight:700; letter-spacing:0.03em; text-transform:uppercase; color:#8894a3; }
+    #results .res-metric-value { font-family:'IBM Plex Mono',monospace; font-size:1.5rem; font-weight:700; color:var(--clr-text-strong); line-height:1.2; }
+    #results .res-metric-unit { font-size:0.82rem; font-weight:600; color:#8894a3; margin-left:0.3rem; }
+    #results .res-metric-note { font-size:0.76rem; color:#4c5768; margin-top:0.45rem; line-height:1.45; }
+
+    /* Bloco de fórmulas dos coeficientes */
+    #results .res-formula-box { background:#fff; border:1px solid var(--clr-border); border-radius:var(--radius); padding:1rem 1.2rem; margin-bottom:1rem; }
+    #results .res-formula-line { font-family:'IBM Plex Mono',monospace; font-size:0.84rem; color:#4c5768; background:#f6f8fb; border-radius:8px; padding:0.65rem 0.85rem; margin-bottom:0.5rem; line-height:1.5; }
+    #results .res-formula-line strong { color:var(--clr-accent); font-family:'IBM Plex Sans',sans-serif; }
+    #results .res-formula-line .result { font-weight:700; color:var(--clr-text-strong); }
+
+    /* Resumo de superfícies aletadas (dentro da análise por camada) */
+    #results .res-fin-summary { border:1px solid var(--clr-border); border-radius:10px; padding:0.7rem 0.9rem; margin-bottom:0.6rem; background:#fbfcfe; }
+    #results .res-fin-summary .r-val { font-family:'IBM Plex Mono',monospace; font-weight:700; }
+
+    /* Tabela de resistências por camada (estrutura antiga, pele nova) */
+    #results .res-table-wrap { overflow-x:auto; }
+    #results table.res-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+    #results table.res-table thead tr { background:var(--clr-accent); color:#fff; }
+    #results table.res-table th { padding:0.7rem 0.8rem; text-align:left; font-weight:700; font-size:0.78rem; letter-spacing:0.02em; white-space:nowrap; }
+    #results table.res-table td { padding:0.65rem 0.8rem; border-bottom:1px solid var(--clr-border); vertical-align:middle; }
+    #results table.res-table tbody tr:hover { background:#f6f8fb; }
+    #results table.res-table tbody tr:last-child td { border-bottom:none; }
+    #results .res-type-chip { display:inline-flex; align-items:center; gap:0.5rem; font-weight:700; color:var(--clr-text-strong); }
+    #results .res-type-chip .ico { width:26px; height:26px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:0.78rem; flex:0 0 auto; }
+    #results .res-type-chip .sub { display:block; font-size:0.68rem; font-weight:600; color:#8894a3; text-transform:uppercase; letter-spacing:0.02em; }
+    #results .kind-solid  .ico { background:#fbe7d4; color:#c2760a; }
+    #results .kind-fluid  .ico { background:#eaf5f7; color:#1f6f82; }
+    #results .kind-finned .ico { background:#d9f0ea; color:#0f7a68; }
+    #results .kind-par    .ico { background:#efe6f7; color:#6b3fa0; }
+    #results .res-formula-cell { font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:#4c5768; }
+    #results .res-subst-cell { font-family:'IBM Plex Mono',monospace; font-size:0.78rem; color:#4c5768; background:#f6f8fb; border-radius:6px; padding:0.35rem 0.55rem; display:inline-block; }
+    #results .res-r-cell { font-family:'IBM Plex Mono',monospace; font-weight:700; white-space:nowrap; }
+    #results .res-contrib-cell { min-width:88px; }
+    #results .res-contrib-pct { font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:0.82rem; }
+    #results .res-contrib-bar-track { height:5px; border-radius:3px; background:#f1f3f7; margin-top:0.3rem; overflow:hidden; }
+    #results .res-contrib-bar-fill { height:100%; border-radius:3px; }
+
+    #results .res-legend { margin-top:1rem; padding-top:0.9rem; border-top:1px solid var(--clr-border); display:flex; flex-wrap:wrap; gap:0.4rem 1.3rem; font-size:0.76rem; color:#4c5768; }
+    #results .res-legend strong { color:var(--clr-text-strong); }
+
+    /* Temperaturas de interface (dentro do balanço térmico — posição antiga) */
+    #results .res-balance-eq { font-family:'IBM Plex Mono',monospace; font-size:0.9rem; color:var(--clr-text-strong); background:#f6f8fb; border:1px solid var(--clr-border); border-radius:8px; padding:0.8rem 1rem; margin-bottom:0.9rem; text-align:center; }
+    #results .res-interface-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:0.6rem; margin-bottom:0.9rem; }
+    #results .res-interface-box { border:1px solid var(--clr-border); border-radius:8px; padding:0.6rem; text-align:center; }
+    #results .res-interface-box .lbl { font-size:0.68rem; color:#8894a3; font-weight:700; margin-bottom:0.2rem; }
+    #results .res-interface-box .val { font-family:'IBM Plex Mono',monospace; font-size:0.98rem; font-weight:700; color:var(--clr-text-strong); }
+
+    #results .res-check { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; padding:0.55rem 0.75rem; border-radius:8px; margin-bottom:0.4rem; }
+    #results .res-check.ok   { background:#eafaf3; color:#0b7a4d; }
+    #results .res-check.fail { background:#fdecea; color:#a82b2d; }
+    #results .res-check.info { background:#fff3e0; color:#935c07; }
+
+    #results .res-empty { text-align:center; padding:2.2rem 1rem; color:#8894a3; }
+    #results .res-empty i { font-size:1.7rem; margin-bottom:0.7rem; color:#c1cadb; display:block; }
+    #results .res-empty strong { display:block; color:#4c5768; font-size:0.92rem; margin-bottom:0.3rem; font-weight:600; }
+    #results .res-empty span { font-size:0.8rem; }
+
+    @media (max-width: 640px) {
+        #results .res-panel, #results .res-metric-card, #results .res-formula-box { padding:0.9rem 1rem; }
+        #results .res-metric-value { font-size:1.25rem; }
+        #results table.res-table { font-size:0.76rem; }
+        #results table.res-table th, #results table.res-table td { padding:0.5rem 0.5rem; }
+    }
     </style>
     <div class="main-container">
         <!-- Header Section -->
         <div class="header-section">
             <div class="header-content">
+                <div class="page-kicker"><i class="fas fa-diagram-project"></i> Modelagem térmica · circuito de resistências</div>
                 <div class="title-row">
                     <h1 class="main-title">
                         <i class="fas fa-microchip"></i>
@@ -1826,6 +2054,7 @@
                 <p class="main-subtitle">
                     Simule e analise a transferência de calor através de múltiplas camadas
                 </p>
+                <div class="eng-scale-rule"></div>
             </div>
         </div>
 
@@ -2017,10 +2246,10 @@
                     </div>
                     <div class="results-card">
                         <div id="results">
-                            <div style="text-align: center; color: #4caf50;">
-                                <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
-                                Os resultados aparecerão aqui após o cálculo<br>
-                                <small>Configure as camadas e clique em "Calcular"</small>
+                            <div class="res-empty">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <strong>Nenhuma análise calculada</strong>
+                                <span>Os resultados aparecerão aqui após o cálculo — resumo, perfil de temperatura, distribuição de resistências e resultados por camada.</span>
                             </div>
                         </div>
                     </div>
@@ -2150,13 +2379,10 @@
             const r = window.__lastResultObject;
             // Forçar recalcular q inferido (buildMainMetricsSection já lida)
             const metricsHTML = buildMainMetricsSection(r);
-            // Substituir somente a primeira ocorrência do grid de métricas dentro do container principal
-            // Heurística: procurar por 'RESISTÊNCIA TÉRMICA TOTAL'
-            const marker = 'RESISTÊNCIA TÉRMICA TOTAL';
-            if(resEl.innerHTML.includes(marker)){
-                // Regex para capturar bloco das métricas (grid principal até fechamento)</n+                const replaced = resEl.innerHTML.replace(/<div style='display:grid;[\s\S]*?<\/div>\s*<!-- Fecha grid de cards -->|<div style='display:grid;[\s\S]*?<\/div>\s*(?=<div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba\(0,0,0,0.06\); border-left:5px solid #5e35b1;'>)/, metricsHTML);
-                if(replaced !== resEl.innerHTML){ resEl.innerHTML = replaced; }
-            }
+            // V30-UXUI-08: troca direta pelo id estável do painel (substitui a heurística por
+            // regex/texto em maiúsculas que dependia da marcação antiga dos cards).
+            const container = document.getElementById('res-main-metrics');
+            if (container) { container.outerHTML = metricsHTML; }
         }
     }
         
@@ -4457,10 +4683,19 @@
                 }
             } catch (e) { /* noop */ }
 
-            // Visualização: somente Física com faixa de resistores integrada (como antes)
+            // Visualização: camadas + circuito equivalente integrado no mesmo desenho
             let circuitHTML = '<div class="circuit-visualization">' +
                 '<div class="view-half" style="margin-bottom: 0;">' +
-                '<h4 class="view-title"><i class="fas fa-layer-group"></i> Representação Física</h4>' +
+                '<div class="viz-head">' +
+                    '<h4 class="view-title"><i class="fas fa-layer-group"></i> Representação Física <span class="viz-subtle">+ circuito equivalente</span></h4>' +
+                    '<div class="viz-legend">' +
+                        '<span class="viz-legend-item"><i class="viz-swatch viz-swatch--solid"></i>Sólido</span>' +
+                        '<span class="viz-legend-item"><i class="viz-swatch viz-swatch--fluid"></i>Fluido</span>' +
+                        '<span class="viz-legend-item"><i class="viz-swatch viz-swatch--par"></i>Paralelo</span>' +
+                        '<span class="viz-legend-item"><i class="viz-swatch viz-swatch--fin"></i>Aletado</span>' +
+                        '<span class="viz-legend-item"><i class="viz-swatch viz-swatch--active"></i>Selecionada</span>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="physical-view-content">' + physicalInnerHTML + '</div>' +
                 '</div>' +
                 '</div>';
@@ -4563,13 +4798,20 @@
                 '<svg width="100%" height="100%" viewBox="0 0 600 480" preserveAspectRatio="xMidYMid meet">' +
                 '<!-- Definir gradientes e padrões -->' +
                 '<defs>' +
-                '<pattern id="fluidPatternCyl" patternUnits="userSpaceOnUse" width="8" height="8">' +
-                '<rect width="8" height="8" fill="#e3f2fd"/>' +
-                '<circle cx="2" cy="2" r="1" fill="#2196f3" opacity="0.4"/>' +
-                '<circle cx="6" cy="6" r="1" fill="#2196f3" opacity="0.4"/>' +
+                '<pattern id="fluidPatternCyl" patternUnits="userSpaceOnUse" width="14" height="14">' +
+                '<rect width="14" height="14" fill="#eaf5f7"/>' +
+                '<path d="M0,3.5 Q3.5,0 7,3.5 T14,3.5" stroke="#2f9bb0" stroke-width="1" fill="none" opacity="0.55"/>' +
+                '<path d="M0,10.5 Q3.5,7 7,10.5 T14,10.5" stroke="#2f9bb0" stroke-width="1" fill="none" opacity="0.4"/>' +
                 '</pattern>' +
+                '<pattern id="solidHatchCyl" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(45)">' +
+                '<rect width="9" height="9" fill="transparent"/>' +
+                '<line x1="0" y1="0" x2="0" y2="9" stroke="#000000" stroke-opacity="0.05" stroke-width="2"/>' +
+                '</pattern>' +
+                '<filter id="dropSoftCyl" x="-30%" y="-30%" width="160%" height="160%">' +
+                '<feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#16233c" flood-opacity="0.16"/>' +
+                '</filter>' +
                 '<marker id="arrowhead" markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="5" refX="6.5" refY="2.5" orient="auto">' +
-                '<polygon points="0 0, 7 2.5, 0 5" fill="#ff5722"/>' +
+                '<polygon points="0 0, 7 2.5, 0 5" fill="#c2760a"/>' +
                 '</marker>' +
                 '</defs>' +
                 '<!-- Conteúdo do cilindro com zoom centralizado -->' +
@@ -4673,60 +4915,70 @@
                 
                 if (isFluid) {
                     // Desenhar região fluida
+                    const midAngR = (currentRadius + outerRadius)/2;
                     physicalHTML += `
                         <!-- Região de fluido ${index + 1} -->
                         <g data-layer="${index}" ${layerLabelTooltip?`title="${layerLabelTooltip.replace(/"/g,'&quot;')}"`: (layerR!=null?`title=\"R=${(layerR>1e-3&&layerR<1e3)?layerR.toPrecision(3):layerR.toExponential(2)} K/W\"`:'')}>
-                            <circle cx="300" cy="240" r="${outerRadius}" fill="none" stroke="#2196f3" stroke-width="${strokeMain}"/>
-                            ${currentRadius > 60 ? `<circle cx="300" cy="240" r="${currentRadius}" fill="none" stroke="#2196f3" stroke-width="${strokeInner}" stroke-dasharray="4,4"/>` : ''}
-                            
+                            <circle cx="300" cy="240" r="${outerRadius}" fill="none" stroke="#1f6f82" stroke-width="${strokeMain}" filter="url(#dropSoftCyl)"/>
+                            ${currentRadius > 60 ? `<circle cx="300" cy="240" r="${currentRadius}" fill="none" stroke="#1f6f82" stroke-width="${strokeInner}" stroke-dasharray="4,4"/>` : ''}
+
                             <!-- Padrão de fluido -->
-                            <path data-layer="${index}" d="M 300,${240-outerRadius} A ${outerRadius},${outerRadius} 0 0,1 300,${240+outerRadius} 
-                                     A ${outerRadius},${outerRadius} 0 0,1 300,${240-outerRadius} 
-                                     ${currentRadius > 60 ? `M 300,${240-currentRadius} A ${currentRadius},${currentRadius} 0 0,0 300,${240+currentRadius} 
-                                     A ${currentRadius},${currentRadius} 0 0,0 300,${240-currentRadius}` : ''} Z" 
-                                  fill="url(#fluidPatternCyl)" fill-opacity="0.6"/>
-                            
+                            <path data-layer="${index}" d="M 300,${240-outerRadius} A ${outerRadius},${outerRadius} 0 0,1 300,${240+outerRadius}
+                                     A ${outerRadius},${outerRadius} 0 0,1 300,${240-outerRadius}
+                                     ${currentRadius > 60 ? `M 300,${240-currentRadius} A ${currentRadius},${currentRadius} 0 0,0 300,${240+currentRadius}
+                                     A ${currentRadius},${currentRadius} 0 0,0 300,${240-currentRadius}` : ''} Z"
+                                  fill="url(#fluidPatternCyl)" fill-opacity="0.85"/>
+
                             <!-- Propriedades do fluido -->
-                                                        <text x="${300 + (currentRadius + outerRadius)/2 * 0.7}" y="${240 - (currentRadius + outerRadius)/2 * 0.7}" 
-                                                                    text-anchor="middle" font-size="14" fill="#1976d2" font-weight="bold">
-                                                                h = ${layer.convection}
-                                                        </text>
-                                                        <text x="${300 + (currentRadius + outerRadius)/2 * 0.7}" y="${240 - (currentRadius + outerRadius)/2 * 0.7 + 16}" 
-                                                                    text-anchor="middle" font-size="12" fill="#1976d2">
-                                                                T∞ = ${isFinite(parseFloat(layer.temperature))? parseFloat(layer.temperature) : ''} °C
-                                                        </text>
-                            
-                            
+                            <text x="${300 + midAngR * 0.7}" y="${240 - midAngR * 0.7}"
+                                  text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace" font-weight="700" fill="#1f6f82" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+                                h=${layer.convection}
+                            </text>
+                            <text x="${300 + midAngR * 0.7}" y="${240 - midAngR * 0.7 + 15}"
+                                  text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" fill="#2f6472" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+                                T∞=${isFinite(parseFloat(layer.temperature))? parseFloat(layer.temperature) : ''}°C
+                            </text>
                         </g>
                     `;
                 } else {
                     // Desenhar camada sólida ou bloco paralelo como anel dedicado
-                    const colors = ['#ffcc80', '#c8e6c9', '#f8bbd9', '#d1c4e9'];
-                    const strokeColors = ['#ff9800', '#4caf50', '#e91e63', '#9c27b0'];
-                    let color = colors[solidIndex % colors.length];
-                    let strokeColor = strokeColors[solidIndex % strokeColors.length];
+                    const solidPaletteCyl = [
+                        { fill: '#fbe7d4', stroke: '#c2760a' },
+                        { fill: '#f1e4d6', stroke: '#8a5a2b' },
+                        { fill: '#eee2cf', stroke: '#a9762e' },
+                        { fill: '#e9dcc8', stroke: '#6f5024' }
+                    ];
+                    const palCyl = solidPaletteCyl[solidIndex % solidPaletteCyl.length];
+                    let color = palCyl.fill;
+                    let strokeColor = palCyl.stroke;
                     let dash = '';
                     if (isParallelBlock) {
                         // Estilo diferenciado para bloco paralelo
-                        color = '#f3e5f5';
-                        strokeColor = '#8e24aa';
-                        dash = 'stroke-dasharray="6,6"';
+                        color = '#efe6f7';
+                        strokeColor = '#6b3fa0';
+                        dash = 'stroke-dasharray="7,5"';
                     }
+                    const midAngR2 = (currentRadius + outerRadius)/2;
                     physicalHTML += `
                         <!-- ${isParallelBlock? 'Bloco Paralelo' : 'Camada sólida'} ${solidIndex + 1} -->
                         <g data-layer="${index}" ${layerLabelTooltip?`title="${layerLabelTooltip.replace(/"/g,'&quot;')}"`: (layerR!=null?`title=\"R=${(layerR>1e-3&&layerR<1e3)?layerR.toPrecision(3):layerR.toExponential(2)} K/W\"`:'')}>
-                            <circle cx="300" cy="240" r="${outerRadius}" fill="none" stroke="${strokeColor}" stroke-width="${strokeMain}" ${dash}/>
+                            <circle cx="300" cy="240" r="${outerRadius}" fill="none" stroke="${strokeColor}" stroke-width="${strokeMain}" ${dash} filter="url(#dropSoftCyl)"/>
                             ${currentRadius > 60 ? `<circle cx="300" cy="240" r="${currentRadius}" fill="none" stroke="${strokeColor}" stroke-width="${strokeInner}" stroke-dasharray="4,4"/>` : ''}
                             <!-- Preenchimento anular -->
-                            <path data-layer="${index}" d="M 300,${240-outerRadius} A ${outerRadius},${outerRadius} 0 0,1 300,${240+outerRadius} 
-                                     A ${outerRadius},${outerRadius} 0 0,1 300,${240-outerRadius} 
-                                     ${currentRadius > 60 ? `M 300,${240-currentRadius} A ${currentRadius},${currentRadius} 0 0,0 300,${240+currentRadius} 
-                                     A ${currentRadius},${currentRadius} 0 0,0 300,${240-currentRadius}` : ''} Z" 
-                                  fill="${color}" fill-opacity="0.6"/>
+                            <path data-layer="${index}" d="M 300,${240-outerRadius} A ${outerRadius},${outerRadius} 0 0,1 300,${240+outerRadius}
+                                     A ${outerRadius},${outerRadius} 0 0,1 300,${240-outerRadius}
+                                     ${currentRadius > 60 ? `M 300,${240-currentRadius} A ${currentRadius},${currentRadius} 0 0,0 300,${240+currentRadius}
+                                     A ${currentRadius},${currentRadius} 0 0,0 300,${240-currentRadius}` : ''} Z"
+                                  fill="${color}" fill-opacity="0.85"/>
+                            <path d="M 300,${240-outerRadius} A ${outerRadius},${outerRadius} 0 0,1 300,${240+outerRadius}
+                                     A ${outerRadius},${outerRadius} 0 0,1 300,${240-outerRadius}
+                                     ${currentRadius > 60 ? `M 300,${240-currentRadius} A ${currentRadius},${currentRadius} 0 0,0 300,${240+currentRadius}
+                                     A ${currentRadius},${currentRadius} 0 0,0 300,${240-currentRadius}` : ''} Z"
+                                  fill="url(#solidHatchCyl)" pointer-events="none"/>
                             <!-- Propriedades / Identificador -->
-                            <text x="${300 + (currentRadius + outerRadius)/2 * 0.7}" y="${240 - (currentRadius + outerRadius)/2 * 0.7}" 
-                                  text-anchor="middle" font-size="13" fill="${isParallelBlock? '#6a1b9a' : '#333'}" font-weight="bold">
-                                ${isParallelBlock ? 'Paralelo' : 'k = '+(layer.conductivity || 0)}
+                            <text x="${300 + midAngR2 * 0.7}" y="${240 - midAngR2 * 0.7}"
+                                  text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace" font-weight="700" fill="${isParallelBlock? '#6b3fa0' : strokeColor}" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+                                ${isParallelBlock ? 'PARALELO' : 'k='+(layer.conductivity || 0)}
                             </text>
                         </g>
                     `;
@@ -4779,11 +5031,11 @@
                 // Limites (nós de temperatura) = r0 do primeiro + todos r1
                 const boundaries = [segments[0].r0, ...segments.map(s=>s.r1)];
                 // Desenhar nós de temperatura
-                physicalHTML += `<!-- Banda de resistores (nova) --><g>`;
+                physicalHTML += `<!-- Banda de resistores --><g>`;
                 boundaries.forEach((rv, bi)=>{
                     const bx = cx0 + rv;
-                    physicalHTML += `<circle cx='${bx}' cy='${yBand}' r='3' fill='#555'/>`+
-                                     `<text x='${bx}' y='${yBand + 44}' text-anchor='middle' font-size='12' fill='#333' font-weight='bold'>${formatIndexedSymbol('T', bi+1)}</text>`;
+                    physicalHTML += `<circle cx='${bx}' cy='${yBand}' r='3' fill='#16233c'/>`+
+                                     `<text x='${bx}' y='${yBand + 44}' text-anchor='middle' font-size='12' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='#16233c' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>${formatIndexedSymbol('T', bi+1)}</text>`;
                 });
                 // Desenhar cada segmento
                 segments.forEach(seg=>{
@@ -4793,8 +5045,8 @@
                     const w = x1 - x0;
                     if(w <= 0.5) return; // ignora segmentos visuais muito finos
                     if(layer.type==='Paralelo'){
-                        physicalHTML += `<path d='M${x0},${yBand-18} L${x0},${yBand+18}' stroke='#6a1b9a' stroke-width='3'/>`+
-                                         `<path d='M${x1},${yBand-18} L${x1},${yBand+18}' stroke='#6a1b9a' stroke-width='3'/>`;
+                        physicalHTML += `<path d='M${x0},${yBand-18} L${x0},${yBand+18}' stroke='#6b3fa0' stroke-width='2.5'/>`+
+                                         `<path d='M${x1},${yBand-18} L${x1},${yBand+18}' stroke='#6b3fa0' stroke-width='2.5'/>`;
                         try {
                             const sub = summarizeParallelBlock(layer);
                             const branches = (sub && Array.isArray(sub.branches))? sub.branches:[];
@@ -4807,28 +5059,28 @@
                                     const yy = startY + bi*spacing;
                                     const ampLocal = 10;
                                     const pathB = `M${x0},${yy} L${x0+w*0.2},${yy-ampLocal} L${x0+w*0.4},${yy+ampLocal} L${x0+w*0.6},${yy-ampLocal} L${x0+w*0.8},${yy+ampLocal} L${x1},${yy}`;
-                                    physicalHTML += `<path d='${pathB}' stroke='#8e24aa' stroke-width='4' fill='none' opacity='0.85'/>`;
+                                    physicalHTML += `<path d='${pathB}' stroke='#6b3fa0' stroke-width='3' fill='none' opacity='0.9'/>`;
                                     const Rb = bInfo.R_branch; const val = (Rb>1e-3&&Rb<1e3)? Rb.toPrecision(3): Rb.toExponential(2);
-                                    physicalHTML += `<text x='${(x0+x1)/2}' y='${yy-8}' text-anchor='middle' font-size='10' fill='#4a148c' font-weight='600'>R${bi+1}=${val}</text>`;
+                                    physicalHTML += `<text x='${(x0+x1)/2}' y='${yy-8}' text-anchor='middle' font-size='10' font-family="'IBM Plex Mono',monospace" font-weight='600' fill='#5a2d8c' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>R${bi+1}=${val}</text>`;
                                 });
                                 if (isFinite(sub.Req)) {
                                     const valReq = (sub.Req>1e-3&&sub.Req<1e3)? sub.Req.toPrecision(3): sub.Req.toExponential(2);
-                                    physicalHTML += `<text x='${(x0+x1)/2}' y='${yBand - (N*spacing/2) - 16}' text-anchor='middle' font-size='11' fill='#311b92' font-weight='700'>R_par=${valReq} K/W</text>`;
+                                    physicalHTML += `<text x='${(x0+x1)/2}' y='${yBand - (N*spacing/2) - 16}' text-anchor='middle' font-size='11' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='#4a2178' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>R_par=${valReq} K/W</text>`;
                                 }
                             } else {
-                                const amp=14; const pathPar=`M${x0},${yBand} L${x0+w*0.2},${yBand-amp} L${x0+w*0.4},${yBand+amp} L${x0+w*0.6},${yBand-amp} L${x0+w*0.8},${yBand+amp} L${x1},${yBand}`; physicalHTML += `<path d='${pathPar}' stroke='#8e24aa' stroke-width='5' fill='none'/>`;
+                                const amp=14; const pathPar=`M${x0},${yBand} L${x0+w*0.2},${yBand-amp} L${x0+w*0.4},${yBand+amp} L${x0+w*0.6},${yBand-amp} L${x0+w*0.8},${yBand+amp} L${x1},${yBand}`; physicalHTML += `<path d='${pathPar}' stroke='#6b3fa0' stroke-width='3.5' fill='none'/>`;
                             }
                         } catch{
-                            const amp=14; const pathPar=`M${x0},${yBand} L${x0+w*0.2},${yBand-amp} L${x0+w*0.4},${yBand+amp} L${x0+w*0.6},${yBand-amp} L${x0+w*0.8},${yBand+amp} L${x1},${yBand}`; physicalHTML += `<path d='${pathPar}' stroke='#8e24aa' stroke-width='5' fill='none'/>`;
+                            const amp=14; const pathPar=`M${x0},${yBand} L${x0+w*0.2},${yBand-amp} L${x0+w*0.4},${yBand+amp} L${x0+w*0.6},${yBand-amp} L${x0+w*0.8},${yBand+amp} L${x1},${yBand}`; physicalHTML += `<path d='${pathPar}' stroke='#6b3fa0' stroke-width='3.5' fill='none'/>`;
                         }
                     } else {
                         const isFluid = layer.type && layer.type.includes('Fluido');
-                        const strokeCol = isFluid ? '#2196f3' : '#ff9800';
+                        const strokeCol = isFluid ? '#1f6f82' : '#c2760a';
                         const amp=14; const path=`M${x0},${yBand} L${x0+w*0.2},${yBand-amp} L${x0+w*0.4},${yBand+amp} L${x0+w*0.6},${yBand-amp} L${x0+w*0.8},${yBand+amp} L${x1},${yBand}`;
-                        physicalHTML += `<path d='${path}' stroke='${strokeCol}' stroke-width='5' fill='none'/>`;
+                        physicalHTML += `<path d='${path}' stroke='${strokeCol}' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/>`;
                         if(isFinite(R)){
                             const valStr = (R>1e-3 && R<1e3)? R.toPrecision(3): R.toExponential(2);
-                            physicalHTML += `<text x='${(x0+x1)/2}' y='${yBand-20}' text-anchor='middle' font-size='11' fill='#37474f' font-weight='600'>R=${valStr} K/W</text>`;
+                            physicalHTML += `<text x='${(x0+x1)/2}' y='${yBand-20}' text-anchor='middle' font-size='11' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='${strokeCol}' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>R=${valStr} K/W</text>`;
                         }
                     }
                 });
@@ -4862,23 +5114,23 @@
                         physicalHTML += `
                             <!-- Seta (Q) pontilhada indicando direção do fluxo de calor -->
                             <line x1="${x1}" y1="${yArrow}" x2="${x2}" y2="${yArrow}"
-                                  stroke="#ef6c00" stroke-width="2.5" stroke-dasharray="4,5" stroke-linecap="round" marker-end="url(#arrowhead)"/>
-                            <text x="${dirRight ? (x2 + 8) : (x2 - 8)}" y="${yArrow - 4}" font-size="14" fill="#ef6c00" text-anchor="${dirRight ? 'start' : 'end'}">Q</text>
+                                  stroke="#d9761e" stroke-width="2.2" stroke-dasharray="4,5" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+                            <text x="${dirRight ? (x2 + 8) : (x2 - 8)}" y="${yArrow - 4}" font-size="13" font-family="'IBM Plex Mono',monospace" font-weight="700" fill="#d9761e" text-anchor="${dirRight ? 'start' : 'end'}" stroke="#fff" stroke-width="3" stroke-linejoin="round" paint-order="stroke">Q</text>
                             <!-- Partículas animadas (cilíndrica) -->
                             <g opacity="0.9">
-                                <circle cy="${yArrow}" r="2.2" fill="#ef6c00">
+                                <circle cy="${yArrow}" r="2.1" fill="#d9761e">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="0s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.2" fill="#ef6c00" opacity="0.85">
+                                <circle cy="${yArrow}" r="2.1" fill="#d9761e" opacity="0.85">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.15*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.2" fill="#ef6c00" opacity="0.75">
+                                <circle cy="${yArrow}" r="2.1" fill="#d9761e" opacity="0.75">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.30*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.2" fill="#ef6c00" opacity="0.65">
+                                <circle cy="${yArrow}" r="2.1" fill="#d9761e" opacity="0.65">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.45*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.2" fill="#ef6c00" opacity="0.55">
+                                <circle cy="${yArrow}" r="2.1" fill="#d9761e" opacity="0.55">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.60*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
                             </g>
@@ -4920,7 +5172,7 @@
                 const { index, layer, rDraw, showCount, baseLen, finCount, Lm } = finnedData;
                 
                 physicalHTML += '<g data-layer="'+index+'" class="finned-surface-group '+(layer.is_pin?'mode-pin':'mode-plate')+'" style="cursor:pointer; pointer-events:all;" tabindex="0" role="button" aria-label="finned '+(index+1)+'" data-finned="1">';
-                physicalHTML += `<circle cx="300" cy="240" r="${rDraw}" fill="none" stroke="#455a64" stroke-width="2" stroke-dasharray="4,4"/>`;
+                physicalHTML += `<circle cx="300" cy="240" r="${rDraw}" fill="none" stroke="#5b6b82" stroke-width="1.6" stroke-dasharray="4,4"/>`;
                 for (let i=0;i<showCount;i++) {
                     const ang = (i / showCount) * 2*Math.PI;
                     const x = 300 + rDraw*Math.cos(ang);
@@ -4931,10 +5183,10 @@
                     const tipLen = baseLen;
                     // para placa, mostrar largura "reta" -> usar linha dupla curta
                         if (layer.is_pin) {
-                            physicalHTML += `<line class="fin-line" data-layer="${index}" x1="${x+dx*inner}" y1="${y+dy*inner}" x2="${x+dx*(inner+tipLen)}" y2="${y+dy*(inner+tipLen)}" stroke="#607d8b" stroke-width="2" stroke-linecap="round" style="pointer-events:stroke;"/>`;
+                            physicalHTML += `<line class="fin-line" data-layer="${index}" x1="${x+dx*inner}" y1="${y+dy*inner}" x2="${x+dx*(inner+tipLen)}" y2="${y+dy*(inner+tipLen)}" stroke="#5b6b82" stroke-width="2" stroke-linecap="round" style="pointer-events:stroke;"/>`;
                         } else {
-                            physicalHTML += `<line class="fin-line" data-layer="${index}" x1="${x+dx*inner}" y1="${y+dy*inner}" x2="${x+dx*(inner+tipLen)}" y2="${y+dy*(inner+tipLen)}" stroke="#80cbc4" stroke-width="4" stroke-linecap="butt" style="pointer-events:stroke;"/>`;
-                            physicalHTML += `<line class="fin-line" data-layer="${index}" x1="${x+dx*inner}" y1="${y+dy*inner}" x2="${x+dx*(inner+tipLen)}" y2="${y+dy*(inner+tipLen)}" stroke="#00695c" stroke-width="1.2" stroke-linecap="butt" style="pointer-events:stroke;"/>`;
+                            physicalHTML += `<line class="fin-line" data-layer="${index}" x1="${x+dx*inner}" y1="${y+dy*inner}" x2="${x+dx*(inner+tipLen)}" y2="${y+dy*(inner+tipLen)}" stroke="#bfe6df" stroke-width="4" stroke-linecap="butt" style="pointer-events:stroke;"/>`;
+                            physicalHTML += `<line class="fin-line" data-layer="${index}" x1="${x+dx*inner}" y1="${y+dy*inner}" x2="${x+dx*(inner+tipLen)}" y2="${y+dy*(inner+tipLen)}" stroke="#0f7a68" stroke-width="1.2" stroke-linecap="butt" style="pointer-events:stroke;"/>`;
                         }
                 }
                 // (Removido) Caixa informativa no cilíndrico por solicitação do usuário
@@ -4953,10 +5205,10 @@
                     const x1 = cx0 + fd.rDraw + fd.baseLen;
                     physicalHTML += `
                         <g class="dim dim-L" opacity="0.9">
-                            <line x1="${x0}" y1="${yDimBase}" x2="${x1}" y2="${yDimBase}" stroke="#00695c" stroke-width="1.6" stroke-dasharray="3,4"/>
-                            <line x1="${x0}" y1="${yDimBase-8}" x2="${x0}" y2="${yDimBase+8}" stroke="#00695c" stroke-width="1.6"/>
-                            <line x1="${x1}" y1="${yDimBase-8}" x2="${x1}" y2="${yDimBase+8}" stroke="#00695c" stroke-width="1.6"/>
-                            <text x="${(x0+x1)/2}" y="${yDimBase - 6}" text-anchor="middle" font-size="11" fill="#004d40" font-weight="600">L = ${Number(fd.Lm).toPrecision(4)} m</text>
+                            <line x1="${x0}" y1="${yDimBase}" x2="${x1}" y2="${yDimBase}" stroke="#8894a3" stroke-width="1.4" stroke-dasharray="3,4"/>
+                            <line x1="${x0}" y1="${yDimBase-8}" x2="${x0}" y2="${yDimBase+8}" stroke="#8894a3" stroke-width="1.4"/>
+                            <line x1="${x1}" y1="${yDimBase-8}" x2="${x1}" y2="${yDimBase+8}" stroke="#8894a3" stroke-width="1.4"/>
+                            <text x="${(x0+x1)/2}" y="${yDimBase - 6}" text-anchor="middle" font-size="11" font-family="'IBM Plex Mono',monospace" font-weight="600" fill="#4c5768">L = ${Number(fd.Lm).toPrecision(4)} m</text>
                         </g>`;
                 });
                 // Cotas de espessura dos sólidos (na base)
@@ -4974,9 +5226,9 @@
                     // Removido o rótulo em metros para evitar duplicidade; mantemos apenas as linhas de cota
                     physicalHTML += `
                         <g class="dim dim-t" opacity="0.85">
-                            <line x1="${x0}" y1="${yDimBase+16}" x2="${x1}" y2="${yDimBase+16}" stroke="#37474f" stroke-width="1.4" stroke-dasharray="3,4"/>
-                            <line x1="${x0}" y1="${yDimBase+8}" x2="${x0}" y2="${yDimBase+24}" stroke="#37474f" stroke-width="1.4"/>
-                            <line x1="${x1}" y1="${yDimBase+8}" x2="${x1}" y2="${yDimBase+24}" stroke="#37474f" stroke-width="1.4"/>
+                            <line x1="${x0}" y1="${yDimBase+16}" x2="${x1}" y2="${yDimBase+16}" stroke="#4c5768" stroke-width="1.3" stroke-dasharray="3,4"/>
+                            <line x1="${x0}" y1="${yDimBase+8}" x2="${x0}" y2="${yDimBase+24}" stroke="#4c5768" stroke-width="1.3"/>
+                            <line x1="${x1}" y1="${yDimBase+8}" x2="${x1}" y2="${yDimBase+24}" stroke="#4c5768" stroke-width="1.3"/>
                         </g>`;
                 });
             } catch(e) { /* cota opcional cyl */ }
@@ -4986,7 +5238,7 @@
                         <!-- Setas de direção removidas para clareza visual -->
                         
                         <!-- Centro -->
-                        <circle cx="300" cy="240" r="4" fill="#333"/>
+                        <circle cx="300" cy="240" r="4" fill="#16233c"/>
                         </g>
                     </svg>
                 </div>
@@ -5006,20 +5258,28 @@
                     <svg width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <marker id="arrowhead2" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="6" refX="8.2" refY="3" orient="auto">
-                                <polygon points="0 0, 9 3, 0 6" fill="#ff5722"/>
+                                <polygon points="0 0, 9 3, 0 6" fill="#c2760a"/>
                             </marker>
-                            <pattern id="fluidPattern" patternUnits="userSpaceOnUse" width="10" height="10">
-                                <rect width="10" height="10" fill="#e3f2fd" opacity="0.3"/>
-                                <circle cx="5" cy="5" r="1" fill="#2196f3" opacity="0.6"/>
+                            <pattern id="fluidPattern" patternUnits="userSpaceOnUse" width="16" height="16" patternTransform="rotate(0)">
+                                <rect width="16" height="16" fill="#eaf5f7"/>
+                                <path d="M0,4 Q4,0 8,4 T16,4" stroke="#2f9bb0" stroke-width="1" fill="none" opacity="0.55"/>
+                                <path d="M0,12 Q4,8 8,12 T16,12" stroke="#2f9bb0" stroke-width="1" fill="none" opacity="0.4"/>
                             </pattern>
+                            <pattern id="solidHatch" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(45)">
+                                <rect width="9" height="9" fill="transparent"/>
+                                <line x1="0" y1="0" x2="0" y2="9" stroke="#000000" stroke-opacity="0.05" stroke-width="2"/>
+                            </pattern>
+                            <filter id="dropSoft" x="-30%" y="-30%" width="160%" height="160%">
+                                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#16233c" flood-opacity="0.16"/>
+                            </filter>
                             <!-- Gradiente para espaço reservado (projeção de aletas) -->
                             <linearGradient id="finProjGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#00897b" stop-opacity="0.25"/>
-                                <stop offset="55%" stop-color="#00897b" stop-opacity="0.12"/>
-                                <stop offset="100%" stop-color="#00897b" stop-opacity="0"/>
+                                <stop offset="0%" stop-color="#0f7a68" stop-opacity="0.22"/>
+                                <stop offset="55%" stop-color="#0f7a68" stop-opacity="0.10"/>
+                                <stop offset="100%" stop-color="#0f7a68" stop-opacity="0"/>
                             </linearGradient>
                         </defs>
-                        
+
                         <!-- Conteúdo planar dimensionado -->
                         <!-- Regiões de fluido -->
             `;
@@ -5089,13 +5349,14 @@
                 
                 if (isParallel) {
                     // bloco paralelo com largura fixa
+                    const pMidY = 40 + layerHeight/2;
                     physicalHTML += `
                         <!-- Bloco Paralelo ${index + 1} -->
                         <g data-layer="${index}" data-layer-index="${index}" class="clickable-layer" title="Paralelo">
-                            <rect data-layer="${index}" x="${currentX}" y="40" width="${PAR_WIDTH}" height="${layerHeight}" 
-                                  fill="#f3e5f5" stroke="#8e24aa" stroke-width="5" stroke-dasharray="6,6"/>
-                            <text x="${currentX + PAR_WIDTH/2}" y="180" text-anchor="middle" font-size="16" fill="#6a1b9a" font-weight="bold">Paralelo</text>
-                            <text x="${currentX + PAR_WIDTH/2}" y="200" text-anchor="middle" font-size="12" fill="#6a1b9a">${(layer.branches||[]).length} ramos</text>
+                            <rect data-layer="${index}" x="${currentX}" y="40" width="${PAR_WIDTH}" height="${layerHeight}" rx="3"
+                                  fill="#efe6f7" stroke="#6b3fa0" stroke-width="3" stroke-dasharray="7,5" filter="url(#dropSoft)"/>
+                            <text x="${currentX + PAR_WIDTH/2}" y="${pMidY - 8}" text-anchor="middle" font-size="12" font-family="'IBM Plex Sans',sans-serif" font-weight="700" letter-spacing="0.03em" fill="#6b3fa0" stroke="#fff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">PARALELO</text>
+                            <text x="${currentX + PAR_WIDTH/2}" y="${pMidY + 12}" text-anchor="middle" font-size="13" font-family="'IBM Plex Mono',monospace" fill="#16233c" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${(layer.branches||[]).length} ramos</text>
                         </g>
                     `;
                     currentX += PAR_WIDTH;
@@ -5118,27 +5379,26 @@
                     // A próxima camada resistiva começa após o gap; não adicionamos novo tempPoint para não criar T extra
                 } else if (isFluid) {
                     // Desenhar camada de fluido
+                    const fMidY = 40 + layerHeight/2;
                     physicalHTML += `
                         <!-- Camada de fluido ${index + 1} -->
                         <g data-layer="${index}" data-layer-index="${index}" class="clickable-layer" title="Fluido h=${layer.convection}">
-                    <rect data-layer="${index}" x="${currentX}" y="40" width="${fluidWidth}" height="${layerHeight}" 
-                                  fill="url(#fluidPattern)" stroke="#2196f3" stroke-width="5"/>
-                            
+                    <rect data-layer="${index}" x="${currentX}" y="40" width="${fluidWidth}" height="${layerHeight}" rx="3"
+                                  fill="url(#fluidPattern)" stroke="#1f6f82" stroke-width="3" filter="url(#dropSoft)"/>
+
                             <!-- Propriedades do fluido -->
-                            <text x="${currentX + fluidWidth/2}" y="140" text-anchor="middle" font-size="16" fill="#1976d2" font-weight="bold">
-                                h = ${layer.convection}
+                            <text x="${currentX + fluidWidth/2}" y="${fMidY - 8}" text-anchor="middle" font-size="12" font-family="'IBM Plex Sans',sans-serif" font-weight="700" letter-spacing="0.03em" fill="#1f6f82" stroke="#fff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">
+                                FLUIDO
                             </text>
-                            <text x="${currentX + fluidWidth/2}" y="160" text-anchor="middle" font-size="14" fill="#1976d2">
-                                T∞ = ${layer.temperature}°C
+                            <text x="${currentX + fluidWidth/2}" y="${fMidY + 12}" text-anchor="middle" font-size="13" font-family="'IBM Plex Mono',monospace" font-weight="600" fill="#16233c" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+                                h=${layer.convection}
                             </text>
-                            
-                            <!-- Nome da camada -->
-                            <text x="${currentX + fluidWidth/2}" y="490" text-anchor="middle" font-size="16" fill="#666">
-                                Fluido
+                            <text x="${currentX + fluidWidth/2}" y="${fMidY + 30}" text-anchor="middle" font-size="12" font-family="'IBM Plex Mono',monospace" fill="#2f6472" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+                                T∞=${layer.temperature}°C
                             </text>
                         </g>
                     `;
-                    
+
                     currentX += fluidWidth;
                     tempPoints.push({x: currentX, y: baseY + (currentX - startX) * slopeY});
                 } else {
@@ -5147,30 +5407,36 @@
                     const minW = 28; // largura mínima visual para não colapsar
                     if (!isFinite(layerWidth) || layerWidth <= 0) layerWidth = minW;
                     if (layerWidth < minW) layerWidth = minW;
-                    const colors = ['#ffcc80', '#c8e6c9', '#f8bbd9', '#d1c4e9'];
-                    const strokeColors = ['#ff9800', '#4caf50', '#e91e63', '#9c27b0'];
-                    const color = colors[solidIndex % colors.length];
-                    const strokeColor = strokeColors[solidIndex % strokeColors.length];
-                    
+                    const solidPalette = [
+                        { fill: '#fbe7d4', stroke: '#c2760a' },
+                        { fill: '#f1e4d6', stroke: '#8a5a2b' },
+                        { fill: '#eee2cf', stroke: '#a9762e' },
+                        { fill: '#e9dcc8', stroke: '#6f5024' }
+                    ];
+                    const pal = solidPalette[solidIndex % solidPalette.length];
+                    const color = pal.fill;
+                    const strokeColor = pal.stroke;
+                    const midY = 40 + layerHeight/2;
+                    const haloName = layerWidth < 70 ? 4 : 5;
+
                     physicalHTML += `
                         <!-- Camada sólida ${solidIndex + 1} -->
                         <g data-layer="${index}" data-layer-index="${index}" class="clickable-layer" title="Sólido k=${layer.conductivity||0}">
-                    <rect data-layer="${index}" x="${currentX}" y="40" width="${layerWidth}" height="${layerHeight}" 
-                                  fill="${color}" stroke="${strokeColor}" stroke-width="5"/>
-                            
+                    <rect data-layer="${index}" x="${currentX}" y="40" width="${layerWidth}" height="${layerHeight}" rx="3"
+                                  fill="${color}" stroke="${strokeColor}" stroke-width="3" filter="url(#dropSoft)"/>
+                            <rect x="${currentX}" y="40" width="${layerWidth}" height="${layerHeight}" rx="3" fill="url(#solidHatch)" pointer-events="none"/>
+
                             <!-- Label da espessura -->
-                            <text x="${currentX + layerWidth/2}" y="500" text-anchor="middle" font-size="16" fill="#666">
+                            <text x="${currentX + layerWidth/2}" y="${40 + layerHeight - 18}" text-anchor="middle" font-size="13" font-family="'IBM Plex Mono',monospace" fill="#16233c" stroke="#fff" stroke-width="3" stroke-linejoin="round" paint-order="stroke">
                                 ${(layer.thickness * 1000).toFixed(1)} mm
                             </text>
-                            
-                            <!-- Propriedades -->
-                            <text x="${currentX + layerWidth/2}" y="200" text-anchor="middle" font-size="16" fill="#333" font-weight="bold">
-                                k = ${layer.conductivity || 0} W/m·K
+
+                            <!-- Nome do material + propriedade -->
+                            <text x="${currentX + layerWidth/2}" y="${midY - 8}" text-anchor="middle" font-size="12" font-family="'IBM Plex Sans',sans-serif" font-weight="700" letter-spacing="0.03em" fill="${strokeColor}" stroke="#fff" stroke-width="${haloName}" stroke-linejoin="round" paint-order="stroke">
+                                SÓLIDO ${solidIndex + 1}
                             </text>
-                            
-                            <!-- Nome do material -->
-                            <text x="${currentX + layerWidth/2}" y="180" text-anchor="middle" font-size="14" fill="#333">
-                                Sólido ${solidIndex + 1}
+                            <text x="${currentX + layerWidth/2}" y="${midY + 12}" text-anchor="middle" font-size="13" font-family="'IBM Plex Mono',monospace" font-weight="600" fill="#16233c" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+                                k=${layer.conductivity || 0}
                             </text>
                         </g>
                 `;
@@ -5189,14 +5455,14 @@
                 const LmPlan = isFinite(LmPlanRaw) ? LmPlanRaw : ((isFinite(parseFloat((finMetrics && finMetrics.L))) && parseFloat(finMetrics.L) > 0)? parseFloat(finMetrics.L) : 0.02);
                 const baseLen = Math.min(140, 18 + (LmPlan)*200); // ampliar teto para sensibilidade
                 const blades = Array.from({length: finCount}).filter((_,i)=> i%drawEvery===0).map((_,fi)=>{
-                    const frac=(fi*drawEvery)/finCount; const y0=40+frac*layerHeight; return `<rect x='${finBaseX - 2}' y='${y0-5}' width='${baseLen}' height='10' rx='2' fill='#80cbc4' stroke='#00695c' stroke-width='1' class='fin-blade'/>`; }).join('');
-                physicalHTML += `<!-- Superfície Aletada ${index+1} (planar - estilo antigo) -->
+                    const frac=(fi*drawEvery)/finCount; const y0=40+frac*layerHeight; return `<rect x='${finBaseX - 2}' y='${y0-4}' width='${baseLen}' height='8' rx='2' fill='#bfe6df' stroke='#0f7a68' stroke-width='1' class='fin-blade'/>`; }).join('');
+                physicalHTML += `<!-- Superfície Aletada ${index+1} (planar) -->
                 <g data-layer='${index}' data-layer-index='${index}' class='finned-surface planar finned-surface-group clickable-layer' style="cursor:pointer;" title="Superfície Aletada">
-                    <line x1='${finBaseX}' y1='40' x2='${finBaseX}' y2='${40+layerHeight}' stroke='#00897b' stroke-width='4' stroke-linecap='round'/>
+                    <line x1='${finBaseX}' y1='40' x2='${finBaseX}' y2='${40+layerHeight}' stroke='#0f7a68' stroke-width='4' stroke-linecap='round'/>
                     ${blades}
                     <!-- Rótulos N e L (notação padronizada) -->
-                    <text x='${finBaseX + baseLen + 8}' y='${50}' text-anchor='start' font-size='12' fill='#004d40' font-weight='600'>N = ${finCount}</text>
-                    <text x='${finBaseX + baseLen + 8}' y='${66}' text-anchor='start' font-size='12' fill='#004d40'>L = ${Number(LmPlan).toPrecision(4)} m</text>
+                    <text x='${finBaseX + baseLen + 8}' y='50' text-anchor='start' font-size='12' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='#0b5c4d' stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">N=${finCount}</text>
+                    <text x='${finBaseX + baseLen + 8}' y='66' text-anchor='start' font-size='12' font-family="'IBM Plex Mono',monospace" fill='#0b5c4d' stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">L=${Number(LmPlan).toPrecision(4)} m</text>
                 </g>`;
             });
             
@@ -5228,10 +5494,10 @@
                     const baseLen = Math.min(140, 18 + (LmPlan)*200);
                     physicalHTML += `
                         <g class='dim dim-L' opacity='0.9'>
-                            <line x1='${finBaseX}' y1='${yDimBase}' x2='${finBaseX + baseLen}' y2='${yDimBase}' stroke='#00695c' stroke-width='1.6' stroke-dasharray='3,4'/>
-                            <line x1='${finBaseX}' y1='${yDimBase-8}' x2='${finBaseX}' y2='${yDimBase+8}' stroke='#00695c' stroke-width='1.6'/>
-                            <line x1='${finBaseX + baseLen}' y1='${yDimBase-8}' x2='${finBaseX + baseLen}' y2='${yDimBase+8}' stroke='#00695c' stroke-width='1.6'/>
-                            <text x='${finBaseX + baseLen/2}' y='${yDimBase - 6}' text-anchor='middle' font-size='11' fill='#004d40' font-weight='600'>L = ${Number(LmPlan).toPrecision(4)} m</text>
+                            <line x1='${finBaseX}' y1='${yDimBase}' x2='${finBaseX + baseLen}' y2='${yDimBase}' stroke='#8894a3' stroke-width='1.4' stroke-dasharray='3,4'/>
+                            <line x1='${finBaseX}' y1='${yDimBase-8}' x2='${finBaseX}' y2='${yDimBase+8}' stroke='#8894a3' stroke-width='1.4'/>
+                            <line x1='${finBaseX + baseLen}' y1='${yDimBase-8}' x2='${finBaseX + baseLen}' y2='${yDimBase+8}' stroke='#8894a3' stroke-width='1.4'/>
+                            <text x='${finBaseX + baseLen/2}' y='${yDimBase - 6}' text-anchor='middle' font-size='11' font-family="'IBM Plex Mono',monospace" font-weight='600' fill='#4c5768'>L = ${Number(LmPlan).toPrecision(4)} m</text>
                         </g>`;
                 });
                 // Cotas de espessura dos sólidos usando interfaces (na parte inferior)
@@ -5246,9 +5512,9 @@
                     // Removido o rótulo em metros nas cotas inferiores; manter apenas linhas de cota
                     physicalHTML += `
                         <g class='dim dim-t' opacity='0.85'>
-                            <line x1='${x0}' y1='${yDimBase2}' x2='${x1}' y2='${yDimBase2}' stroke='#37474f' stroke-width='1.4' stroke-dasharray='3,4'/>
-                            <line x1='${x0}' y1='${yDimBase2-8}' x2='${x0}' y2='${yDimBase2+8}' stroke='#37474f' stroke-width='1.4'/>
-                            <line x1='${x1}' y1='${yDimBase2-8}' x2='${x1}' y2='${yDimBase2+8}' stroke='#37474f' stroke-width='1.4'/>
+                            <line x1='${x0}' y1='${yDimBase2}' x2='${x1}' y2='${yDimBase2}' stroke='#4c5768' stroke-width='1.3' stroke-dasharray='3,4'/>
+                            <line x1='${x0}' y1='${yDimBase2-8}' x2='${x0}' y2='${yDimBase2+8}' stroke='#4c5768' stroke-width='1.3'/>
+                            <line x1='${x1}' y1='${yDimBase2-8}' x2='${x1}' y2='${yDimBase2+8}' stroke='#4c5768' stroke-width='1.3'/>
                         </g>`;
                 }
             } catch(e){ /* cota opcional planar */ }
@@ -5291,11 +5557,11 @@
                         const amp = 14;
                         const layer = layers[i];
                         const isFluid = layer && layer.type && layer.type.includes('Fluido');
-                        const strokeCol = layer && layer.type==='Paralelo'? '#8e24aa' : (isFluid? '#2196f3':'#ff9800');
+                        const strokeCol = layer && layer.type==='Paralelo'? '#6b3fa0' : (isFluid? '#1f6f82':'#c2760a');
                         if (layer && layer.type==='Paralelo') {
                             // marcadores de fronteira do bloco paralelo
-                            physicalHTML += `<path d="M${x0},${yBand-18} L${x0},${yBand+18}" stroke='${strokeCol}' stroke-width='3'/>`+
-                                            `<path d="M${x1},${yBand-18} L${x1},${yBand+18}" stroke='${strokeCol}' stroke-width='3'/>`;
+                            physicalHTML += `<path d="M${x0},${yBand-18} L${x0},${yBand+18}" stroke='${strokeCol}' stroke-width='2.5'/>`+
+                                            `<path d="M${x1},${yBand-18} L${x1},${yBand+18}" stroke='${strokeCol}' stroke-width='2.5'/>`;
                             // Resistores por ramo
                             try {
                                 const sub = summarizeParallelBlock(layer);
@@ -5312,13 +5578,13 @@
                                         const yy = startY + bi*spacing;
                                         const ampLocal = Math.min(10, amp * 0.7);
                                         const pathBranch = `M${x0},${yy} L${x0 + w*0.2},${yy - ampLocal} L${x0 + w*0.4},${yy + ampLocal} L${x0 + w*0.6},${yy - ampLocal} L${x0 + w*0.8},${yy + ampLocal} L${x1},${yy}`;
-                                        physicalHTML += `<path d='${pathBranch}' stroke='${strokeCol}' stroke-width='4' fill='none' opacity='0.85'/>`;
+                                        physicalHTML += `<path d='${pathBranch}' stroke='${strokeCol}' stroke-width='3' fill='none' opacity='0.9'/>`;
                                         const valRb = (Rb>1e-3 && Rb<1e3)? Rb.toPrecision(3): Rb.toExponential(2);
-                                        physicalHTML += `<text x='${(x0+x1)/2}' y='${yy - 8}' text-anchor='middle' font-size='10' fill='#4a148c' font-weight='600'>R${bi+1}=${valRb}</text>`;
+                                        physicalHTML += `<text x='${(x0+x1)/2}' y='${yy - 8}' text-anchor='middle' font-size='10' font-family="'IBM Plex Mono',monospace" font-weight='600' fill='#5a2d8c' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>R${bi+1}=${valRb}</text>`;
                                     });
                                     if (isFinite(sub.Req)) {
                                         const valReq = (sub.Req>1e-3 && sub.Req<1e3)? sub.Req.toPrecision(3): sub.Req.toExponential(2);
-                                        physicalHTML += `<text x='${(x0+x1)/2}' y='${yBand - (N*spacing/2) - 14}' text-anchor='middle' font-size='11' fill='#311b92' font-weight='700'>R_par=${valReq} K/W</text>`;
+                                        physicalHTML += `<text x='${(x0+x1)/2}' y='${yBand - (N*spacing/2) - 14}' text-anchor='middle' font-size='11' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='#4a2178' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>R_par=${valReq} K/W</text>`;
                                     }
                                 }
                             } catch(e) { /* silencioso */ }
@@ -5328,21 +5594,21 @@
                             if (!isFinned) {
                                 // Só desenha resistor se NÃO for superfície aletada
                                 const path = `M${x0Adj},${yBand} L${x0Adj + w*0.2},${yBand - amp} L${x0Adj + w*0.4},${yBand + amp} L${x0Adj + w*0.6},${yBand - amp} L${x0Adj + w*0.8},${yBand + amp} L${x1},${yBand}`;
-                                physicalHTML += `<path d='${path}' stroke='${strokeCol}' stroke-width='5' fill='none'/>`;
+                                physicalHTML += `<path d='${path}' stroke='${strokeCol}' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/>`;
                                 const Rtxt = Rsegs[i];
                                 if (isFinite(Rtxt)) {
-                                    const label = 'R';
                                     const valStr = (Rtxt>1e-3 && Rtxt<1e3)? Rtxt.toPrecision(3) : Rtxt.toExponential(2);
-                                    physicalHTML += `<text x='${(x0Adj+x1)/2}' y='${yBand - 26}' text-anchor='middle' font-size='11' fill='#37474f' font-weight='600'>${label} = ${valStr} K/W</text>`;
+                                    physicalHTML += `<text x='${(x0Adj+x1)/2}' y='${yBand - 26}' text-anchor='middle' font-size='11' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='${strokeCol}' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>R=${valStr} K/W</text>`;
                                 }
                             } else {
-                                // Superfície aletada: não desenhar resistor nem label (mantém visual limpo conforme versão "perfeita")
+                                // Superfície aletada: não desenhar resistor nem label (mantém visual limpo)
                             }
                         }
                     }
                     // Etiquetas de T_i abaixo
                     interfaceXs.forEach((x,idx)=>{
-                        physicalHTML += `<text x='${x}' y='${yBand + 30}' text-anchor='middle' font-size='12' fill='#333' font-weight='bold'>${formatIndexedSymbol('T', idx+1)}</text>`;
+                        physicalHTML += `<circle cx='${x}' cy='${yBand}' r='3' fill='#16233c'/>`+
+                                         `<text x='${x}' y='${yBand + 30}' text-anchor='middle' font-size='12' font-family="'IBM Plex Mono',monospace" font-weight='700' fill='#16233c' stroke='#fff' stroke-width='3' stroke-linejoin='round' paint-order='stroke'>${formatIndexedSymbol('T', idx+1)}</text>`;
                     });
                     physicalHTML += `</g>`;
                 }
@@ -5373,23 +5639,23 @@
                         physicalHTML += `
                             <!-- Seta (Q) pontilhada indicando direção do fluxo de calor -->
                             <line x1="${x1}" y1="${yArrow}" x2="${x2}" y2="${yArrow}"
-                                  stroke="#ef6c00" stroke-width="4" stroke-dasharray="6,8" stroke-linecap="round" marker-end="url(#arrowhead2)"/>
-                            <text x="${dirRight ? (x2 + 12) : (x2 - 12)}" y="${yArrow - 6}" font-size="15" fill="#ef6c00" font-weight="600" text-anchor="${dirRight ? 'start' : 'end'}">Q</text>
+                                  stroke="#d9761e" stroke-width="3" stroke-dasharray="6,8" stroke-linecap="round" marker-end="url(#arrowhead2)"/>
+                            <text x="${dirRight ? (x2 + 12) : (x2 - 12)}" y="${yArrow - 6}" font-size="14" font-family="'IBM Plex Mono',monospace" fill="#d9761e" font-weight="700" text-anchor="${dirRight ? 'start' : 'end'}" stroke="#fff" stroke-width="3" stroke-linejoin="round" paint-order="stroke">Q</text>
                             <!-- Partículas animadas (planar) -->
                             <g opacity="0.9">
-                                <circle cy="${yArrow}" r="2.6" fill="#ef6c00">
+                                <circle cy="${yArrow}" r="2.4" fill="#d9761e">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="0s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.6" fill="#ef6c00" opacity="0.85">
+                                <circle cy="${yArrow}" r="2.4" fill="#d9761e" opacity="0.85">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.16*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.6" fill="#ef6c00" opacity="0.75">
+                                <circle cy="${yArrow}" r="2.4" fill="#d9761e" opacity="0.75">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.32*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.6" fill="#ef6c00" opacity="0.65">
+                                <circle cy="${yArrow}" r="2.4" fill="#d9761e" opacity="0.65">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.48*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
-                                <circle cy="${yArrow}" r="2.6" fill="#ef6c00" opacity="0.55">
+                                <circle cy="${yArrow}" r="2.4" fill="#d9761e" opacity="0.55">
                                     <animate attributeName="cx" from="${dirRight ? x1 : x2}" to="${dirRight ? x2 : x1}" dur="${durQ}s" begin="${(0.64*parseFloat(durQ)).toFixed(2)}s" repeatCount="indefinite" />
                                 </circle>
                             </g>
@@ -7097,82 +7363,25 @@
         // 📊 FUNÇÃO PRINCIPAL: RELATÓRIO ESTRUTURADO POR ETAPAS
         // ═══════════════════════════════════════════════════════════════════════════════
         function buildStructuredThermalReport(result) {
-            const fmt = (v, d = 4) => (isFinite(v) ? Number(v).toFixed(d) : '—');
-            const fmtExp = (v, d = 3) => (isFinite(v) ? Number(v).toExponential(d) : '—');
-            
             let html = '';
-            
-            // ═══════════════════════════════════════════════════════════
-            // 📊 CABEÇALHO PRINCIPAL
-            // ═══════════════════════════════════════════════════════════
-            html += buildReportHeader(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🔥 SEÇÃO: MÉTRICAS PRINCIPAIS
-            // ═══════════════════════════════════════════════════════════
-            html += buildMainMetricsSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🧊 SEÇÃO: SUPERFÍCIES ALETADAS (se houver)
-            // ═══════════════════════════════════════════════════════════
-            html += buildFinnedSurfacesSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🧮 SEÇÃO: ANÁLISE POR CAMADA INDIVIDUAL
-            // ═══════════════════════════════════════════════════════════
-            html += buildLayerAnalysisSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🧾 SEÇÃO: EXPLICAÇÃO DIDÁTICA PASSO A PASSO
-            // ═══════════════════════════════════════════════════════════
-            html += buildStepByStepSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 📐 SEÇÃO: EQUAÇÕES FUNDAMENTAIS
-            // ═══════════════════════════════════════════════════════════
-            html += buildFundamentalEquationsSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🌡️ SEÇÃO: QUEDAS DE TEMPERATURA
-            // ═══════════════════════════════════════════════════════════
-            html += buildTemperatureDropsSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // ⚖️ SEÇÃO: BALANÇO TÉRMICO E TEMPERATURAS
-            // ═══════════════════════════════════════════════════════════
-            html += buildThermalBalanceSection(result);
 
-            // ═══════════════════════════════════════════════════════════
-            // 🔥 SEÇÃO: TAXA DE CALOR GLOBAL 
-            // ═══════════════════════════════════════════════════════════
+            // Ordem restaurada (checkpoint V30-UXUI-08B): esta é a mesma sequência de antes
+            // do V30-UXUI-08 — só a pele visual mudou. Cabeçalho → cards de métricas →
+            // superfícies aletadas + tabela de camadas → passo a passo → equações →
+            // quedas de temperatura → balanço térmico/interfaces → taxa de calor global →
+            // perfil T(x) por último.
+            html += buildReportHeader(result);
+            html += buildMainMetricsSection(result);
+            html += buildFinnedSurfacesSection(result);
+            html += buildLayerAnalysisSection(result);
+            html += buildStepByStepSection(result);
+            html += buildFundamentalEquationsSection(result);
+            html += buildTemperatureDropsSection(result);
+            html += buildThermalBalanceSection(result);
             html += buildHeatRateSection(result);
-            
-            // ═══════════════════════════════════════════════════════════
-            // 📈 SEÇÃO: GRÁFICO DE TEMPERATURA
-            // ═══════════════════════════════════════════════════════════
-            html += `
-                <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #009688;'>
-                    <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#009688; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'><i class="fa-solid fa-chart-line"></i></span> Perfil de Temperatura
-                    </h3>
-                    <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Distribuição espacial da temperatura ao longo do sistema</p>
-                    <div style='background:#fff; border:1px solid #eee; border-radius:12px; padding:20px; text-align:center;'>
-                        <canvas id='temp-profile-canvas' style='width:100%; max-width:800px; height:300px; display:block; margin:0 auto; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);'></canvas>
-                        <div style='color:#666; font-size:0.9rem; margin-top:12px; font-style:italic;'>
-                            ${selectedGeometry === 'planar' ? '<i class="fa-solid fa-ruler"></i> Planar: x representa a espessura acumulada (m)' : '<i class="fa-solid fa-arrows-rotate"></i> Cilíndrico: x representa o raio (m)'}<br>
-                            Segmentos fluidos aparecem como saltos verticais (espessura desprezível)
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // ═══════════════════════════════════════════════════════════
-            // 🎉 FECHAMENTO DO CONTAINER PRINCIPAL
-            // ═══════════════════════════════════════════════════════════
-            html += `</div>`; // Fecha container principal do relatório estruturado
-            
-            // ✨ Efeitos visuais desabilitados
-            
+            html += buildTemperatureProfileSection(result);
+
+            html += `</div>`; // fecha .results-report aberto em buildReportHeader
             return html;
         }
 
@@ -7180,81 +7389,18 @@
         // 📊 FUNÇÃO: CABEÇALHO DO RELATÓRIO
         // ═══════════════════════════════════════════════════════════════════════════════
         function buildReportHeader(result) {
-            const geometryText = selectedGeometry === 'planar' 
-                ? `Planar (A = ${(planarParams.A || 1).toFixed(2)} m²)`
-                : `Cilíndrica (L = ${(result.params?.L || 1).toFixed(2)} m, r₁ = ${(result.params?.r_in || 0.05).toFixed(4)} m)`;
-            
-            return `
-                <div style='
-                    font-family:system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; 
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-                    padding: 40px; 
-                    border-radius: 25px 25px 0 0; 
-                    max-width: 1200px; 
-                    margin: 16px auto; 
-                    line-height: 1.4;
-                    position: relative;
-                    overflow: hidden;
-                    box-shadow: 0 15px 50px rgba(102, 126, 234, 0.4);
-                '>
-                    <!-- Elementos decorativos animados -->
-                    <div style='position: absolute; top: -80px; right: -80px; width: 200px; height: 200px; background: rgba(255,255,255,0.15); border-radius: 50%; opacity: 0.8;'></div>
-                    <div style='position: absolute; bottom: -60px; left: -60px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.6;'></div>
-                    <div style='position: absolute; top: 30px; left: 30px; width: 80px; height: 80px; background: rgba(255,255,255,0.08); border-radius: 50%;'></div>
-                    
-                    <div style='text-align: center; position: relative; z-index: 2; color: white;'>
-                        <!-- Ícone principal com efeito brilho -->
-                        <div style='margin-bottom: 25px;'>
-                            <i class='fas fa-fire' style='
-                                font-size: 4em; 
-                                text-shadow: 0 5px 20px rgba(0,0,0,0.5);
-                                filter: drop-shadow(0 0 25px rgba(255,255,255,0.6));
-                            '></i>
-                        </div>
-                        
-                        <h1 style='
-                            margin: 0 0 15px; 
-                            font-size: 2.5rem; 
-                            font-weight: 800; 
-                            text-shadow: 0 4px 12px rgba(0,0,0,0.4);
-                            letter-spacing: 2px;
-                            background: linear-gradient(45deg, #ffffff, #f0f8ff);
-                            -webkit-background-clip: text;
-                            -webkit-text-fill-color: transparent;
-                            background-clip: text;
-                        '>
-                            <i class='fas fa-calculator' style='margin-right: 20px; color: white;'></i>
-                            Análise Térmica Avançada
-                        </h1>
-                        
-                        <p style='
-                            margin: 0 0 20px; 
-                            font-size: 1.3rem; 
-                            color: rgba(255,255,255,0.95);
-                            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                            font-weight: 300;
-                            letter-spacing: 1px;
-                        '>
-                            <i class='fas fa-chart-line' style='margin-right: 12px;'></i>
-                            Relatório Estruturado de Transferência de Calor
-                        </p>
-                        
-                        <div style='
-                            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15)); 
-                            display: inline-block; 
-                            padding: 15px 30px; 
-                            border-radius: 25px; 
-                            font-size: 1.1rem; 
-                            color: white; 
-                            font-weight: 600;
-                            border: 2px solid rgba(255,255,255,0.3);
-                            backdrop-filter: blur(10px);
-                            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-                        '>
-                            <i class='fas fa-cog' style='margin-right: 10px;'></i>
-                            <strong>Geometria:</strong> ${geometryText}
-                        </div>
+            const geometryText = selectedGeometry === 'planar'
+                ? `Planar · A = ${(planarParams.A || 1).toFixed(2)} m²`
+                : `Cilíndrica · L = ${(result.params?.L || 1).toFixed(2)} m, r₁ = ${(result.params?.r_in || 0.05).toFixed(4)} m`;
+            const nLayers = (result.layers || []).length;
+
+            return `<div class="results-report">
+                <div class="res-panel" style="margin-bottom:1rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem;">
+                        <div class="res-panel-title"><i class="fa-solid fa-chart-line"></i> Resultados do cálculo térmico</div>
+                        <span class="res-badge"><i class="fa-solid fa-diagram-project"></i> ${geometryText} · ${nLayers} camada${nLayers === 1 ? '' : 's'}</span>
                     </div>
+                </div>
             `;
         }
 
@@ -7270,134 +7416,98 @@
                 inferredDeltaT = parseFloat(globalTemps.Tin) - parseFloat(globalTemps.Tout);
             }
             const hasQOriginal = (result.q != null && isFinite(result.q));
-            // Inferir q se não existir e tivermos ΔT e R_total
+            // Inferir q se não existir e tivermos ΔT e R_total (mesma regra de sempre — só mudou a apresentação)
             if (!hasQOriginal && isFinite(Rtot) && Rtot > 0 && isFinite(inferredDeltaT)) {
                 try { result.q = inferredDeltaT / Rtot; } catch {}
             }
             const hasQ = (result.q != null && isFinite(result.q));
-            const qv = hasQ ? result.q : (isFinite(inferredDeltaT) && isFinite(Rtot) && Rtot>0 ? inferredDeltaT / Rtot : null);
+            const qv = hasQ ? result.q : (isFinite(inferredDeltaT) && isFinite(Rtot) && Rtot > 0 ? inferredDeltaT / Rtot : null);
             const deltaT = (isFinite(result.deltaT) ? result.deltaT : (isFinite(inferredDeltaT) ? inferredDeltaT : (hasQ ? (result.q * Rtot) : null)));
             const Aplan = (selectedGeometry === 'planar') ? (planarParams.A || 1) : null;
             const U = (selectedGeometry === 'planar' && isFinite(Rtot) && Aplan > 0) ? (1 / (Rtot * Aplan)) : null;
             const UA = isFinite(Rtot) ? (1 / Rtot) : null;
 
-            let html = `<div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; margin-bottom:24px;'>`;
-            
-            // 🔥 Card: Resistência Total
-            html += `
-                <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ef5350; transition:transform 0.2s;'>
-                    <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                        <div style='background:linear-gradient(135deg,#ff6b6b,#ee5a6f); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(239,83,80,0.3);'><i class="fa-solid fa-fire"></i></div>
-                        <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>RESISTÊNCIA TÉRMICA TOTAL</div></div>
-                    </div>
-                    <div style='font-size:2.5rem; font-weight:800; color:#ef5350; margin-bottom:6px; line-height:1;'>R<sub>total</sub> = ${fmt(Rtot, 4)}</div>
-                    <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>K/W</div>
-                    <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Oposição total ao fluxo de calor</div>
-                </div>
-            `;
+            // ── Grade de cards de métricas (estrutura anterior ao V30-UXUI-08, restaurada) ──
+            let html = `<div class="res-metric-grid" id="res-main-metrics">`;
 
-            // 🌡️ Card: Temperaturas de Contorno (sempre que houver q ou alguma temperatura conhecida)
+            // Card: Resistência Total
+            html += `<div class="res-metric-card res-metric--total">
+                <div class="metric-head"><span class="metric-icon"><i class="fa-solid fa-fire"></i></span><span class="res-metric-label">Resistência térmica total</span></div>
+                <div class="res-metric-value">R<sub>total</sub> = ${fmt(Rtot, 4)}<span class="res-metric-unit">K/W</span></div>
+                <div class="res-metric-note">Oposição total ao fluxo de calor</div>
+            </div>`;
+
+            // Card: Temperaturas de Contorno
             const hasTin = isFinite(parseFloat(globalTemps.Tin));
             const hasTout = isFinite(parseFloat(globalTemps.Tout));
             const source = result.__boundarySource || (hasTin && hasTout ? 'provided_both' : (hasTin ? 'provided_Tin' : (hasTout ? 'provided_Tout' : 'none')));
             if (hasTin || hasTout || hasQ) {
-                const badge = (src=>{
-                    switch(src){
-                        case 'inferred_q_plus_Tout': return 'Inferido (q + T_out)';
+                const badge = (src => {
+                    switch (src) {
+                        case 'inferred_q_plus_Tout': case 'inferred_q_plus_Tout_only': return 'Inferido (q + T_out)';
                         case 'inferred_q_plus_Tin': return 'Inferido (q + T_in)';
-                        case 'inferred_q_plus_Tout_only': return 'Inferido (q + T_out)';
-                        case 'provided_both': return 'Digitado (Tin & Tout)';
-                        case 'provided_Tin': return 'Tin digitado';
-                        case 'provided_Tout': return 'Tout digitado';
+                        case 'provided_both': return 'Digitado (T_in e T_out)';
+                        case 'provided_Tin': return 'T_in digitado';
+                        case 'provided_Tout': return 'T_out digitado';
                         default: return 'Origem indefinida';
                     }
                 })(source);
-                html += `
-                <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #26a69a;'>
-                    <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                        <div style='background:linear-gradient(135deg,#4db6ac,#26a69a); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; box-shadow:0 4px 12px rgba(38,166,154,0.3);'><i class="fa-solid fa-temperature-half"></i></div>
-                        <div style='flex:1;'><div style='font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; color:#00796b; font-weight:700; margin-bottom:4px;'>TEMPERATURAS DE CONTORNO</div>
-                        <div style='font-size:0.65rem; display:inline-block; background:#e0f2f1; color:#004d40; padding:4px 8px; border-radius:12px; font-weight:600;'>${badge}</div></div>
+                html += `<div class="res-metric-card res-metric--boundary">
+                    <div class="metric-head"><span class="metric-icon"><i class="fa-solid fa-temperature-half"></i></span><span class="res-metric-label">Temperaturas de contorno</span></div>
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:0.95rem; color:var(--clr-text-strong); font-weight:600; line-height:1.7;">
+                        Entrada (T<sub>in</sub>): ${hasTin ? fmt(parseFloat(globalTemps.Tin), 2) : '—'} °C<br>
+                        Saída (T<sub>out</sub>): ${hasTout ? fmt(parseFloat(globalTemps.Tout), 2) : '—'} °C
                     </div>
-                    <div style='display:flex; flex-direction:column; gap:6px; font-size:0.95rem; color:#004d40; font-weight:600;'>
-                        <div>Entrada (T_in): <span style='color:#00796b;'>${hasTin? fmt(parseFloat(globalTemps.Tin),2):'—'} °C</span></div>
-                        <div>Saída (T_out): <span style='color:#00796b;'>${hasTout? fmt(parseFloat(globalTemps.Tout),2):'—'} °C</span></div>
-                        <div style='font-size:0.75rem; font-weight:500; color:#00695c; margin-top:4px;'>${(hasTin&&hasTout)?'ΔT = T_in − T_out = '+fmt(parseFloat(globalTemps.Tin)-parseFloat(globalTemps.Tout),2)+' °C': (hasTin&&hasQ? 'Tout inferido quando disponível' : (hasTout&&hasQ? 'Tin inferido quando disponível':''))}</div>
-                    </div>
+                    <div class="res-metric-note">${(hasTin && hasTout) ? '&Delta;T = T_in − T_out = ' + fmt(parseFloat(globalTemps.Tin) - parseFloat(globalTemps.Tout), 2) + ' °C' : ''} · <span class="res-badge">${badge}</span></div>
                 </div>`;
             }
-            
-            // ⚡ Card: Taxa de Transferência (agora sempre que conseguirmos inferir q)
-            if (qv != null && isFinite(qv)) {
-                html += `
-                    <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ffa726;'>
-                        <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                            <div style='background:linear-gradient(135deg,#ffb347,#ffcc33); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(255,167,38,0.3);'><i class="fa-solid fa-bolt"></i></div>
-                            <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>TAXA DE TRANSFERÊNCIA</div></div>
-                        </div>
-                        <div style='font-size:2.5rem; font-weight:800; color:#ff8f00; margin-bottom:6px; line-height:1;'>q = ${fmt(qv, 2)} W</div>
-                        <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>Watts</div>
-                        <div style='font-size:0.88rem; color:#ff6f00; font-weight:600;'><i class="fa-solid fa-ruler"></i> ΔT = ${deltaT != null ? fmt(deltaT, 2) : '—'} °C</div>
-                        <div style='font-size:0.7rem; color:#b26a00; font-style:italic;'>${hasQOriginal ? 'Valor direto' : 'Inferido: q = ΔT_total / R_total'}</div>
-                    </div>
-                `;
-            }
-            
-            // 📐 Card: Coeficiente Global U
-            if (selectedGeometry === 'planar' && U != null) {
-                html += `
-                    <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #42a5f5;'>
-                        <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                            <div style='background:linear-gradient(135deg,#42a5f5,#478ed1); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(66,165,245,0.3);'><i class="fa-solid fa-drafting-compass"></i></div>
-                            <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>COEFICIENTE GLOBAL</div></div>
-                        </div>
-                        <div style='font-size:2.5rem; font-weight:800; color:#1976d2; margin-bottom:6px; line-height:1;'>U = ${fmt(U, 2)}</div>
-                        <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W/(m²·K)</div>
-                        <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Transferência por unidade de área</div>
-                    </div>
-                `;
-            }
-            
-            // 🔧 Card: Condutância Térmica
-            if (UA != null) {
-                html += `
-                    <div style='background:#fff; border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-top:5px solid #ab47bc;'>
-                        <div style='display:flex; align-items:center; gap:14px; margin-bottom:16px;'>
-                            <div style='background:linear-gradient(135deg,#ab47bc,#8e24aa); width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 4px 12px rgba(171,71,188,0.3);'><i class="fa-solid fa-wrench"></i></div>
-                            <div style='flex:1;'><div style='font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#999; font-weight:700; margin-bottom:2px;'>CONDUTÂNCIA TÉRMICA</div></div>
-                        </div>
-                        <div style='font-size:2.5rem; font-weight:800; color:#8e24aa; margin-bottom:6px; line-height:1;'>UA = ${fmt(UA, 2)}</div>
-                        <div style='font-size:1rem; color:#666; font-weight:600; margin-bottom:10px;'>W/K</div>
-                        <div style='font-size:0.88rem; color:#888; font-style:italic; line-height:1.4;'><i class="fa-solid fa-lightbulb"></i> Capacidade de condução global</div>
-                    </div>
-                `;
-            }
-            
-            html += `</div>`; // Fecha grid de cards
 
-            // 📝 Fórmulas dos Coeficientes
+            // Card: Taxa de Transferência
+            if (qv != null && isFinite(qv)) {
+                html += `<div class="res-metric-card res-metric--rate">
+                    <div class="metric-head"><span class="metric-icon"><i class="fa-solid fa-bolt"></i></span><span class="res-metric-label">Taxa de transferência</span></div>
+                    <div class="res-metric-value">q = ${fmt(qv, 2)}<span class="res-metric-unit">W</span></div>
+                    <div class="res-metric-note">&Delta;T = ${deltaT != null ? fmt(deltaT, 2) : '—'} °C · ${hasQOriginal ? 'valor direto' : 'inferido: q = &Delta;T_total / R_total'}</div>
+                </div>`;
+            }
+
+            // Card: Coeficiente Global U (planar) ou U_i/U_o (cilíndrica)
+            if (selectedGeometry === 'planar' && U != null) {
+                html += `<div class="res-metric-card res-metric--u">
+                    <div class="metric-head"><span class="metric-icon"><i class="fa-solid fa-drafting-compass"></i></span><span class="res-metric-label">Coeficiente global</span></div>
+                    <div class="res-metric-value">U = ${fmt(U, 2)}<span class="res-metric-unit">W/m²·K</span></div>
+                    <div class="res-metric-note">Transferência por unidade de área</div>
+                </div>`;
+            }
+            if (selectedGeometry === 'cylindrical' && result.U_i != null && result.U_o != null) {
+                html += `<div class="res-metric-card res-metric--u">
+                    <div class="metric-head"><span class="metric-icon"><i class="fa-solid fa-drafting-compass"></i></span><span class="res-metric-label">Coeficientes globais</span></div>
+                    <div class="res-metric-value">U<sub>i</sub>=${fmt(result.U_i, 2)} / U<sub>o</sub>=${fmt(result.U_o, 2)}<span class="res-metric-unit">W/m²·K</span></div>
+                    <div class="res-metric-note">Transferência por unidade de área (interna/externa)</div>
+                </div>`;
+            }
+
+            // Card: Condutância Térmica
+            if (UA != null) {
+                html += `<div class="res-metric-card res-metric--ua">
+                    <div class="metric-head"><span class="metric-icon"><i class="fa-solid fa-wrench"></i></span><span class="res-metric-label">Condutância térmica</span></div>
+                    <div class="res-metric-value">UA = ${fmt(UA, 2)}<span class="res-metric-unit">W/K</span></div>
+                    <div class="res-metric-note">Capacidade de condução global</div>
+                </div>`;
+            }
+
+            html += `</div>`; // fecha res-metric-grid
+
+            // Fórmulas dos Coeficientes (restaurado)
             if (U != null || UA != null) {
-                html += `
-                    <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #5e35b1;'>
-                        <div style='font-size:0.9rem; color:#555; line-height:2; font-family:"Courier New",Consolas,monospace;'>
-                `;
+                html += `<div class="res-formula-box">`;
                 if (U != null) {
-                    html += `
-                        <div style='margin-bottom:12px; padding:12px; background:#f5f5f5; border-radius:8px;'>
-                            <strong style='color:#1976d2; font-size:1rem;'><i class="fa-solid fa-drafting-compass"></i> Fórmula de U:</strong><br>
-                            <span style='color:#333;'>U = 1/(R<sub>total</sub>·A) = 1/(${fmt(Rtot, 4)} · ${fmt(Aplan, 4)}) = <span style='font-size:1.15rem; font-weight:700; color:#1976d2;'>${fmt(U, 4)}</span> W/m²·K</span>
-                        </div>
-                    `;
+                    html += `<div class="res-formula-line"><strong>Fórmula de U:</strong> U = 1/(R<sub>total</sub>·A) = 1/(${fmt(Rtot, 4)} · ${fmt(Aplan, 4)}) = <span class="result">${fmt(U, 4)}</span> W/m²·K</div>`;
                 }
                 if (UA != null) {
-                    html += `
-                        <div style='padding:12px; background:#f5f5f5; border-radius:8px;'>
-                            <strong style='color:#8e24aa; font-size:1rem;'><i class="fa-solid fa-wrench"></i> Fórmula de UA:</strong><br>
-                            <span style='color:#333;'>UA = 1/R<sub>total</sub> = 1/(${fmt(Rtot, 4)}) = <span style='font-size:1.15rem; font-weight:700; color:#8e24aa;'>${fmt(UA, 4)}</span> W/K</span>
-                        </div>
-                    `;
+                    html += `<div class="res-formula-line" style="margin-bottom:0;"><strong>Fórmula de UA:</strong> UA = 1/R<sub>total</sub> = 1/(${fmt(Rtot, 4)}) = <span class="result">${fmt(UA, 4)}</span> W/K</div>`;
                 }
-                html += `</div></div>`;
+                html += `</div>`;
             }
 
             return html;
@@ -7496,199 +7606,61 @@
         // ═══════════════════════════════════════════════════════════════════════════════
         function buildLayerAnalysisSection(result) {
             const fmt = (v, d = 4) => (isFinite(v) ? Number(v).toFixed(d) : '—');
-            const fmtExp = (v, d = 3) => (isFinite(v) ? Number(v).toExponential(d) : '—');
             const allLayers = result.layers || [];
+            if (!allLayers.length) return '';
+            const Rtot = result.R_total;
             const finnedLayers = allLayers.filter(l => l && l.kind === 'finned');
-            
-            let html = `
-                <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #ff9800;'>
-                    <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#ff9800; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'><i class="fa-solid fa-calculator"></i></span> Análise por Camada Individual
-                    </h3>
-                    <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Resistências térmicas detalhadas e substituições numéricas</p>
-            `;
-            
-            // Superfícies Aletadas (resumo)
+
+            const kindMeta = {
+                solid:    { cls: 'kind-solid',  icon: 'fa-cube',        label: 'Condução',     color: '#c2760a' },
+                fluid:    { cls: 'kind-fluid',  icon: 'fa-wind',        label: 'Convecção',    color: '#1f6f82' },
+                finned:   { cls: 'kind-finned', icon: 'fa-snowflake',   label: 'Sup. aletada', color: '#0f7a68' },
+                parallel: { cls: 'kind-par',    icon: 'fa-code-branch', label: 'Paralelo',     color: '#6b3fa0' }
+            };
+            const metaFor = (k) => kindMeta[k] || kindMeta.solid;
+
+            let html = `<div class="res-panel res-panel--layers">
+                <div class="res-panel-title"><i class="fa-solid fa-calculator"></i> Análise por camada individual</div>
+                <div class="res-panel-sub">Resistências térmicas detalhadas e substituições numéricas</div>`;
+
+            // Resumo de superfícies aletadas (estrutura antiga, dentro desta seção)
             if (finnedLayers.length > 0) {
-                html += `
-                    <div style='background:linear-gradient(135deg,#e0f2f1 0%,#f1f8e9 100%); border:1px solid #4caf50; border-radius:10px; padding:12px; margin-bottom:16px;'>
-                        <h4 style='margin:0 0 8px; color:#2e7d32; font-weight:600; display:flex; align-items:center; gap:6px;'>
-                            <span><i class="fa-regular fa-snowflake"></i></span> Superfícies Aletadas (${finnedLayers.length})
-                        </h4>
-                `;
-                
+                html += `<div style="margin-bottom:1rem;">
+                    <div class="res-panel-title" style="font-size:0.85rem; margin-bottom:0.5rem;"><i class="fa-solid fa-snowflake" style="color:#0f7a68;"></i> Superfícies aletadas (${finnedLayers.length})</div>`;
                 finnedLayers.forEach((fl, idx) => {
                     const d = fl.details || {};
-                    const contrib = isFinite(fl.R) && isFinite(result.R_total) && result.R_total > 0 
-                        ? (fl.R / result.R_total * 100) : 0;
-                    
-                    html += `
-                        <div style='background:#fff; border:1px solid #81c784; border-radius:8px; padding:10px; margin:8px 0;'>
-                            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;'>
-                                <strong style='color:#2e7d32;'>${fl.label || 'Sup. Aletada #' + (idx + 1)} ${d.is_pin ? 'PIN' : 'RET'}</strong>
-                                <span style='background:#4caf50; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.8rem;'>Contrib.= ${fmt(contrib, 2)} %</span>
-                            </div>
-                            <div style='font-family:"Courier New",monospace; font-size:0.85rem; color:#333; line-height:1.4;'>
-                                w=${fmt(d.w_fin || d.w || 0, 4)} m | t=${fmt(d.t_fin || d.t || 0, 4)} m | L=${fmt(d.L_fin || 0, 3)} m<br>
-                                η_f=${fmt(d.eta_f || 0, 3)} | η₀=${fmt(d.eta_o || 0, 3)}<br>
-                                A_t=${fmt(d.A_total || d.A_t || 0, 3)} m² (A_f=${fmt(d.A_f || 0, 3)} m²)<br>
-                                m=${fmt(d.m || 0, 3)} (mL=${fmt(d.mL || 0, 3)})<br>
-                                <strong style='color:#2e7d32;'>R= ${fmt(d.R_total || 0, 4)} K/W</strong>
-                            </div>
-                            <div style='font-size:0.8rem; color:#4caf50; margin-top:4px; font-style:italic;'>
-                                R_equiv = 1/(η₀·h·A_t). A_t = A_b + A_f; η₀ = 1 − (A_f/A_t)(1 − η_f).
-                            </div>
+                    const contrib = isFinite(fl.R) && isFinite(Rtot) && Rtot > 0 ? (fl.R / Rtot * 100) : 0;
+                    html += `<div class="res-fin-summary">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                            <strong>${fl.label || 'Sup. Aletada #' + (idx + 1)} ${d.is_pin ? '(PIN)' : '(RET)'}</strong>
+                            <span class="res-badge">Contrib. ${fmt(contrib, 2)}%</span>
                         </div>
-                    `;
+                        <div style="font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:#4c5768; line-height:1.5;">
+                            w=${fmt(d.w_fin || d.w || 0, 4)} m | t=${fmt(d.t_fin || d.t || 0, 4)} m | L=${fmt(d.L_fin || 0, 3)} m<br>
+                            η_f=${fmt(d.eta_f || 0, 3)} | η₀=${fmt(d.eta_o || 0, 3)}<br>
+                            A_t=${fmt(d.A_total || d.A_t || 0, 3)} m² (A_f=${fmt(d.A_f || 0, 3)} m²)<br>
+                            m=${fmt(d.m || 0, 3)} (mL=${fmt(d.mL || 0, 3)}) · <span class="r-val">R = ${fmt(d.R_total || 0, 4)} K/W</span>
+                        </div>
+                    </div>`;
                 });
-                
                 html += `</div>`;
             }
-            
-            // Tabela de todas as camadas com design melhorado
-            html += `
-                <div style='overflow-x:auto; margin-top:20px;'>
-                    <div style='
-                        background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
-                        border-radius: 15px;
-                        padding: 25px;
-                        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-                        border: 2px solid #e3f2fd;
-                    '>
-                        <h4 style='
-                            margin: 0 0 20px; 
-                            color: #1565c0; 
-                            font-weight: 700;
-                            font-size: 1.2em;
-                            display: flex;
-                            align-items: center;
-                            gap: 10px;
-                        '>
-                            <span style='
-                                background: linear-gradient(135deg, #2196f3, #1565c0);
-                                color: white;
-                                width: 35px;
-                                height: 35px;
-                                border-radius: 10px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 1.1em;
-                                box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-                            '><i class="fa-solid fa-chart-column"></i></span>
-                            Resumo das Resistências Térmicas por Camada
-                        </h4>
-                        
-                        <table style='
-                            width:100%; 
-                            border-collapse:collapse; 
-                            font-size:0.95rem; 
-                            background:#fff; 
-                            border-radius:12px; 
-                            overflow:hidden; 
-                            box-shadow:0 4px 15px rgba(0,0,0,0.08);
-                        '>
-                            <thead>
-                                <tr style='
-                                    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); 
-                                    color: white;
-                                    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
-                                '>
-                                    <th style='
-                                        padding: 16px 12px; 
-                                        text-align: left; 
-                                        font-weight: 700; 
-                                        font-size: 0.95em;
-                                        border-right: 1px solid rgba(255,255,255,0.1);
-                                    '>
-                                        <div style='display: flex; align-items: center; gap: 8px;'>
-                                            <span><i class="fa-solid fa-tag"></i></span> Camada
-                                        </div>
-                                    </th>
-                                    <th style='
-                                        padding: 16px 12px; 
-                                        text-align: left; 
-                                        font-weight: 700; 
-                                        font-size: 0.95em;
-                                        border-right: 1px solid rgba(255,255,255,0.1);
-                                    '>
-                                        <div style='display: flex; align-items: center; gap: 8px;'>
-                                            <span><i class="fa-solid fa-drafting-compass"></i></span> Fórmula Aplicada
-                                        </div>
-                                    </th>
-                                    <th style='
-                                        padding: 16px 12px; 
-                                        text-align: left; 
-                                        font-weight: 700; 
-                                        font-size: 0.95em;
-                                        border-right: 1px solid rgba(255,255,255,0.1);
-                                    '>
-                                        <div style='display: flex; align-items: center; gap: 8px;'>
-                                            <span><i class="fa-solid fa-hashtag"></i></span> Substituição Numérica
-                                        </div>
-                                    </th>
-                                    <th style='
-                                        padding: 16px 12px; 
-                                        text-align: center; 
-                                        font-weight: 700; 
-                                        font-size: 0.95em;
-                                        border-right: 1px solid rgba(255,255,255,0.1);
-                                    '>
-                                        <div style='display: flex; align-items: center; justify-content: center; gap: 8px;'>
-                                            <span><i class="fa-solid fa-bolt"></i></span> R (K/W)
-                                        </div>
-                                    </th>
-                                    <th style='
-                                        padding: 16px 12px; 
-                                        text-align: center; 
-                                        font-weight: 700; 
-                                        font-size: 0.95em;
-                                    '>
-                                        <div style='display: flex; align-items: center; justify-content: center; gap: 8px;'>
-                                            <span><i class="fa-solid fa-chart-line"></i></span> Contrib. (%)
-                                        </div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
-            
+
+            // Tabela de todas as camadas (estrutura antiga)
+            html += `<div class="res-table-wrap"><table class="res-table"><thead><tr>
+                <th>Camada</th><th>Fórmula aplicada</th><th>Substituição numérica</th><th>R (K/W)</th><th>Contrib. (%)</th>
+            </tr></thead><tbody>`;
+
             allLayers.forEach((Lr, i) => {
-                const isEven = i % 2 === 0;
-                const rowBg = isEven ? 'rgba(248, 250, 252, 0.7)' : '#fff';
-                const hoverBg = isEven ? 'rgba(255, 243, 224, 0.8)' : 'rgba(255, 243, 224, 0.6)';
-                
-                const contrib = isFinite(Lr.R) && isFinite(result.R_total) && result.R_total > 0 
-                    ? (Lr.R / result.R_total * 100) : 0;
-                
-                let icon = '<i class="fa-solid fa-cube"></i>';
-                let typeColor = '#f57c00';
-                let typeBg = 'rgba(255, 152, 0, 0.1)';
-                let kindLabel = 'Condução';
-                
-                if (Lr.kind === 'fluid') {
-                    icon = '<i class="fa-solid fa-wind"></i>';
-                    typeColor = '#1976d2';
-                    typeBg = 'rgba(33, 150, 243, 0.1)';
-                    kindLabel = 'Convecção';
-                } else if (Lr.kind === 'finned') {
-                    icon = '<i class="fa-regular fa-snowflake"></i>';
-                    typeColor = '#7b1fa2';
-                    typeBg = 'rgba(156, 39, 176, 0.1)';
-                    kindLabel = 'Sup. Aletada';
-                }
-                
-                // Determinando a fórmula baseada no tipo
-                let formulaText = '';
-                if (Lr.kind === 'finned') {
-                    formulaText = 'R = 1/(η₀·h·A<sub>t</sub>)';
-                } else if (Lr.kind === 'fluid') {
-                    formulaText = 'R = 1/(h·A)';
-                } else {
-                    formulaText = 'R = L/(k·A)';
-                }
-                
-                // Preparando a substituição numérica
+                const meta = metaFor(Lr.kind);
+                const contrib = isFinite(Lr.R) && isFinite(Rtot) && Rtot > 0 ? (Lr.R / Rtot * 100) : null;
+                const contribColor = contrib == null ? '#8894a3' : (contrib > 50 ? '#c23934' : contrib > 20 ? '#c2760a' : '#0b7a4d');
+
+                let formulaText = 'R = L/(k·A)';
+                if (Lr.kind === 'finned') formulaText = 'R = 1/(η₀·h·A<sub>t</sub>)';
+                else if (Lr.kind === 'fluid') formulaText = 'R = 1/(h·A)';
+                else if (Lr.kind === 'parallel') formulaText = '1/R_eq = &Sigma; (1/R_ramo)';
+
                 let substText = '—';
                 if (Lr.kind === 'finned' && Lr.details) {
                     const d = Lr.details;
@@ -7698,219 +7670,39 @@
                     substText = `1/(${fmt(d.h || 0, 2)}×${fmt(d.A || 1, 3)})`;
                 } else if (Lr.kind === 'solid' && Lr.details) {
                     const d = Lr.details;
-                    const A = selectedGeometry === 'planar' ? (planarParams.A || 1) : 1;
-                    substText = `${fmt(d.L || 0, 4)}/(${fmt(d.k || 0, 3)}×${fmt(A, 3)})`;
+                    if (isFinite(d.r1) && isFinite(d.r2)) {
+                        substText = `ln(${fmt(d.r2, 4)}/${fmt(d.r1, 4)})/(2π·${fmt(d.k || 0, 3)}·L)`;
+                    } else {
+                        const A = selectedGeometry === 'planar' ? (planarParams.A || 1) : 1;
+                        substText = `${fmt(d.L || 0, 4)}/(${fmt(d.k || 0, 3)}×${fmt(A, 3)})`;
+                    }
+                } else if (Lr.kind === 'parallel' && Lr.details) {
+                    substText = (Lr.subst || (Lr.details.branches || []).map(b => `1/${isFinite(b.R_branch) ? fmt(b.R_branch) : 'N/A'}`).join(' + ')) || '—';
                 }
-                
-                // Cor da contribuição
-                let contribColor = '#4caf50';
-                let contribIcon = '<i class="fa-solid fa-circle-check" style="color:#2e7d32"></i>';
-                if (contrib > 50) {
-                    contribColor = '#f44336';
-                    contribIcon = '<i class="fa-solid fa-fire"></i>';
-                } else if (contrib > 20) {
-                    contribColor = '#ff9800';
-                    contribIcon = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i>';
-                }
-                
-                html += `
-                    <tr style='
-                        background: ${rowBg}; 
-                        border-bottom: 1px solid #e0e0e0; 
-                        transition: all 0.3s ease;
-                        transform: translateX(0);
-                    ' 
-                    onmouseover="
-                        this.style.backgroundColor='${hoverBg}'; 
-                        this.style.transform='translateX(2px)';
-                        this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';
-                    " 
-                    onmouseout="
-                        this.style.backgroundColor='${rowBg}';
-                        this.style.transform='translateX(0)';
-                        this.style.boxShadow='none';
-                    ">
-                        <td style='
-                            padding: 14px 12px; 
-                            vertical-align: top;
-                            border-right: 1px solid #f0f0f0;
-                        '>
-                            <div style='display: flex; align-items: center; gap: 10px;'>
-                                <span style='
-                                    background: ${typeBg};
-                                    color: ${typeColor};
-                                    width: 35px;
-                                    height: 35px;
-                                    border-radius: 8px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    font-size: 1.2em;
-                                    border: 2px solid ${typeColor}20;
-                                '>${icon}</span>
-                                <div>
-                                    <div style='
-                                        font-weight: 700; 
-                                        color: ${typeColor}; 
-                                        font-size: 0.95em;
-                                        margin-bottom: 2px;
-                                    '>${Lr.label || 'Camada ' + (i + 1)}</div>
-                                    <div style='
-                                        font-size: 0.8em; 
-                                        color: #666;
-                                        background: ${typeBg};
-                                        padding: 2px 6px;
-                                        border-radius: 10px;
-                                        display: inline-block;
-                                        border: 1px solid ${typeColor}20;
-                                    '>${kindLabel}</div>
-                                </div>
-                            </div>
-                        </td>
-                        
-                        <td style='
-                            padding: 14px 12px; 
-                            vertical-align: top; 
-                            border-right: 1px solid #f0f0f0;
-                        '>
-                            <div style='
-                                font-family: "KaTeX_Math", "Times New Roman", serif; 
-                                color: #1565c0; 
-                                font-size: 0.9em;
-                                background: rgba(33, 150, 243, 0.05);
-                                padding: 8px 10px;
-                                border-radius: 6px;
-                                border-left: 3px solid ${typeColor};
-                                line-height: 1.4;
-                            '>
-                                ${formulaText}
-                            </div>
-                        </td>
-                        
-                        <td style='
-                            padding: 14px 12px; 
-                            vertical-align: top;
-                            border-right: 1px solid #f0f0f0;
-                        '>
-                            <div style='
-                                font-family: "JetBrains Mono", "Fira Code", monospace; 
-                                font-size: 0.85em; 
-                                color: #424242; 
-                                background: #f8f9fa; 
-                                padding: 8px 10px; 
-                                border-radius: 6px; 
-                                border-left: 3px solid ${typeColor};
-                                line-height: 1.3;
-                            '>
-                                ${substText}
-                            </div>
-                        </td>
-                        
-                        <td style='
-                            padding: 14px 12px; 
-                            text-align: center; 
-                            vertical-align: top;
-                            border-right: 1px solid #f0f0f0;
-                        '>
-                            <div style='
-                                font-family: "JetBrains Mono", monospace; 
-                                font-weight: 700; 
-                                font-size: 1em; 
-                                color: ${typeColor}; 
-                                background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.9)); 
-                                padding: 8px 12px; 
-                                border-radius: 8px; 
-                                display: inline-block;
-                                border: 2px solid ${typeColor}20;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-                            '>
-                                ${isFinite(Lr.R) ? fmt(Lr.R, 4) : 'N/A'}
-                            </div>
-                        </td>
-                        
-                        <td style='
-                            padding: 14px 12px; 
-                            text-align: center; 
-                            vertical-align: top;
-                        '>
-                            <div style='
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 6px;
-                                font-weight: 700;
-                                color: ${contribColor};
-                                font-size: 0.95em;
-                            '>
-                                <span style='font-size: 1.1em;'>${contribIcon}</span>
-                                <span style='
-                                    background: ${contribColor}15;
-                                    color: ${contribColor};
-                                    padding: 4px 10px;
-                                    border-radius: 12px;
-                                    border: 1px solid ${contribColor}30;
-                                '>${fmt(contrib, 2)}%</span>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+
+                html += `<tr>
+                    <td><span class="res-type-chip ${meta.cls}"><span class="ico"><i class="fa-solid ${meta.icon}"></i></span><span>${Lr.label || 'Camada ' + (i + 1)}<span class="sub">${meta.label}</span></span></span></td>
+                    <td class="res-formula-cell">${formulaText}</td>
+                    <td><span class="res-subst-cell">${substText}</span></td>
+                    <td class="res-r-cell">${isFinite(Lr.R) ? fmt(Lr.R, 4) : 'N/A'}</td>
+                    <td class="res-contrib-cell">
+                        ${contrib != null ? `<span class="res-contrib-pct" style="color:${contribColor};">${fmt(contrib, 1)}%</span><div class="res-contrib-bar-track"><div class="res-contrib-bar-fill" style="width:${Math.min(100, contrib).toFixed(1)}%; background:${contribColor};"></div></div>` : '—'}
+                    </td>
+                </tr>`;
             });
-            
-            html += `
-                            </tbody>
-                        </table>
-                        
-                        <!-- Legenda -->
-                        <div style='
-                            margin-top: 20px;
-                            padding: 15px;
-                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                            border-radius: 10px;
-                            border-left: 4px solid #6c757d;
-                        '>
-                            <h5 style='
-                                margin: 0 0 10px;
-                                color: #495057;
-                                font-weight: 600;
-                                font-size: 0.9em;
-                                display: flex;
-                                align-items: center;
-                                gap: 8px;
-                            '>
-                                <span><i class="fa-solid fa-lightbulb"></i></span> Legenda dos Ícones
-                            </h5>
-                            <div style='
-                                display: grid;
-                                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                                gap: 10px;
-                                font-size: 0.85em;
-                                color: #6c757d;
-                            '>
-                                <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span><i class="fa-solid fa-cube"></i></span> <strong>Condução:</strong> Camadas sólidas
-                                </div>
-                                <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span><i class="fa-solid fa-wind"></i></span> <strong>Convecção:</strong> Interfaces fluidas
-                                </div>
-                                <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span><i class="fa-regular fa-snowflake"></i></span> <strong>Sup. Aletada:</strong> Superfícies com aletas
-                                </div>
-                                <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span><i class="fa-solid fa-fire"></i></span> <strong>Alta contrib.:</strong> > 50% da resistência total
-                                </div>
-                                <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i></span> <strong>Média contrib.:</strong> 20-50% da resistência
-                                </div>
-                                <div style='display: flex; align-items: center; gap: 6px;'>
-                                    <span><i class="fa-solid fa-circle-check" style="color:#2e7d32"></i></span> <strong>Baixa contrib.:</strong> < 20% da resistência
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            `;
-            
+
+            html += `</tbody></table></div>`;
+
+            html += `<div class="res-legend">
+                <span><i class="fa-solid fa-cube" style="color:#c2760a;"></i> <strong>Condução:</strong> camadas sólidas</span>
+                <span><i class="fa-solid fa-wind" style="color:#1f6f82;"></i> <strong>Convecção:</strong> interfaces fluidas</span>
+                <span><i class="fa-solid fa-snowflake" style="color:#0f7a68;"></i> <strong>Sup. aletada:</strong> superfícies com aletas</span>
+                <span style="color:#c23934;"><strong>Alta contrib.:</strong> &gt; 50% da resistência total</span>
+                <span style="color:#c2760a;"><strong>Média contrib.:</strong> 20–50%</span>
+                <span style="color:#0b7a4d;"><strong>Baixa contrib.:</strong> &lt; 20%</span>
+            </div>`;
+
+            html += `</div>`; // fecha res-panel
             return html;
         }
 
@@ -8992,101 +8784,69 @@
         // ═══════════════════════════════════════════════════════════════════════════════
         // ⚖️ FUNÇÃO: BALANÇO TÉRMICO E TEMPERATURAS
         // ═══════════════════════════════════════════════════════════════════════════════
+        // 🌡️ FUNÇÃO: PERFIL DE TEMPERATURA (posição antiga — fim do relatório)
+        // O desenho em si continua vindo de drawTemperatureProfile(result), inalterada
+        // (usa result.interfaces, os mesmos valores já calculados). Só a moldura é nova.
+        // ═══════════════════════════════════════════════════════════════════════════════
+        function buildTemperatureProfileSection(result) {
+            return `<div class="res-panel res-panel--profile">
+                <div class="res-panel-title"><i class="fa-solid fa-chart-line"></i> Perfil de Temperatura</div>
+                <div class="res-panel-sub">Distribuição espacial da temperatura ao longo do sistema</div>
+                <div style="text-align:center;">
+                    <canvas id="temp-profile-canvas" style="width:100%; max-width:800px; height:280px; display:block; margin:0 auto;"></canvas>
+                    <div style="color:#4c5768; font-size:0.82rem; margin-top:0.7rem; font-style:italic;">
+                        ${selectedGeometry === 'planar' ? '<i class="fa-solid fa-ruler"></i> Planar: x representa a espessura acumulada (m)' : '<i class="fa-solid fa-arrows-rotate"></i> Cilíndrico: x representa o raio (m)'}<br>
+                        Segmentos fluidos aparecem como saltos verticais (espessura desprezível)
+                    </div>
+                </div>
+            </div>`;
+        }
+
         function buildThermalBalanceSection(result) {
             const fmt = (v, d = 2) => (isFinite(v) ? Number(v).toFixed(d) : '—');
             const fmtTemp = (v, d = 1) => (isFinite(v) ? Number(v).toFixed(d) : '—');
             const allLayers = result.layers || [];
             const hasValidQ = result.q != null && isFinite(result.q);
             const interfaces = result.interfaces || [];
-            
-            let html = `
-                <div style='background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:28px; box-shadow:0 3px 16px rgba(0,0,0,0.06); border-left:5px solid #4caf50;'>
-                    <h3 style='margin:0 0 16px; font-size:1.3rem; font-weight:700; color:#4caf50; display:flex; align-items:center; gap:8px;'>
-                        <span style='font-size:1.2em;'><i class="fa-solid fa-scale-balanced"></i></span> Balanço Térmico e Temperaturas de Interface
-                    </h3>
-                    <p style='margin:0 0 20px; color:#666; font-size:0.95rem;'>Validação da conservação de energia e distribuição de temperaturas</p>
-            `;
-            
+
+            let html = `<div class="res-panel">
+                <div class="res-panel-title"><i class="fa-solid fa-scale-balanced"></i> Balanço Térmico e Temperaturas de Interface</div>
+                <div class="res-panel-sub">Validação da conservação de energia e distribuição de temperaturas</div>`;
+
             if (!hasValidQ) {
-                html += `
-                    <div style='background:#fff8e1; border:1px solid #ffcc02; border-radius:8px; padding:16px; text-align:center; color:#ef6c00;'>
-                        <i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> Balanço térmico não disponível sem taxa de calor conhecida
-                    </div>
-                `;
+                html += `<div class="res-check info"><i class="fa-solid fa-circle-info"></i> Balanço térmico não disponível sem taxa de calor conhecida.</div>`;
             } else {
                 // Equação principal do balanço
-                html += `
-                    <div style='background:linear-gradient(135deg,#e8f5e8 0%,#f1f8e9 100%); border:2px solid #4caf50; border-radius:10px; padding:16px; margin-bottom:20px;'>
-                        <h4 style='margin:0 0 12px; color:#2e7d32; font-weight:600;'><i class="fa-solid fa-scale-balanced"></i> Equação do Balanço Térmico</h4>
-                        <div style='font-family:"Courier New",monospace; font-size:1rem; color:#1b5e20; line-height:1.6; text-align:center;'>
-                            <div style='background:white; padding:12px; border-radius:6px; border-left:4px solid #4caf50; margin-bottom:12px;'>
-                                <strong>q = ΔT_total / R_total = ${fmtTemp(result.deltaT || 0, 2)} / ${fmt(result.R_total, 4)} = ${fmt(result.q, 4)} W</strong>
-                            </div>
-                            <div style='font-size:0.9rem; color:#388e3c; font-style:italic;'>
-                                Conservação de energia: o calor que entra deve ser igual ao calor que sai
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
+                html += `<div class="res-balance-eq">
+                    q = &Delta;T_total / R_total = ${fmtTemp(result.deltaT || 0, 2)} / ${fmt(result.R_total, 4)} = <strong>${fmt(result.q, 4)} W</strong>
+                    <div style="font-family:'IBM Plex Sans',sans-serif; font-size:0.76rem; color:#8894a3; font-weight:500; margin-top:0.35rem;">Conservação de energia: o calor que entra deve ser igual ao calor que sai</div>
+                </div>`;
+
                 // Temperaturas de interface
                 if (interfaces.length > 0) {
-                    html += `
-                        <div style='margin-bottom:20px;'>
-                            <h4 style='margin:0 0 12px; color:#1976d2; font-weight:600;'><i class="fa-solid fa-temperature-half"></i> Temperaturas nas Interfaces</h4>
-                            <div style='display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px;'>
-                    `;
-                    
+                    html += `<div class="res-panel-title" style="font-size:0.85rem;"><i class="fa-solid fa-temperature-half"></i> Temperaturas nas interfaces</div>
+                    <div class="res-interface-grid">`;
                     interfaces.forEach((T, idx) => {
-                        const tempColor = T > 100 ? '#d32f2f' : T > 50 ? '#ff9800' : T > 0 ? '#4caf50' : '#2196f3';
-                        html += `
-                            <div style='background:white; border:2px solid ${tempColor}; border-radius:8px; padding:12px; text-align:center;'>
-                                <div style='font-size:0.8rem; color:#666; font-weight:600; margin-bottom:4px;'>Interface ${idx + 1}</div>
-                                <div style='font-size:1.3rem; font-weight:700; color:${tempColor}; font-family:"Courier New",monospace;'>
-                                    ${fmtTemp(T, 1)}°C
-                                </div>
-                            </div>
-                        `;
+                        html += `<div class="res-interface-box"><div class="lbl">Interface ${idx + 1}</div><div class="val">${fmtTemp(T, 1)}°C</div></div>`;
                     });
-                    
-                    html += `</div></div>`;
+                    html += `</div>`;
                 }
-                
+
                 // Validação do balanço
                 const sumRcalc = allLayers.filter(l => isFinite(l.R)).reduce((s, l) => s + l.R, 0);
                 const dR = Math.abs(result.R_total - sumRcalc);
                 const qCheck = result.deltaT / result.R_total;
                 const dq = Math.abs(result.q - qCheck);
-                
-                html += `
-                    <div style='background:linear-gradient(135deg,#e3f2fd 0%,#f0f7ff 100%); border:1px solid #90caf9; border-radius:10px; padding:16px;'>
-                        <h4 style='margin:0 0 12px; color:#1976d2; font-weight:600;'><i class="fa-solid fa-magnifying-glass"></i> Validação dos Cálculos</h4>
-                        <div style='font-family:"Courier New",monospace; font-size:0.9rem; color:#333; line-height:1.6;'>
-                            <div style='background:white; padding:10px; border-radius:6px; margin-bottom:8px;'>
-                                <strong>Consistência das Resistências:</strong><br>
-                                ΣR_i = ${fmt(sumRcalc, 6)} K/W<br>
-                                R_total = ${fmt(result.R_total, 6)} K/W<br>
-                                Diferença: ΔR = ${fmt(dR, 8)} K/W ${dR < 1e-6 ? '<span style="color:#4caf50; font-weight:600;">✓ PASS</span>' : '<span style="color:#f44336; font-weight:600;"><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> FAIL</span>'}
-                            </div>
-                            <div style='background:white; padding:10px; border-radius:6px;'>
-                                <strong>Consistência da Taxa de Calor:</strong><br>
-                                q_calculado = ΔT/R_total = ${fmt(qCheck, 6)} W<br>
-                                q_informado = ${fmt(result.q, 6)} W<br>
-                                Diferença: Δq = ${fmt(dq, 8)} W ${dq < 1e-6 ? '<span style="color:#4caf50; font-weight:600;">✓ PASS</span>' : '<span style="color:#f44336; font-weight:600;"><i class="fa-solid fa-triangle-exclamation" style="color:#ef6c00"></i> FAIL</span>'}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const okR = dR < 1e-6, okQ = dq < 1e-6;
+                html += `<div class="res-panel-title" style="font-size:0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Validação dos cálculos</div>`;
+                html += `<div class="res-check ${okR ? 'ok' : 'fail'}"><i class="fa-solid ${okR ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> &Sigma;R_i = ${fmt(sumRcalc, 6)} K/W · R_total = ${fmt(result.R_total, 6)} K/W${okR ? ' — consistente' : ' — divergência de ' + fmt(dR, 8) + ' K/W'}</div>`;
+                html += `<div class="res-check ${okQ ? 'ok' : 'fail'}"><i class="fa-solid ${okQ ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> q_calculado = ${fmt(qCheck, 6)} W · q_informado = ${fmt(result.q, 6)} W${okQ ? ' — consistente' : ' — divergência de ' + fmt(dq, 8) + ' W'}</div>`;
             }
-            
-            html += `
-                <div style='background:#f5f5f5; border:1px dashed #999; border-radius:8px; padding:16px; margin-top:16px; font-size:0.9rem; color:#555; line-height:1.5;'>
-                    <strong><i class="fa-solid fa-chart-column"></i> Resumo:</strong> O balanço térmico confirma que a energia é conservada no sistema. 
-                    As temperaturas de interface mostram a distribuição espacial e ajudam a identificar pontos críticos 
-                    para melhorias no design térmico.
-                </div>
-            `;
-            
+
+            html += `<div style="margin-top:0.9rem; padding-top:0.8rem; border-top:1px solid var(--clr-border); font-size:0.8rem; color:#4c5768; line-height:1.5;">
+                <strong style="color:var(--clr-text-strong);"><i class="fa-solid fa-chart-column"></i> Resumo:</strong> o balanço térmico confirma que a energia é conservada no sistema. As temperaturas de interface mostram a distribuição espacial e ajudam a identificar pontos críticos para melhorias no design térmico.
+            </div>`;
+
             html += `</div>`;
             return html;
         }

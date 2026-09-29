@@ -854,7 +854,11 @@ def processar_conveccao_natural_json():
         elif geometria == 'placa_horizontal':
             L_placa = float(data.get('comprimento_placa', 0))
             W_placa = float(data.get('largura_placa', 0))
-            orientacao = data.get('orientacao', 'inferior')
+            # Default unificado com a rota de formulário (app.py ~linha 790) e com o
+            # <select> do frontend, que já vem com 'superior' selecionado (C.17). A UI
+            # sempre envia 'orientacao' explicitamente; este default só é usado se um
+            # consumidor externo da API omitir o campo.
+            orientacao = data.get('orientacao', 'superior')
             if L_placa <= 0 or W_placa <= 0:
                 return jsonify({'erro': 'Preencha as dimensões da placa (L e W).'}), 400
             lc = (L_placa * W_placa) / (2 * (L_placa + W_placa))
