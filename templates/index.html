@@ -64,7 +64,12 @@
       display: block; width: 100%; height: auto;
       filter: drop-shadow(0 8px 18px rgba(13, 20, 32, 0.22));
       will-change: transform;
-      transition: transform 180ms cubic-bezier(.22,.8,.32,1);
+      /* Retorno: longo e suave — a aleta "desliza de volta" no gelo (620ms ease-out) */
+      transition: transform 620ms cubic-bezier(0.0, 0.0, 0.2, 1.0);
+    }
+    /* Empurrão: rápido no início, desacelera como disco no gelo (380ms ease-out) */
+    .aleta-particle img.is-repelled {
+      transition: transform 380ms cubic-bezier(0.0, 0.0, 0.2, 1.0);
     }
 
     /* Igual ao floatAnim antigo: translateY(110vh) → translateY(-20vh), giro completo 0→360deg.
@@ -333,11 +338,15 @@
           if (dist < REPEL_RADIUS && dist > 0.01) {
             if (!particle.repelled) {
               const ux = dx / dist, uy = dy / dist;
+              // Ativa transição rápida (380ms ease-out) antes de mover
+              particle.img.classList.add('is-repelled');
               particle.img.style.transform = `translate(${(ux * REPEL_STRENGTH).toFixed(1)}px, ${(uy * REPEL_STRENGTH).toFixed(1)}px)`;
               particle.repelled = true;
             }
           } else {
             if (particle.repelled) {
+              // Remove classe → CSS volta para transição lenta de retorno (620ms)
+              particle.img.classList.remove('is-repelled');
               particle.img.style.transform = '';
               particle.repelled = false;
             }
@@ -360,6 +369,7 @@
         mouseX = -9999; mouseY = -9999;
         for (const particle of window.__aletaParticles) {
           if (particle.repelled) {
+            particle.img.classList.remove('is-repelled');
             particle.img.style.transform = '';
             particle.repelled = false;
           }
