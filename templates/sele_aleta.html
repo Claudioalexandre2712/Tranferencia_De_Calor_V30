@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escolha o Tipo de Aleta</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -266,7 +267,7 @@
         </form>
     </div>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // Seleção visual dos cards (radio)
         document.querySelectorAll('.aleta-card').forEach(card => {
             card.addEventListener('click', function(e) {

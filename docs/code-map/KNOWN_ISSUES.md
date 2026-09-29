@@ -6,19 +6,38 @@ escopo desta auditoria (mapear/documentar, não alterar comportamento).
 
 ## Segurança / segredos
 
-- **Credenciais Wi-Fi hardcoded** (`WIFI_SSID`/`WIFI_PASSWORD`) em ambos os `.ino`
-  (`esp32_painel_status/esp32_painel_status.ino` e
-  `esp32_monitor_ambiente/esp32_monitor_ambiente.ino`, mesmas credenciais nos dois) — SSID
-  + senha em texto puro no código-fonte, versionado no git. Revalidado em 2026-09-15;
-  números de linha propositalmente omitidos aqui (ver seção "Números de linha" — use
-  `Grep "WIFI_SSID"` para localizar a linha atual em cada arquivo).
-- **IP interno hardcoded como fallback (`SERVER_HOST`)** em ambos `.ino` — expõe topologia
-  de rede interna, risco baixo mas real se o repositório for público. Revalidado em
-  2026-09-15: o valor atual no código é `10.1.17.239` (não `10.18.163.204`, que era o
-  valor de uma auditoria anterior e já não existe no código — puramente histórico, a rede
-  do laboratório mudou de IP). `SERVER_HOST` só é usado como último recurso depois que a
-  descoberta UDP e o fallback mDNS falham — ver `HARDWARE_MAP.md`. Confirme sempre por
-  `Grep "SERVER_HOST"` antes de citar este valor, pois ele muda com a rede.
+Revisão de segurança para publicação (2026-09-29) — itens abaixo **corrigidos**:
+
+- **Credenciais Wi-Fi**: saíram dos `.ino`; agora vêm de `secrets.h` (no `.gitignore`), com
+  modelo em `secrets.example.h` em cada pasta de firmware. A senha antiga foi trocada no
+  roteador e removida do histórico do git.
+- **`app.secret_key`**: vem de `FLASK_SECRET_KEY` (variável de ambiente); sem ela, chave
+  aleatória por processo.
+- **`debug=True` fixo**: agora só com `FLASK_DEBUG=1`.
+- **Handler de exceção global**: não devolve mais traceback nem texto da exceção ao público
+  (só com debug), escapa tudo e deixa erros HTTP (404/405/400) passarem com o código certo.
+  Antes, `/resultado?h=<script>…` refletia o payload sem escape (XSS).
+- **XSS em `resultados_sele`**: `dados_grafico_json` usa `htmlsafe_json_dumps`, então um
+  nome de material com `</script>` não quebra mais o bloco `<script>`.
+- **`polyfill.io`** (domínio comprometido em 2024) removido de dois templates.
+- **Gravação anônima de sensores**: na Vercel (`VERCEL=1`) os `POST` de
+  `/api/temperaturas`, `/api/monitoramento` e `/api/temperatura-alvo` respondem 403.
+- **CSP com nonce** + cabeçalhos de segurança (`app.py:add_security_headers` e
+  `vercel.json`). Atributos `on*=` viraram `data-on*=`, tratados por
+  `static/js/csp-handlers.js`. Ver README, seção "Segurança do site".
+
+Ainda aberto:
+
+- **IP interno como fallback (`SERVER_HOST`)** nos dois `.ino` — IP privado da rede do
+  laboratório; risco baixo. Confirme sempre por `Grep "SERVER_HOST"` antes de citar o valor.
+  `SERVER_HOST` só é usado depois que a descoberta UDP e o fallback mDNS falham — ver
+  `HARDWARE_MAP.md`.
+- **`innerHTML` com texto do usuário no circuito térmico** (nomes de camadas/variantes,
+  inclusive de JSON importado): só afeta o próprio usuário e a CSP bloqueia a execução de
+  script, mas trocar por `textContent` seria o ideal.
+- **Relatórios `static/relatorio.txt` / `selerelatorio.txt`** são sobrescritos a cada
+  cálculo e servidos publicamente (último cálculo de qualquer visitante). Na Vercel o disco é
+  somente leitura, então a gravação falha em silêncio.
 
 ## Pastas com nome trocado em relação ao conteúdo
 
@@ -41,17 +60,6 @@ escopo desta auditoria (mapear/documentar, não alterar comportamento).
   - Documentação corrigida para citar o arquivo real por função (`doc["device"]`) em vez
     de confiar no nome da pasta: `HARDWARE_MAP.md`, `docs/knowledge-graph/Firmware/ESP32
     Ambiente.md`, `docs/knowledge-graph/Firmware/ESP32 Painel.md`.
-- **`app.secret_key` fixo** em `app.py:48` — só protege `flash()` no momento, mas é uma
-  prática frágil se o uso do secret_key crescer.
-- **`debug=True` fixo** em `app.py:1775-1777`, sem variável de ambiente controlando —
-  se esse código rodar localmente exposto na rede (`host='0.0.0.0'`), o debugger do
-  Werkzeug fica acessível. Mitigado em produção pelo deploy Vercel (que não usa esse
-  bloco `if __name__ == '__main__'`), mas é um risco em execução local na rede do
-  laboratório.
-- **Handler de exceção global** (`app.py:54-72`) devolve o traceback completo em qualquer
-  erro 500, para qualquer cliente — informação de diagnóstico útil em laboratório, mas
-  não deveria ir para uma implantação pública sem revisão.
-
 ## Código órfão / não integrado
 
 - **`melhorias_sistema.py`** (29KB) — nenhum módulo do projeto o importa (nem `app.py`
@@ -71,13 +79,9 @@ escopo desta auditoria (mapear/documentar, não alterar comportamento).
 
 ## Higiene de repositório
 
-- **Sem `.gitignore`** — `__pycache__/app.cpython-314.pyc` está sendo rastreado pelo git
-  (aparece como modificado a cada execução local). Os três `.zip` de backup
-  (`backup_V29.zip`, `backup_completo_V30_2026-09-03.zip`,
-  `backup_completo_V30_2026-09-11.zip`, ~6.8MB somados) também estão versionados no
-  histórico — infla o tamanho do repositório. Não alterado nesta auditoria por estar fora
-  do escopo de "mapear/documentar"; se quiser, posso criar um `.gitignore` e parar de
-  versionar os `.zip` (ação reversível, mas peço confirmação antes).
+- **`.gitignore` criado** (2026-09-29): ignora `.env*`, `secrets.h`, `__pycache__/`,
+  `backup_*.zip`, `node_modules/`, builds e `.DS_Store`. `__pycache__/` deixou de ser
+  versionado e os `.zip` de backup foram removidos do repositório e do histórico.
 
 ## Armazenamento em memória (limitação arquitetural, não bug)
 

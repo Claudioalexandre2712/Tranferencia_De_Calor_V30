@@ -1,0 +1,30 @@
+# Segredos e variáveis de ambiente
+.env
+.env.*
+!.env.example
+secrets.h
+**/secrets.h
+
+# Dependências e builds
+node_modules/
+dist/
+build/
+.vercel/
+.next/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Backups (não versionar: podem conter credenciais antigas)
+backup_*.zip
+_backup_pre_auditoria/
+*.bak
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/

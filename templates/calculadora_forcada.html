@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora - Convecção Forçada</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
@@ -177,6 +178,9 @@
             .console-rail { width: 100%; height: auto; position: relative; }
             .main-area { padding: 1.4rem 1.1rem 2rem; max-width: 100%; }
         }
+        /* Efeitos de hover (antes feitos com onmouseover, bloqueado pela CSP) */
+        .botao-hover-sobe:hover { transform: translateY(-2px); }
+        .botao-hover-claro:hover { background: #eef1f6 !important; }
     </style>
 </head>
 <body>
@@ -221,7 +225,7 @@
 
             <div class="rail-section">
                 <div class="rail-label">Fonte dos dados</div>
-                <button type="button" class="rail-btn w-100" id="btn-importar" onclick="importarDadosParaCalculos()">
+                <button type="button" class="rail-btn w-100" id="btn-importar" data-onclick="importarDadosParaCalculos()">
                     <i class="fas fa-download"></i> Importar para cálculos
                 </button>
             </div>
@@ -245,12 +249,12 @@
                     <span class="panel-sub">Selecione a configuração ensaiada</span>
                 </div>
                 <div class="geometry-row">
-                    <div class="geometry-card selected" id="card-placa-plana" onclick="selectGeometry('placa_plana')">
+                    <div class="geometry-card selected" id="card-placa-plana" data-onclick="selectGeometry('placa_plana')">
                         <i class="fas fa-square icon-blue"></i>
                         <h6>Placa Plana</h6>
                         <small>Escoamento paralelo sobre placa plana</small>
                     </div>
-                    <div class="geometry-card" id="card-cilindro" onclick="selectGeometry('cilindro_cruzado')">
+                    <div class="geometry-card" id="card-cilindro" data-onclick="selectGeometry('cilindro_cruzado')">
                         <i class="fas fa-circle icon-blue"></i>
                         <h6>Cilindro</h6>
                         <small>Escoamento cruzado sobre cilindro</small>
@@ -336,9 +340,9 @@
         </main>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script nonce="{{ csp_nonce }}">
         // =========================================================================
         // FUNCIONALIDADE DE MONITORAMENTO EM TEMPO REAL
         // =========================================================================
@@ -660,10 +664,10 @@
 
                                 <!-- Botões de ação -->
                                 <div style="display: flex; gap: 12px; justify-content: center; padding-bottom: 10px; flex-wrap: wrap;">
-                                    <button onclick="usarCoeficienteCalculado(${h})" style="background: linear-gradient(90deg, #43a047, #66bb6a); color: white; border: none; border-radius: 12px; padding: 13px 28px; font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(67,160,71,0.3); transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <button data-onclick="usarCoeficienteCalculado(${h})" style="background: linear-gradient(90deg, #43a047, #66bb6a); color: white; border: none; border-radius: 12px; padding: 13px 28px; font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(67,160,71,0.3); transition: all 0.25s ease;" class="botao-hover-sobe">
                                         <i class="fas fa-check-circle mr-2"></i>Usar na Simulação de Aletas
                                     </button>
-                                    <button onclick="document.getElementById('calculoForm').scrollIntoView({behavior:'smooth'})" style="background: white; color: var(--primary-blue); border: 2px solid var(--primary-blue); border-radius: 12px; padding: 13px 28px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.background='#eef1f6'" onmouseout="this.style.background='white'">
+                                    <button data-onclick="rolarAte('calculoForm')" style="background: white; color: var(--primary-blue); border: 2px solid var(--primary-blue); border-radius: 12px; padding: 13px 28px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.25s ease;" class="botao-hover-claro">
                                         <i class="fas fa-redo mr-2"></i>Novo Cálculo
                                     </button>
                                 </div>

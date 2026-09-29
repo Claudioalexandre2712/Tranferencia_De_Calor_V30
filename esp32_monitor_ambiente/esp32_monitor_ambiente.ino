@@ -38,8 +38,9 @@
 #include <WiFiUdp.h>
 
 // ── CONFIGURAÇÕES DE REDE E SERVIDOR ─────────────────────────────────────────
-#define WIFI_SSID "REDE_REMOVIDA"
-#define WIFI_PASSWORD "SENHA_REMOVIDA"
+// Credenciais do Wi-Fi ficam em secrets.h, que NÃO vai para o git (.gitignore).
+// Copie secrets.example.h para secrets.h nesta pasta e preencha WIFI_SSID e WIFI_PASSWORD.
+#include "secrets.h"
 
 const char* SERVER_HOST = "10.211.228.204"; // IP atual do computador na rede Wi-Fi
 const uint16_t SERVER_PORT = 5000;
