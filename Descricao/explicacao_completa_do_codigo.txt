@@ -431,7 +431,7 @@ O funcionamento cronológico de ponta a ponta do sistema ocorre em 12 etapas:
 
 Etapa 1: Energização dos dois módulos microcontroladores ESP32 na bancada experimental.
 Etapa 2: Inicialização dos barramentos OneWire (GPIO 4) e DHT11 (GPIO 27); os firmwares carregam os offsets de calibração previamente salvos na memória Flash NVS.
-Etapa 3: Autenticação e conexão automática dos ESP32 à rede Wi-Fi local ("REDE_REMOVIDA").
+Etapa 3: Autenticação e conexão automática dos ESP32 à rede Wi-Fi local (nome e senha definidos em secrets.h, fora do git).
 Etapa 4: Aquisição física periódica das temperaturas a cada 1000 ms pelos conversores A/D internos dos sensores DS18B20 (resolução de 10 bits) e pelo elemento resistivo/capacitivo do DHT11.
 Etapa 5: Validação das leituras brutas, aplicação dos offsets individuais de calibração e descarte de falhas transitórias (-127 °C, 85 °C ou leituras fora da faixa de -55 a 150 °C).
 Etapa 6: Formatação e serialização das medições válidas em objetos JSON leves.
