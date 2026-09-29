@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora - Escoamento Interno</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
@@ -10,9 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/design-system.css') }}" rel="stylesheet">
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script nonce="{{ csp_nonce }}">
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -131,7 +131,7 @@
                     </div>
 
                     <div style="margin-top:1.1rem; text-align:center;">
-                        <button type="button" data-h="{{ resultado.h }}" onclick="usarCoeficienteCalculado(Number(this.dataset.h))" class="vx-btn vx-btn-primary vx-btn-lg">
+                        <button type="button" data-h="{{ resultado.h }}" data-onclick="usarCoeficienteCalculado(Number(this.dataset.h))" class="vx-btn vx-btn-primary vx-btn-lg">
                             <i class="fa-solid fa-check-circle"></i> Usar na simulação de aletas
                         </button>
                     </div>
@@ -170,13 +170,13 @@
                             <h2>Parâmetros de entrada</h2>
                         </div>
                         <div class="panel-body">
-                            <form method="POST" action="/calculadora_escoamento_interno" onsubmit="return validarCamposEscoamento()">
+                            <form method="POST" action="/calculadora_escoamento_interno" data-onsubmit="return validarCamposEscoamento()">
                                 <fieldset class="vx-fieldset">
                                     <legend>Geometria do duto</legend>
 
                                     <div class="vx-field">
                                         <label class="vx-field-label" for="geometria">Tipo de geometria</label>
-                                        <select class="form-control vx-select" id="geometria" name="geometria" onchange="toggleGeometria()" required>
+                                        <select class="form-control vx-select" id="geometria" name="geometria" data-onchange="toggleGeometria()" required>
                                             <option value="circular">Tubo Circular</option>
                                             <option value="quadrado">Duto Quadrado</option>
                                             <option value="retangular">Duto Retangular</option>
@@ -240,7 +240,7 @@
 
                                     <div class="vx-field">
                                         <label class="vx-field-label" for="tipo_calculo">Tipo de cálculo</label>
-                                        <select class="form-control vx-select" id="tipo_calculo" name="tipo_calculo" onchange="toggleTipoCalculo()" required>
+                                        <select class="form-control vx-select" id="tipo_calculo" name="tipo_calculo" data-onchange="toggleTipoCalculo()" required>
                                             <option value="tradicional">Cálculo Tradicional (Temperatura da parede conhecida)</option>
                                             <option value="temp_entrada_saida">Cálculo com Temperaturas de Entrada e Saída</option>
                                         </select>
@@ -405,7 +405,7 @@
     </div>
 
     {% if resultado %}
-    <script>
+    <script nonce="{{ csp_nonce }}">
         try {
             localStorage.setItem('coeficiente_convectivo', '{{ resultado.h }}');
             localStorage.setItem('ultimo_h_calculado', '{{ resultado.h }}');
@@ -413,7 +413,7 @@
     </script>
     {% endif %}
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
         function usarCoeficienteCalculado(hValue) {
             try {
                 localStorage.setItem('coeficiente_convectivo', hValue);

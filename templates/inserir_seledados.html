@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inserir Dados</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,10 +87,10 @@
                 <div class="h-input-row">
                     <input type="text" class="vx-input" id="h" name="h" required placeholder="Ex: 25 W/m²·K">
                     <div class="h-actions">
-                        <button type="button" class="vx-btn vx-btn-ghost vx-btn-sm" id="btn-usar-h" onclick="usarHCalculado()" title="Usar valor de h calculado anteriormente">
+                        <button type="button" class="vx-btn vx-btn-ghost vx-btn-sm" id="btn-usar-h" data-onclick="usarHCalculado()" title="Usar valor de h calculado anteriormente">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Usar h calculado
                         </button>
-                        <button type="button" class="vx-btn vx-btn-ghost vx-btn-sm" onclick="abrirCalculadoraConvectivo()" title="Abrir calculadora de convecção">
+                        <button type="button" class="vx-btn vx-btn-ghost vx-btn-sm" data-onclick="abrirCalculadoraConvectivo()" title="Abrir calculadora de convecção">
                             <i class="fa-solid fa-calculator"></i> Calcular h
                         </button>
                     </div>
@@ -103,7 +104,7 @@
                             Insira manualmente ou use a calculadora de convecção.
                         </span>
                     </span>
-                    <span id="badge-h-disponivel" class="h-badge" onclick="usarHCalculado()" title="Clique para preencher o campo com este valor">
+                    <span id="badge-h-disponivel" class="h-badge" data-onclick="usarHCalculado()" title="Clique para preencher o campo com este valor">
                         <i class="fa-solid fa-clock-rotate-left"></i> <span id="badge-h-texto">h disponível</span>
                     </span>
                 </div>
@@ -172,19 +173,19 @@
                 <label style="font-size: 0.95rem; color: var(--ink);">Condição de contorno na ponta</label>
                 <div class="cond-list">
                     <div class="cond-row">
-                        <input type="radio" name="condicao_ponta" id="cond_adiabatica" value="adiabatica" checked onchange="toggleTempCampo()">
+                        <input type="radio" name="condicao_ponta" id="cond_adiabatica" value="adiabatica" checked data-onchange="toggleTempCampo()">
                         <label for="cond_adiabatica">Ponta adiabática (padrão)</label>
                     </div>
                     <div class="cond-row">
-                        <input type="radio" name="condicao_ponta" id="cond_conveccao" value="conveccao" onchange="toggleTempCampo()">
+                        <input type="radio" name="condicao_ponta" id="cond_conveccao" value="conveccao" data-onchange="toggleTempCampo()">
                         <label for="cond_conveccao">Convecção na ponta</label>
                     </div>
                     <div class="cond-row">
-                        <input type="radio" name="condicao_ponta" id="cond_infinita" value="infinita" onchange="toggleTempCampo()">
+                        <input type="radio" name="condicao_ponta" id="cond_infinita" value="infinita" data-onchange="toggleTempCampo()">
                         <label for="cond_infinita">Aleta infinita</label>
                     </div>
                     <div class="cond-row">
-                        <input type="radio" name="condicao_ponta" id="cond_temp_especificada" value="temp_especificada" onchange="toggleTempCampo()">
+                        <input type="radio" name="condicao_ponta" id="cond_temp_especificada" value="temp_especificada" data-onchange="toggleTempCampo()">
                         <label for="cond_temp_especificada">Temperatura especificada na ponta</label>
                     </div>
                 </div>
@@ -202,7 +203,7 @@
         </form>
     </div>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
     function toggleTempCampo() {
         var campo_T_L = document.getElementById('campo_T_L');
         var input_T_L = document.getElementById('T_L');

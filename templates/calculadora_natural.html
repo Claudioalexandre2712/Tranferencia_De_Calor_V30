@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora - Convecção Natural & Balanço Térmico | UFR</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
@@ -368,30 +369,30 @@
 
         <div class="rail-section">
             <div class="rail-label">Fonte dos dados</div>
-            <button type="button" class="rail-btn rail-btn-accent w-100" id="btn-importar" onclick="importarDadosESP32()">
+            <button type="button" class="rail-btn rail-btn-accent w-100" id="btn-importar" data-onclick="importarDadosESP32()">
                 <i class="fas fa-download"></i> Importar para cálculos
             </button>
-            <button type="button" class="rail-btn w-100" id="btn-simular" onclick="injetarTelemetriaExemplo()" title="Carrega leituras padrão de ensaio 80°C">
+            <button type="button" class="rail-btn w-100" id="btn-simular" data-onclick="injetarTelemetriaExemplo()" title="Carrega leituras padrão de ensaio 80°C">
                 <i class="fas fa-flask"></i> Simular 80°C
             </button>
-            <button type="button" class="rail-btn w-100" id="btn-real" onclick="restaurarLeituraReal()" title="Voltar a escutar o ESP32 ao vivo">
+            <button type="button" class="rail-btn w-100" id="btn-real" data-onclick="restaurarLeituraReal()" title="Voltar a escutar o ESP32 ao vivo">
                 <i class="fas fa-satellite-dish"></i> Leitura real
             </button>
             <label class="rail-btn w-100" style="margin-bottom: 0;" title="Carregar arquivo CSV de ensaio baixado anteriormente para preencher os dados">
                 <i class="fas fa-file-csv"></i> Carregar CSV
-                <input type="file" id="input-csv-natural" accept=".csv" style="display: none;" onchange="carregarCSVNatural(event)">
+                <input type="file" id="input-csv-natural" accept=".csv" style="display: none;" data-onchange="carregarCSVNatural(event)">
             </label>
 
             <!-- Painel Informativo e Seletor do CSV Carregado -->
             <div id="box-csv-info" class="rail-csv-box" style="display: none;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <strong><i class="fas fa-check-circle mr-1"></i>CSV ativo</strong>
-                    <button type="button" style="font-size: 1rem; line-height: 1; outline: none; border: none; background: transparent; cursor: pointer; color: var(--rail-text-dim);" onclick="fecharCSVNatural()" title="Fechar arquivo e restaurar">&times;</button>
+                    <button type="button" style="font-size: 1rem; line-height: 1; outline: none; border: none; background: transparent; cursor: pointer; color: var(--rail-text-dim);" data-onclick="fecharCSVNatural()" title="Fechar arquivo e restaurar">&times;</button>
                 </div>
                 <div id="csv-arquivo-nome" class="text-truncate" style="max-width: 100%; color:#fff;"></div>
                 <div id="csv-detalhes-pontos" style="margin-bottom: 0.3rem;"></div>
                 <label style="display:block; margin-bottom: 0.2rem;">Critério de amostragem:</label>
-                <select id="select-modo-csv" onchange="aplicarModoCSV()">
+                <select id="select-modo-csv" data-onchange="aplicarModoCSV()">
                     <option value="regime" selected>Regime permanente (últimos 15%)</option>
                     <option value="ultimo">Última leitura (ponto final)</option>
                     <option value="media_total">Média geral (todo o ensaio)</option>
@@ -424,22 +425,22 @@
                 <span class="panel-sub">Selecione a configuração ensaiada</span>
             </div>
             <div class="geometry-row">
-                <div class="geometry-card selected" id="card-placa-horizontal" onclick="selecionarGeometria('placa_horizontal')">
+                <div class="geometry-card selected" id="card-placa-horizontal" data-onclick="selecionarGeometria('placa_horizontal')">
                     <i class="fas fa-window-minimize icon-blue"></i>
                     <h6>Placa Horizontal</h6>
                     <small>Face superior/inferior aquecida (bancada TCC)</small>
                 </div>
-                <div class="geometry-card" id="card-placa-vertical" onclick="selecionarGeometria('placa_vertical')">
+                <div class="geometry-card" id="card-placa-vertical" data-onclick="selecionarGeometria('placa_vertical')">
                     <i class="fas fa-square icon-blue"></i>
                     <h6>Placa Vertical</h6>
                     <small>Superfície plana vertical</small>
                 </div>
-                <div class="geometry-card" id="card-cilindro" onclick="selecionarGeometria('cilindro_horizontal')">
+                <div class="geometry-card" id="card-cilindro" data-onclick="selecionarGeometria('cilindro_horizontal')">
                     <i class="fas fa-circle icon-blue"></i>
                     <h6>Cilindro Horizontal</h6>
                     <small>Cilindro ou tubo horizontal</small>
                 </div>
-                <div class="geometry-card" id="card-esfera" onclick="selecionarGeometria('esfera')">
+                <div class="geometry-card" id="card-esfera" data-onclick="selecionarGeometria('esfera')">
                     <i class="fas fa-globe icon-blue"></i>
                     <h6>Esfera</h6>
                     <small>Superfície esférica aquecida</small>
@@ -490,11 +491,11 @@
                         <div class="field-grid">
                             <div class="form-group mb-0">
                                 <label class="font-weight-bold small">Largura da Placa &mdash; W (m):</label>
-                                <input type="number" class="form-control mono" id="largura_placa_h" name="largura_placa_h" step="0.001" value="0.17" oninput="atualizarLcInfo()">
+                                <input type="number" class="form-control mono" id="largura_placa_h" name="largura_placa_h" step="0.001" value="0.17" data-oninput="atualizarLcInfo()">
                             </div>
                             <div class="form-group mb-0">
                                 <label class="font-weight-bold small">Comprimento da Placa &mdash; L (m):</label>
-                                <input type="number" class="form-control mono" id="comprimento_placa_h" name="comprimento_placa_h" step="0.001" value="0.37" oninput="atualizarLcInfo()">
+                                <input type="number" class="form-control mono" id="comprimento_placa_h" name="comprimento_placa_h" step="0.001" value="0.37" data-oninput="atualizarLcInfo()">
                             </div>
                             <div class="form-group mb-0">
                                 <label class="font-weight-bold small">Orientação Térmica:</label>
@@ -542,7 +543,7 @@
                         <div class="form-group mb-0">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <label class="font-weight-bold small mb-0">Correção água &rarr; chapa &mdash; X (°C):</label>
-                                <span role="button" onclick="estimarXBalanco()" class="badge badge-light border text-secondary" style="cursor: pointer; font-size: 0.68rem; font-weight: 500; padding: 2px 6px;" title="Estimativa aproximada de X com propriedades médias do ar (não usa o motor de cálculo do backend) — valor editável, não é resultado experimental">
+                                <span role="button" data-onclick="estimarXBalanco()" class="badge badge-light border text-secondary" style="cursor: pointer; font-size: 0.68rem; font-weight: 500; padding: 2px 6px;" title="Estimativa aproximada de X com propriedades médias do ar (não usa o motor de cálculo do backend) — valor editável, não é resultado experimental">
                                     <i class="fas fa-calculator mr-1" style="font-size: 0.6rem;"></i>sugerir (estimativa)
                                 </span>
                             </div>
@@ -582,9 +583,9 @@
     </main>
 </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script nonce="{{ csp_nonce }}">
         let intervalTelemetria = null;
         let modoSimulacao = false;
         let dadosCSVNatural = null;
@@ -1258,13 +1259,13 @@ Q_conv = h_teorico &times; As &times; (T_s &minus; T_inf) = ${h_teorico.toFixed(
 
                         <!-- Botões Finais -->
                         <div class="text-center pt-2">
-                            <button onclick="usarCoeficienteCalculado(${h_teorico})" class="btn btn-success px-4 mr-2 mb-2 font-weight-bold">
+                            <button data-onclick="usarCoeficienteCalculado(${h_teorico})" class="btn btn-success px-4 mr-2 mb-2 font-weight-bold">
                                 <i class="fas fa-check-circle mr-2"></i>Usar na Simulação de Aletas
                             </button>
-                            <button onclick="document.getElementById('calculoForm').scrollIntoView({behavior:'smooth'})" class="btn btn-primary px-4 mr-2 mb-2">
+                            <button data-onclick="rolarAte('calculoForm')" class="btn btn-primary px-4 mr-2 mb-2">
                                 <i class="fas fa-redo mr-2"></i>Novo Cálculo
                             </button>
-                            <button onclick="window.print()" class="btn btn-dark px-4 mb-2">
+                            <button data-onclick="imprimirPagina()" class="btn btn-dark px-4 mb-2">
                                 <i class="fas fa-print mr-2"></i>Imprimir Relatório (PDF)
                             </button>
                         </div>

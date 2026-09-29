@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    {% include '_meta.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultados do Circuito Térmico</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
@@ -291,7 +292,7 @@
             <div style="margin-bottom: 30px;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
                     <h3 style="color: #2e4fe0; margin: 0; font-size: 1.15rem;"><i class="fa-solid fa-temperature-half mr-2"></i>Distribuição de Temperatura</h3>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportarGraficoCSV()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #cfd8dc; color: #455a64; background: #fafafa; font-weight: 500;" title="Salvar dados da curva em arquivo CSV">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-onclick="exportarGraficoCSV()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #cfd8dc; color: #455a64; background: #fafafa; font-weight: 500;" title="Salvar dados da curva em arquivo CSV">
                         <i class="fa-solid fa-file-csv mr-1 text-secondary"></i> Salvar CSV
                     </button>
                 </div>
@@ -307,10 +308,10 @@
                         <i class="fa-solid fa-table-list mr-2"></i>Tabela de Resultados — Distribuição de Temperatura
                     </h3>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-copiar-tabela" onclick="copiarTabelaResultados()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;" title="Copiar linhas da tabela para colar no Excel, Word ou Markdown">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-copiar-tabela" data-onclick="copiarTabelaResultados()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;" title="Copiar linhas da tabela para colar no Excel, Word ou Markdown">
                             <i class="fa-solid fa-copy mr-1"></i> Copiar Tabela
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportarGraficoCSV()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #cfd8dc; color: #455a64; background: #fafafa; font-weight: 500;" title="Salvar dados em arquivo CSV">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-onclick="exportarGraficoCSV()" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #cfd8dc; color: #455a64; background: #fafafa; font-weight: 500;" title="Salvar dados em arquivo CSV">
                             <i class="fa-solid fa-file-csv mr-1 text-secondary"></i> Salvar CSV
                         </button>
                     </div>
@@ -392,7 +393,7 @@
 
             <h2><i class="fa-solid fa-file-export mr-2 text-primary"></i>Exportações e Relatórios</h2>
             <div class="text-center d-flex justify-content-center align-items-center flex-wrap">
-                <button type="button" class="btn btn-outline-secondary btn-custom" onclick="exportarGraficoCSV()" style="background: #ffffff; border: 1px solid #cfd8dc; color: #37474f; font-weight: 500;">
+                <button type="button" class="btn btn-outline-secondary btn-custom" data-onclick="exportarGraficoCSV()" style="background: #ffffff; border: 1px solid #cfd8dc; color: #37474f; font-weight: 500;">
                     <i class="fa-solid fa-file-csv mr-2 text-secondary"></i>Salvar CSV do Gráfico
                 </button>
                 <a href="{{ url_for('static', filename='relatorio.txt') }}" class="btn btn-custom" download="relatorio_aletas.txt">
@@ -406,18 +407,18 @@
     </div>
 
     <!-- Dados estruturados das curvas em formato JSON para exportação direta e infalível -->
-    <script id="dados-grafico-json" type="application/json">
+    <script nonce="{{ csp_nonce }}" id="dados-grafico-json" type="application/json">
         {{ dados_grafico_json|safe if dados_grafico_json else '{}' }}
     </script>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- Plotly -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Plotly: o gráfico já traz o plotly.js com hash de integridade (gerado em visualizacao_plotly.py).
+         O antigo plotly-latest (v1.58) foi removido: usava eval, bloqueado pela CSP, e não era chamado aqui. -->
     <!-- MathJax para renderizar equações -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script nonce="{{ csp_nonce }}">
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
