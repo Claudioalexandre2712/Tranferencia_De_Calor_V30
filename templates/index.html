@@ -63,10 +63,8 @@
     .aleta-particle img {
       display: block; width: 100%; height: auto;
       filter: drop-shadow(0 8px 18px rgba(13, 20, 32, 0.22));
-      /* Sem transition CSS: a interação com o cursor é controlada inteiramente
-         pelo oscilador amortecido no RAF (ver script). Isso elimina saltos
-         na borda do raio e permite inércia/overshoot precisos. */
       will-change: transform;
+      transition: transform 180ms cubic-bezier(.22,.8,.32,1);
     }
 
     /* Igual ao floatAnim antigo: translateY(110vh) → translateY(-20vh), giro completo 0→360deg.
@@ -311,124 +309,63 @@
       }
     }, spawnEveryMs);
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // ESQUIVA — Lerp de decaimento exponencial por partícula
-    // ══════════════════════════════════════════════════════════════════════════
-    //
-    // Composição de transforms (camadas independentes):
-    //   • wrap.transform  → animação CSS vx-rise (voo, giro, deriva) — NUNCA tocado aqui.
-    //   • img.transform   → exclusivo desta interação (lerp JS, translate + rotate mínimo).
-    //
-    // Modelo: lerp exponencial puro — sem velocidade, sem mola, sem overshoot.
-    //   A cada frame: px = px + (target - px) * alpha
-    //   alpha é calculado a partir da constante de tempo τ compensada por deltaTime:
-    //     alpha = 1 - (1 - α_base)^(dt / 0.01667)
-    //   Isso garante comportamento idêntico em 60, 120 e 144 Hz.
-    //   Dois alphas distintos: αIN (rápido, ao se aproximar) e αOUT (suave, ao retornar).
-    //   Convergência monotônica: px NUNCA ultrapassa o target — overshoot é impossível.
-    //
-    // ── PARÂMETROS DE AJUSTE ─────────────────────────────────────────────────
-    //   EVADE_RADIUS   → raio de influência (px). Mais largo = reage de mais longe.
-    //   EVADE_MAX      → deslocamento máximo de fuga (px).
-    //   EVADE_ALPHA_IN → [0–1] por frame a 60Hz: quanto % do erro é corrigido por frame
-    //                    ao se aproximar do target. 0.22 ≈ τ 65ms ≈ reação ~160ms perceptível.
-    //   EVADE_ALPHA_OUT→ idem, ao retornar ao repouso. 0.10 ≈ τ 145ms ≈ retorno ~280ms.
-    //   Para MAIS EXPRESSIVO: aumente EVADE_MAX e/ou EVADE_RADIUS.
-    //   Para MAIS DISCRETO:   reduza-os. Reação mais viva: aumente EVADE_ALPHA_IN.
-    const EVADE_RADIUS    = 180;  // px  — raio de influência
-    const EVADE_MAX       = 50;   // px  — deslocamento máximo
-    const EVADE_ALPHA_IN  = 0.22; // [0–1] por frame @60Hz — velocidade de reação
-    const EVADE_ALPHA_OUT = 0.10; // [0–1] por frame @60Hz — velocidade de retorno
-    // ─────────────────────────────────────────────────────────────────────────
+    // Repulsão por proximidade: um empurrão decisivo por aproximação.
+    // Só ativa em pointer:fine + hover (mouse). Touch e prefers-reduced-motion: off.
+    const REPEL_RADIUS   = 140;  // px — raio que dispara a fuga
+    const REPEL_STRENGTH = 120;  // px — deslocamento de cada empurrão
 
-    // Só ativa em pointer:fine + hover (mouse real). Touch e prefers-reduced-motion: off.
     const hasFinePointer = window.matchMedia('(pointer: fine) and (hover: hover)').matches;
-    const evadeEnabled   = hasFinePointer && !reducedMotion;
+    const repelEnabled   = hasFinePointer && !reducedMotion;
 
     let mouseX = -9999, mouseY = -9999;
-    let evadeRafId  = null;
-    let lastEvadeTs = null;
+    let repelRafId = null;
+    let repelFrameSkip = false;
 
-    // Smoothstep: zero na borda do raio → 1 no centro (sem salto)
-    function smoothstep(t) { return t * t * (3 - 2 * t); }
-
-    // Clamp utilitário
-    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-
-    function evadeTick(ts) {
-      // deltaTime compensado: comportamento idêntico em qualquer taxa de quadros
-      const dt      = lastEvadeTs !== null ? Math.min((ts - lastEvadeTs) / 1000, 0.05) : 0.016;
-      lastEvadeTs   = ts;
-      const dtRatio = dt / 0.01667; // 1.0 em 60Hz, 0.5 em 120Hz, 2.0 em 30Hz
-
-      for (const p of window.__aletaParticles) {
-        // ── Referência de repouso = centro do WRAP (CSS anima, nunca tocamos aqui) ──
-        const r  = p.wrap.getBoundingClientRect();
-        const cx = r.left + r.width  / 2;
-        const cy = r.top  + r.height / 2;
-        const dx = cx - mouseX;
-        const dy = cy - mouseY;
-        const dist = Math.hypot(dx, dy);
-
-        // ── Alvo: só atualiza quando dentro do raio de influência ──
-        // Fora do raio: px/py ficam congelados onde estão — sem retorno automático.
-        if (dist < EVADE_RADIUS && dist > 0.5) {
-          const raw       = clamp(1 - dist / EVADE_RADIUS, 0, 1);
-          const intensity = smoothstep(raw);    // 0 na borda → 1 no centro
-          const ux = dx / dist, uy = dy / dist;
-          const targetX = ux * EVADE_MAX * intensity;
-          const targetY = uy * EVADE_MAX * intensity;
-
-          const errX = targetX - p.px, errY = targetY - p.py;
-          const α = 1 - Math.pow(1 - EVADE_ALPHA_IN, dtRatio);
-          p.px += errX * α;
-          p.py += errY * α;
-
-          if (Math.abs(p.px) > 0.05 || Math.abs(p.py) > 0.05) {
-            p.img.style.transform = `translate(${p.px.toFixed(2)}px,${p.py.toFixed(2)}px)`;
-          } else if (p.img.style.transform !== '') {
-            p.img.style.transform = '';
+    function repelTick() {
+      // Throttle a ~30fps (pula 1 a cada 2 frames)
+      repelFrameSkip = !repelFrameSkip;
+      if (repelFrameSkip) {
+        for (const particle of window.__aletaParticles) {
+          const r = particle.wrap.getBoundingClientRect();
+          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          const dx = cx - mouseX, dy = cy - mouseY;
+          const dist = Math.hypot(dx, dy);
+          if (dist < REPEL_RADIUS && dist > 0.01) {
+            if (!particle.repelled) {
+              const ux = dx / dist, uy = dy / dist;
+              particle.img.style.transform = `translate(${(ux * REPEL_STRENGTH).toFixed(1)}px, ${(uy * REPEL_STRENGTH).toFixed(1)}px)`;
+              particle.repelled = true;
+            }
+          } else {
+            if (particle.repelled) {
+              particle.img.style.transform = '';
+              particle.repelled = false;
+            }
           }
         }
-        // Fora do raio: não toca em p.px, p.py nem em style.transform.
       }
-
-      evadeRafId = requestAnimationFrame(evadeTick);
+      repelRafId = requestAnimationFrame(repelTick);
     }
 
-    // Inicializa estado por partícula (apenas posição, sem velocidade)
-    function initParticleEvade(particle) {
-      particle.px = 0;
-      particle.py = 0;
-    }
-
-    if (evadeEnabled) {
+    if (repelEnabled) {
       stage.addEventListener('mouseenter', function (e) {
         mouseX = e.clientX; mouseY = e.clientY;
-        lastEvadeTs = null;
-        if (!evadeRafId) evadeRafId = requestAnimationFrame(evadeTick);
+        if (!repelRafId) repelRafId = requestAnimationFrame(repelTick);
       });
-
       stage.addEventListener('mousemove', function (e) {
         mouseX = e.clientX; mouseY = e.clientY;
       });
-
       stage.addEventListener('mouseleave', function () {
-        // Para o RAF; aletas ficam onde estão — sem settle, sem retorno.
-        if (evadeRafId) { cancelAnimationFrame(evadeRafId); evadeRafId = null; }
-        mouseX = mouseY = -9999;
-        lastEvadeTs = null;
+        if (repelRafId) { cancelAnimationFrame(repelRafId); repelRafId = null; }
+        mouseX = -9999; mouseY = -9999;
+        for (const particle of window.__aletaParticles) {
+          if (particle.repelled) {
+            particle.img.style.transform = '';
+            particle.repelled = false;
+          }
+        }
       });
     }
-
-    // Patch: inicializa estado de cada nova partícula ao ser adicionada ao Set
-    const _origAdd = window.__aletaParticles.add.bind(window.__aletaParticles);
-    window.__aletaParticles.add = function (p) {
-      initParticleEvade(p);
-      return _origAdd(p);
-    };
-    // Inicializa partículas já existentes (preenchimento inicial)
-    for (const p of window.__aletaParticles) initParticleEvade(p);
 
     if (!reducedMotion) {
       // Paralaxe sutil do campo inteiro (bem discreta — a interação principal é a repulsão acima).
