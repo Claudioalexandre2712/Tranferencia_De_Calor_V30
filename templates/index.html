@@ -247,8 +247,8 @@
     // ── Emissor contínuo (chuva/corrente de aletas) ──────────────────────────────
     // Nada de conjunto fixo criado uma vez: spawnAleta() cria UMA partícula, que se
     // autorremove no fim da própria animação (animationend, 1 iteração só). Um timer
-    // ── Emissor contínuo controlado (quantidade elegante, sem poluição visual) ──
-    const MAX_ACTIVE_ALETAS = 14; // Mantém a tela limpa e respirável (Problema 3)
+    // ── Emissor contínuo equilibrado e preenchido ─────────────────────────────
+    const MAX_ACTIVE_ALETAS = 26; // Quantidade rica e viva na tela
     window.__aletaParticles = new Set();
 
     function spawnAleta(initialProgress) {
@@ -305,10 +305,10 @@
       return particle;
     }
 
-    // Configuração de fluxo leve e arejado (Problema 3)
-    const activeMax = reducedMotion ? 8 : MAX_ACTIVE_ALETAS;
-    const initialFill = reducedMotion ? 4 : 7;
-    const spawnEveryMs = reducedMotion ? 2600 : 1700;
+    // Configuração de fluxo rico e bem distribuído
+    const activeMax = reducedMotion ? 12 : MAX_ACTIVE_ALETAS;
+    const initialFill = reducedMotion ? 7 : 16;
+    const spawnEveryMs = reducedMotion ? 1500 : 850;
 
     for (let i = 0; i < initialFill; i++) spawnAleta(Math.random());
 
