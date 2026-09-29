@@ -64,12 +64,6 @@
       display: block; width: 100%; height: auto;
       filter: drop-shadow(0 8px 18px rgba(13, 20, 32, 0.22));
       will-change: transform;
-      /* Retorno: longo e suave — a aleta "desliza de volta" no gelo (620ms ease-out) */
-      transition: transform 620ms cubic-bezier(0.0, 0.0, 0.2, 1.0);
-    }
-    /* Empurrão: rápido no início, desacelera como disco no gelo (380ms ease-out) */
-    .aleta-particle img.is-repelled {
-      transition: transform 380ms cubic-bezier(0.0, 0.0, 0.2, 1.0);
     }
 
     /* Igual ao floatAnim antigo: translateY(110vh) → translateY(-20vh), giro completo 0→360deg.
@@ -283,7 +277,16 @@
       img.style.opacity = (0.65 + 0.25 * ((size - 70) / 80)).toFixed(2);
       wrap.appendChild(img);
 
-      const particle = { wrap, img, repelled: false };
+      const particle = {
+        wrap,
+        img,
+        ox: 0,
+        oy: 0,
+        vx: 0,
+        vy: 0,
+        rot: 0,
+        bounced: false
+      };
       wrap.addEventListener('animationend', function () {
         wrap.remove();
         window.__aletaParticles.delete(particle);
@@ -314,66 +317,208 @@
       }
     }, spawnEveryMs);
 
-    // Repulsão por proximidade: um empurrão decisivo por aproximação.
-    // Só ativa em pointer:fine + hover (mouse). Touch e prefers-reduced-motion: off.
-    const REPEL_RADIUS   = 140;  // px — raio que dispara a fuga
-    const REPEL_STRENGTH = 120;  // px — deslocamento de cada empurrão
+    // ── Dinâmica de Movimento: Deslizamento Livre + Colisão com Paredes ──────────
+    // Comportamento:
+    //   1. O cursor empurra a aleta pelo espaço com impulso proporcional à proximidade.
+    //   2. A aleta continua deslizando livremente pelo espaço com baixo atrito (inércia).
+    //   3. Ao colidir com qualquer limite da tela/página, ela rebate suavemente
+    //      (restituição ~30%) e desacelera de maneira controlada, sem saltos.
+    //   4. Touch / mobile: desligado (sem simulação de cursor).
+    //   5. Prefers-reduced-motion: desligado.
 
     const hasFinePointer = window.matchMedia('(pointer: fine) and (hover: hover)').matches;
-    const repelEnabled   = hasFinePointer && !reducedMotion;
+    const physicsEnabled = hasFinePointer && !reducedMotion;
+
+    // Parâmetros de física ajustáveis
+    const PUSH_RADIUS        = 155;   // px — raio de alcance do empurrão do cursor
+    const PUSH_FORCE         = 4.6;   // intensidade do impulso por frame
+    const MAX_SPEED          = 13.5;  // px/frame — velocidade máxima de deslizamento
+    const GLIDE_FRICTION     = 0.993; // atrito baixo durante o trajeto (desliza longe)
+    const BOUNCE_RESTITUTION = 0.32;  // fração de energia após a colisão na parede
+    const MAX_BOUNCE_SPEED   = 3.2;   // teto da velocidade de recuo após bater
+    const RETURN_FRICTION    = 0.938; // desaceleração após o impacto (volta lentamente e para)
+    const WALL_PAD           = 14;    // px — margem interna de colisão com as bordas
 
     let mouseX = -9999, mouseY = -9999;
-    let repelRafId = null;
-    let repelFrameSkip = false;
+    let prevMouseX = -9999, prevMouseY = -9999;
+    let mouseVx = 0, mouseVy = 0;
+    let physicsRafId = null;
+    let lastTs = null;
 
-    function repelTick() {
-      // Throttle a ~30fps (pula 1 a cada 2 frames)
-      repelFrameSkip = !repelFrameSkip;
-      if (repelFrameSkip) {
-        for (const particle of window.__aletaParticles) {
-          const r = particle.wrap.getBoundingClientRect();
-          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-          const dx = cx - mouseX, dy = cy - mouseY;
-          const dist = Math.hypot(dx, dy);
-          if (dist < REPEL_RADIUS && dist > 0.01) {
-            if (!particle.repelled) {
-              const ux = dx / dist, uy = dy / dist;
-              // Ativa transição rápida (380ms ease-out) antes de mover
-              particle.img.classList.add('is-repelled');
-              particle.img.style.transform = `translate(${(ux * REPEL_STRENGTH).toFixed(1)}px, ${(uy * REPEL_STRENGTH).toFixed(1)}px)`;
-              particle.repelled = true;
-            }
-          } else {
-            if (particle.repelled) {
-              // Remove classe → CSS volta para transição lenta de retorno (620ms)
-              particle.img.classList.remove('is-repelled');
-              particle.img.style.transform = '';
-              particle.repelled = false;
-            }
+    function physicsTick(ts) {
+      const dt = lastTs !== null ? Math.min((ts - lastTs) / 1000, 0.045) : 0.016;
+      lastTs = ts;
+      const dtNorm = dt / 0.01667; // normalizado para 60fps
+
+      // Limites da área visível do palco
+      const stageRect = stage.getBoundingClientRect();
+      const minX = stageRect.left + WALL_PAD;
+      const maxX = stageRect.right - WALL_PAD;
+      const minY = stageRect.top + WALL_PAD;
+      const maxY = stageRect.bottom - WALL_PAD;
+
+      // Amortecimento suave da velocidade do mouse
+      mouseVx *= Math.pow(0.82, dtNorm);
+      mouseVy *= Math.pow(0.82, dtNorm);
+
+      let hasActiveMotion = false;
+
+      for (const p of window.__aletaParticles) {
+        // Centro visual atual = centro do wrap (que sobe via CSS) + offsets acumulados
+        const r = p.wrap.getBoundingClientRect();
+        const halfW = r.width / 2;
+        const halfH = r.height / 2;
+        const cx = r.left + halfW + p.ox;
+        const cy = r.top + halfH + p.oy;
+
+        // Distância até o cursor
+        const dx = cx - mouseX;
+        const dy = cy - mouseY;
+        const dist = Math.hypot(dx, dy);
+        const radius = Math.max(PUSH_RADIUS, halfW + 60);
+
+        // 1. Empurrão do cursor
+        if (dist < radius && dist > 0.5) {
+          const ux = dx / dist;
+          const uy = dy / dist;
+          const t = Math.max(0, 1 - dist / radius);
+          const push = t * t * PUSH_FORCE * dtNorm;
+
+          p.vx += ux * push;
+          p.vy += uy * push;
+
+          // Adiciona momento do mouse em movimento rápido
+          p.vx += mouseVx * 0.12 * t * dtNorm;
+          p.vy += mouseVy * 0.12 * t * dtNorm;
+
+          // Novo empurrão reativa o deslizamento livre até a parede
+          p.bounced = false;
+        }
+
+        // Teto de velocidade de deslizamento
+        const currentSpeed = Math.hypot(p.vx, p.vy);
+        if (currentSpeed > MAX_SPEED) {
+          p.vx = (p.vx / currentSpeed) * MAX_SPEED;
+          p.vy = (p.vy / currentSpeed) * MAX_SPEED;
+        }
+
+        // 2. Integração do deslocamento
+        p.ox += p.vx * dtNorm;
+        p.oy += p.vy * dtNorm;
+
+        // Posições das bordas da aleta
+        const aletaLeft   = cx - halfW;
+        const aletaRight  = cx + halfW;
+        const aletaTop    = cy - halfH;
+        const aletaBottom = cy + halfH;
+
+        // 3. Colisões com as paredes da página (bate e volta lentamente de forma controlada)
+        // Parede Esquerda
+        if (aletaLeft < minX) {
+          p.ox += (minX - aletaLeft);
+          if (p.vx < 0) {
+            p.vx = Math.min(-p.vx * BOUNCE_RESTITUTION, MAX_BOUNCE_SPEED);
+            p.bounced = true;
+            p.rot = Math.max(-5, p.rot - 2.2);
           }
+        }
+        // Parede Direita
+        if (aletaRight > maxX) {
+          p.ox -= (aletaRight - maxX);
+          if (p.vx > 0) {
+            p.vx = Math.max(-p.vx * BOUNCE_RESTITUTION, -MAX_BOUNCE_SPEED);
+            p.bounced = true;
+            p.rot = Math.min(5, p.rot + 2.2);
+          }
+        }
+        // Parede Superior
+        if (aletaTop < minY) {
+          p.oy += (minY - aletaTop);
+          if (p.vy < 0) {
+            p.vy = Math.min(-p.vy * BOUNCE_RESTITUTION, MAX_BOUNCE_SPEED);
+            p.bounced = true;
+          }
+        }
+        // Parede Inferior
+        if (aletaBottom > maxY) {
+          p.oy -= (aletaBottom - maxY);
+          if (p.vy > 0) {
+            p.vy = Math.max(-p.vy * BOUNCE_RESTITUTION, -MAX_BOUNCE_SPEED);
+            p.bounced = true;
+          }
+        }
+
+        // 4. Atrito gradual
+        if (!p.bounced) {
+          // Deslizamento livre pelo espaço (inércia longa até a parede)
+          p.vx *= Math.pow(GLIDE_FRICTION, dtNorm);
+          p.vy *= Math.pow(GLIDE_FRICTION, dtNorm);
+        } else {
+          // Após o impacto na parede: desaceleração controlada (recuo suave)
+          p.vx *= Math.pow(RETURN_FRICTION, dtNorm);
+          p.vy *= Math.pow(RETURN_FRICTION, dtNorm);
+        }
+
+        if (Math.abs(p.vx) < 0.035) p.vx = 0;
+        if (Math.abs(p.vy) < 0.035) p.vy = 0;
+
+        // Alinhamento gradual da rotação
+        const targetRot = Math.max(-5, Math.min(5, p.vx * 0.65));
+        p.rot += (targetRot - p.rot) * (1 - Math.pow(0.86, dtNorm));
+        if (Math.abs(p.rot) < 0.02) p.rot = 0;
+
+        // Atualização visual do transform
+        if (Math.abs(p.ox) > 0.04 || Math.abs(p.oy) > 0.04 || Math.abs(p.rot) > 0.04) {
+          p.img.style.transform = `translate(${p.ox.toFixed(2)}px, ${p.oy.toFixed(2)}px) rotate(${p.rot.toFixed(2)}deg)`;
+        } else if (p.img.style.transform !== '') {
+          p.img.style.transform = '';
+        }
+
+        if (Math.abs(p.vx) > 0 || Math.abs(p.vy) > 0) {
+          hasActiveMotion = true;
         }
       }
-      repelRafId = requestAnimationFrame(repelTick);
+
+      // Mantém o RAF ativo se houver movimento ou se o cursor estiver dentro do stage
+      if (hasActiveMotion || mouseX !== -9999) {
+        physicsRafId = requestAnimationFrame(physicsTick);
+      } else {
+        physicsRafId = null;
+        lastTs = null;
+      }
     }
 
-    if (repelEnabled) {
+    function ensurePhysicsLoop() {
+      if (!physicsRafId) {
+        lastTs = null;
+        physicsRafId = requestAnimationFrame(physicsTick);
+      }
+    }
+
+    if (physicsEnabled) {
       stage.addEventListener('mouseenter', function (e) {
-        mouseX = e.clientX; mouseY = e.clientY;
-        if (!repelRafId) repelRafId = requestAnimationFrame(repelTick);
+        mouseX = prevMouseX = e.clientX;
+        mouseY = prevMouseY = e.clientY;
+        mouseVx = mouseVy = 0;
+        ensurePhysicsLoop();
       });
+
       stage.addEventListener('mousemove', function (e) {
-        mouseX = e.clientX; mouseY = e.clientY;
-      });
-      stage.addEventListener('mouseleave', function () {
-        if (repelRafId) { cancelAnimationFrame(repelRafId); repelRafId = null; }
-        mouseX = -9999; mouseY = -9999;
-        for (const particle of window.__aletaParticles) {
-          if (particle.repelled) {
-            particle.img.classList.remove('is-repelled');
-            particle.img.style.transform = '';
-            particle.repelled = false;
-          }
+        if (prevMouseX !== -9999) {
+          mouseVx = (e.clientX - prevMouseX);
+          mouseVy = (e.clientY - prevMouseY);
         }
+        prevMouseX = mouseX = e.clientX;
+        prevMouseY = mouseY = e.clientY;
+        ensurePhysicsLoop();
+      });
+
+      stage.addEventListener('mouseleave', function () {
+        // Ao sair do palco, o cursor não empurra mais, mas as aletas continuam
+        // seu deslizamento livre até a parede/recuo até pararem completamente.
+        mouseX = mouseY = -9999;
+        prevMouseX = prevMouseY = -9999;
+        mouseVx = mouseVy = 0;
       });
     }
 
