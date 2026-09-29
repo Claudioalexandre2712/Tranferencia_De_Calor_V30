@@ -247,24 +247,20 @@
     // ── Emissor contínuo (chuva/corrente de aletas) ──────────────────────────────
     // Nada de conjunto fixo criado uma vez: spawnAleta() cria UMA partícula, que se
     // autorremove no fim da própria animação (animationend, 1 iteração só). Um timer
-    // mantém a contagem de ativas perto de MAX_ACTIVE_ALETAS, repondo continuamente.
-    const MAX_ACTIVE_ALETAS = 40;
-    window.__aletaParticles = new Set(); // exposto para inspeção/QA (ver ACTIVE_ALETAS)
+    // ── Emissor contínuo controlado (quantidade elegante, sem poluição visual) ──
+    const MAX_ACTIVE_ALETAS = 14; // Mantém a tela limpa e respirável (Problema 3)
+    window.__aletaParticles = new Set();
 
     function spawnAleta(initialProgress) {
-      // Piso 70px preservado (nunca menor que o que já tínhamos); teto um pouco maior
-      // (150px) só para dar mais variedade de tamanho, sem ficar exagerado.
-      const size = ale(70, 150);
-      const dur = ale(12, 25);   // mesma faixa da index antiga
+      const size = ale(70, 145);
+      const dur = ale(13, 24);
       const wrap = document.createElement('div');
       wrap.className = 'aleta-particle';
-      wrap.style.left = ale(0, 100) + '%';
+      wrap.style.left = ale(2, 98) + '%';
       wrap.style.width = size + 'px';
-      wrap.style.setProperty('--drift', ale(-3.2, 3.2) + 'vw');
+      wrap.style.setProperty('--drift', ale(-3.0, 3.0) + 'vw');
       wrap.style.animationDuration = dur + 's';
-      // Preenchimento inicial: nasce em progresso aleatório da travessia (delay negativo),
-      // para a tela já começar cheia. Partículas emitidas depois (initialProgress
-      // indefinido) nascem do zero, de baixo da viewport, como pedido.
+
       if (typeof initialProgress === 'number') {
         wrap.style.animationDelay = (-initialProgress * dur) + 's';
       }
@@ -272,9 +268,7 @@
       const img = document.createElement('img');
       img.src = aletasImgs[Math.floor(Math.random() * aletasImgs.length)];
       img.alt = '';
-      // Correlação simples de profundidade: aletas maiores = mais opacas/"perto";
-      // menores = mais discretas/"longe" — sem tiers separados, sem blur.
-      img.style.opacity = (0.65 + 0.25 * ((size - 70) / 80)).toFixed(2);
+      img.style.opacity = (0.65 + 0.25 * ((size - 70) / 75)).toFixed(2);
       wrap.appendChild(img);
 
       const particle = {
@@ -285,11 +279,23 @@
         vx: 0,
         vy: 0,
         rot: 0,
-        bounced: false
+        bounced: false,
+        size: size
       };
+
+      // Problema 1: A aleta NUNCA some na cara do usuário no meio da tela.
+      // animationend só remove se a posição real visível já estiver fora da viewport (topo).
       wrap.addEventListener('animationend', function () {
-        wrap.remove();
-        window.__aletaParticles.delete(particle);
+        const r = wrap.getBoundingClientRect();
+        const realBottom = r.top + r.height + particle.oy;
+        if (realBottom < 0) {
+          wrap.remove();
+          window.__aletaParticles.delete(particle);
+        } else {
+          // Se ainda está visível na tela (ex: foi empurrada para baixo),
+          // mantém ativa até subir e sair da tela pelo loop de física.
+          particle.pendingRemove = true;
+        }
       });
 
       plume.appendChild(wrap);
@@ -297,47 +303,31 @@
       return particle;
     }
 
-    // O fluxo de aletas roda SEMPRE — prefers-reduced-motion só reduz quantidade/ritmo
-    // (menos partículas, reposição mais lenta) em vez de desligar tudo. Isso evita o
-    // problema anterior: com o SO/navegador reportando "reduzir movimento", a página
-    // não mostrava nenhuma aleta, mesmo sendo esse o efeito principal pedido.
-    const activeMax = reducedMotion ? 20 : MAX_ACTIVE_ALETAS;
-    const initialFill = reducedMotion ? 10 : 18;
-    const spawnEveryMs = reducedMotion ? 750 : 380;
+    // Configuração de fluxo leve e arejado (Problema 3)
+    const activeMax = reducedMotion ? 8 : MAX_ACTIVE_ALETAS;
+    const initialFill = reducedMotion ? 4 : 7;
+    const spawnEveryMs = reducedMotion ? 2600 : 1700;
 
-    // Preenchimento inicial: parte das aletas já em progresso variado da travessia.
     for (let i = 0; i < initialFill; i++) spawnAleta(Math.random());
 
-    // Emissor: tenta repor até o teto periodicamente. Quando uma partícula termina
-    // (animationend acima), sai do Set e o próximo tick pode repor — criação,
-    // movimento, remoção e nova criação continuam por tempo indefinido.
     setInterval(function () {
       if (window.__aletaParticles.size < activeMax) {
         spawnAleta();
       }
     }, spawnEveryMs);
 
-    // ── Dinâmica de Movimento: Deslizamento Livre + Colisão com Paredes ──────────
-    // Comportamento:
-    //   1. O cursor empurra a aleta pelo espaço com impulso proporcional à proximidade.
-    //   2. A aleta continua deslizando livremente pelo espaço com baixo atrito (inércia).
-    //   3. Ao colidir com qualquer limite da tela/página, ela rebate suavemente
-    //      (restituição ~30%) e desacelera de maneira controlada, sem saltos.
-    //   4. Touch / mobile: desligado (sem simulação de cursor).
-    //   5. Prefers-reduced-motion: desligado.
-
+    // ── Dinâmica Física Completa: Interação Contínua + Colisão Entre Aletas + Limites da Página ──
     const hasFinePointer = window.matchMedia('(pointer: fine) and (hover: hover)').matches;
     const physicsEnabled = hasFinePointer && !reducedMotion;
 
-    // Parâmetros de física ajustáveis
-    const PUSH_RADIUS        = 155;   // px — raio de alcance do empurrão do cursor
-    const PUSH_FORCE         = 4.6;   // intensidade do impulso por frame
-    const MAX_SPEED          = 13.5;  // px/frame — velocidade máxima de deslizamento
-    const GLIDE_FRICTION     = 0.993; // atrito baixo durante o trajeto (desliza longe)
-    const BOUNCE_RESTITUTION = 0.32;  // fração de energia após a colisão na parede
-    const MAX_BOUNCE_SPEED   = 3.2;   // teto da velocidade de recuo após bater
-    const RETURN_FRICTION    = 0.938; // desaceleração após o impacto (volta lentamente e para)
-    const WALL_PAD           = 14;    // px — margem interna de colisão com as bordas
+    const PUSH_RADIUS        = 160;   // px — alcance do empurrão do cursor
+    const PUSH_FORCE         = 4.8;   // impulso progressivo
+    const MAX_SPEED          = 13.0;  // velocidade máxima no espaço
+    const GLIDE_FRICTION     = 0.993; // atrito de deslizamento longo
+    const BOUNCE_RESTITUTION = 0.35;  // recuo suave na colisão com a parede
+    const MAX_BOUNCE_SPEED   = 3.2;   // teto da velocidade de retorno da parede
+    const RETURN_FRICTION    = 0.940; // desaceleração do recuo
+    const WALL_PAD           = 14;    // px — margem interna com as bordas da tela
 
     let mouseX = -9999, mouseY = -9999;
     let prevMouseX = -9999, prevMouseY = -9999;
@@ -348,36 +338,46 @@
     function physicsTick(ts) {
       const dt = lastTs !== null ? Math.min((ts - lastTs) / 1000, 0.045) : 0.016;
       lastTs = ts;
-      const dtNorm = dt / 0.01667; // normalizado para 60fps
+      const dtNorm = dt / 0.01667;
 
-      // Limites da área visível do palco
       const stageRect = stage.getBoundingClientRect();
       const minX = stageRect.left + WALL_PAD;
       const maxX = stageRect.right - WALL_PAD;
       const minY = stageRect.top + WALL_PAD;
       const maxY = stageRect.bottom - WALL_PAD;
 
-      // Amortecimento suave da velocidade do mouse
-      mouseVx *= Math.pow(0.82, dtNorm);
-      mouseVy *= Math.pow(0.82, dtNorm);
+      mouseVx *= Math.pow(0.80, dtNorm);
+      mouseVy *= Math.pow(0.80, dtNorm);
 
       let hasActiveMotion = false;
+      const toRemove = [];
 
+      // ── PASSO 1: Atualização individual (Cursor, Paredes, Inércia) ──────────
       for (const p of window.__aletaParticles) {
-        // Centro visual atual = centro do wrap (que sobe via CSS) + offsets acumulados
         const r = p.wrap.getBoundingClientRect();
         const halfW = r.width / 2;
         const halfH = r.height / 2;
         const cx = r.left + halfW + p.ox;
         const cy = r.top + halfH + p.oy;
 
-        // Distância até o cursor
+        // Problema 1: Exclusão estritamente fora da tela (acima do topo)
+        const aletaBottom = cy + halfH;
+        if (aletaBottom < -40) {
+          toRemove.push(p);
+          continue;
+        }
+
+        // Se a animação CSS acabou mas a aleta ainda está na tela, aplica subida suave
+        if (p.pendingRemove) {
+          p.oy -= 1.8 * dtNorm;
+        }
+
+        // Problema 2: Interação contínua sempre ativa (quantas vezes o mouse passar)
         const dx = cx - mouseX;
         const dy = cy - mouseY;
         const dist = Math.hypot(dx, dy);
-        const radius = Math.max(PUSH_RADIUS, halfW + 60);
+        const radius = Math.max(PUSH_RADIUS, halfW + 65);
 
-        // 1. Empurrão do cursor
         if (dist < radius && dist > 0.5) {
           const ux = dx / dist;
           const uy = dy / dist;
@@ -387,51 +387,45 @@
           p.vx += ux * push;
           p.vy += uy * push;
 
-          // Adiciona momento do mouse em movimento rápido
-          p.vx += mouseVx * 0.12 * t * dtNorm;
-          p.vy += mouseVy * 0.12 * t * dtNorm;
+          // Transfere velocidade do cursor em movimento
+          p.vx += mouseVx * 0.18 * t * dtNorm;
+          p.vy += mouseVy * 0.18 * t * dtNorm;
 
-          // Novo empurrão reativa o deslizamento livre até a parede
-          p.bounced = false;
+          p.bounced = false; // Sempre responsivo a novos toques
         }
 
-        // Teto de velocidade de deslizamento
+        // Teto de velocidade
         const currentSpeed = Math.hypot(p.vx, p.vy);
         if (currentSpeed > MAX_SPEED) {
           p.vx = (p.vx / currentSpeed) * MAX_SPEED;
           p.vy = (p.vy / currentSpeed) * MAX_SPEED;
         }
 
-        // 2. Integração do deslocamento
+        // Integração de posição
         p.ox += p.vx * dtNorm;
         p.oy += p.vy * dtNorm;
 
-        // Posições das bordas da aleta
+        // Limites com as 4 paredes da página
         const aletaLeft   = cx - halfW;
         const aletaRight  = cx + halfW;
         const aletaTop    = cy - halfH;
-        const aletaBottom = cy + halfH;
 
-        // 3. Colisões com as paredes da página (bate e volta lentamente de forma controlada)
-        // Parede Esquerda
         if (aletaLeft < minX) {
           p.ox += (minX - aletaLeft);
           if (p.vx < 0) {
             p.vx = Math.min(-p.vx * BOUNCE_RESTITUTION, MAX_BOUNCE_SPEED);
             p.bounced = true;
-            p.rot = Math.max(-5, p.rot - 2.2);
+            p.rot = Math.max(-5, p.rot - 2.0);
           }
         }
-        // Parede Direita
         if (aletaRight > maxX) {
           p.ox -= (aletaRight - maxX);
           if (p.vx > 0) {
             p.vx = Math.max(-p.vx * BOUNCE_RESTITUTION, -MAX_BOUNCE_SPEED);
             p.bounced = true;
-            p.rot = Math.min(5, p.rot + 2.2);
+            p.rot = Math.min(5, p.rot + 2.0);
           }
         }
-        // Parede Superior
         if (aletaTop < minY) {
           p.oy += (minY - aletaTop);
           if (p.vy < 0) {
@@ -439,7 +433,6 @@
             p.bounced = true;
           }
         }
-        // Parede Inferior
         if (aletaBottom > maxY) {
           p.oy -= (aletaBottom - maxY);
           if (p.vy > 0) {
@@ -448,13 +441,11 @@
           }
         }
 
-        // 4. Atrito gradual
+        // Fricção de deslizamento e recuo
         if (!p.bounced) {
-          // Deslizamento livre pelo espaço (inércia longa até a parede)
           p.vx *= Math.pow(GLIDE_FRICTION, dtNorm);
           p.vy *= Math.pow(GLIDE_FRICTION, dtNorm);
         } else {
-          // Após o impacto na parede: desaceleração controlada (recuo suave)
           p.vx *= Math.pow(RETURN_FRICTION, dtNorm);
           p.vy *= Math.pow(RETURN_FRICTION, dtNorm);
         }
@@ -462,24 +453,82 @@
         if (Math.abs(p.vx) < 0.035) p.vx = 0;
         if (Math.abs(p.vy) < 0.035) p.vy = 0;
 
-        // Alinhamento gradual da rotação
-        const targetRot = Math.max(-5, Math.min(5, p.vx * 0.65));
-        p.rot += (targetRot - p.rot) * (1 - Math.pow(0.86, dtNorm));
-        if (Math.abs(p.rot) < 0.02) p.rot = 0;
-
-        // Atualização visual do transform
-        if (Math.abs(p.ox) > 0.04 || Math.abs(p.oy) > 0.04 || Math.abs(p.rot) > 0.04) {
-          p.img.style.transform = `translate(${p.ox.toFixed(2)}px, ${p.oy.toFixed(2)}px) rotate(${p.rot.toFixed(2)}deg)`;
-        } else if (p.img.style.transform !== '') {
-          p.img.style.transform = '';
-        }
+        // Dados cacheados para o passo de colisão entre partículas
+        p._cx = cx;
+        p._cy = cy;
+        p._rad = Math.min(halfW, halfH) * 0.82; // Raio físico da aleta
 
         if (Math.abs(p.vx) > 0 || Math.abs(p.vy) > 0) {
           hasActiveMotion = true;
         }
       }
 
-      // Mantém o RAF ativo se houver movimento ou se o cursor estiver dentro do stage
+      // Limpeza de partículas que saíram do topo da tela
+      for (const p of toRemove) {
+        p.wrap.remove();
+        window.__aletaParticles.delete(p);
+      }
+
+      // ── PASSO 2: Colisão Mútua Entre Aletas (Problema 4 - Não se sobrepõem) ──
+      const particles = Array.from(window.__aletaParticles);
+      const total = particles.length;
+      for (let i = 0; i < total; i++) {
+        const p1 = particles[i];
+        for (let j = i + 1; j < total; j++) {
+          const p2 = particles[j];
+          const cdx = p2._cx - p1._cx;
+          const cdy = p2._cy - p1._cy;
+          const cdist = Math.hypot(cdx, cdy);
+          const minDist = p1._rad + p2._rad;
+
+          if (cdist < minDist && cdist > 0.1) {
+            // Penetração detectada: separa as duas aletas com elegância
+            const overlap = minDist - cdist;
+            const nx = cdx / cdist;
+            const ny = cdy / cdist;
+
+            // Afasta suavemente cada aleta metade da sobreposição
+            p1.ox -= nx * overlap * 0.5;
+            p1.oy -= ny * overlap * 0.5;
+            p2.ox += nx * overlap * 0.5;
+            p2.oy += ny * overlap * 0.5;
+
+            // Troca de impulso elástico
+            const relVx = p2.vx - p1.vx;
+            const relVy = p2.vy - p1.vy;
+            const velAlongNormal = relVx * nx + relVy * ny;
+
+            if (velAlongNormal < 0) {
+              const restitution = 0.50; // impacto suave e natural
+              const impulse = -(1 + restitution) * velAlongNormal * 0.5;
+              p1.vx -= nx * impulse;
+              p1.vy -= ny * impulse;
+              p2.vx += nx * impulse;
+              p2.vy += ny * impulse;
+
+              // Rotação dinâmica ao colidir
+              p1.rot = Math.max(-5, Math.min(5, p1.rot - ny * 1.8));
+              p2.rot = Math.max(-5, Math.min(5, p2.rot + ny * 1.8));
+
+              hasActiveMotion = true;
+            }
+          }
+        }
+      }
+
+      // ── PASSO 3: Renderização dos Transforms Visuais ────────────────────────
+      for (const p of window.__aletaParticles) {
+        const targetRot = Math.max(-5, Math.min(5, p.vx * 0.65));
+        p.rot += (targetRot - p.rot) * (1 - Math.pow(0.86, dtNorm));
+        if (Math.abs(p.rot) < 0.02) p.rot = 0;
+
+        if (Math.abs(p.ox) > 0.04 || Math.abs(p.oy) > 0.04 || Math.abs(p.rot) > 0.04) {
+          p.img.style.transform = `translate(${p.ox.toFixed(2)}px, ${p.oy.toFixed(2)}px) rotate(${p.rot.toFixed(2)}deg)`;
+        } else if (p.img.style.transform !== '') {
+          p.img.style.transform = '';
+        }
+      }
+
       if (hasActiveMotion || mouseX !== -9999) {
         physicsRafId = requestAnimationFrame(physicsTick);
       } else {
@@ -514,8 +563,6 @@
       });
 
       stage.addEventListener('mouseleave', function () {
-        // Ao sair do palco, o cursor não empurra mais, mas as aletas continuam
-        // seu deslizamento livre até a parede/recuo até pararem completamente.
         mouseX = mouseY = -9999;
         prevMouseX = prevMouseY = -9999;
         mouseVx = mouseVy = 0;
