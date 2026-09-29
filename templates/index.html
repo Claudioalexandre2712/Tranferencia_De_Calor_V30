@@ -281,6 +281,7 @@
         rot: 0,
         bounced: false,
         hasInteracted: false,
+        riseSpeed: ale(1.2, 1.8),
         size: size
       };
 
@@ -365,22 +366,19 @@
         const aletaTop    = cy - halfH;
         const aletaBottom = cy + halfH;
 
-        // Se a aleta não foi interagida e encostar no topo da página (aletaTop <= 2),
-        // ela deve sumir imediatamente para não ficar presa no topo.
-        if (!p.hasInteracted && aletaTop <= 2) {
+        // Apenas é removida quando estiver COMPLETAMENTE FORA da tela pelo topo (invisível ao usuário)
+        if (aletaBottom <= -15) {
           toRemove.push(p);
           continue;
         }
 
-        // Qualquer aleta que já ultrapassou totalmente o topo da tela é removida
-        if (aletaBottom < -20) {
-          toRemove.push(p);
-          continue;
-        }
+        // Subida térmica contínua: após a interação se acalmar, a aleta
+        // retoma suavemente sua subida rumo ao topo até sair da tela
+        p.vy -= 0.035 * dtNorm;
+        if (p.vy < -2.2) p.vy = -2.2;
 
-        // Se a animação CSS acabou mas a aleta ainda está na tela, aplica subida suave
         if (p.pendingRemove) {
-          p.oy -= 1.8 * dtNorm;
+          p.oy -= p.riseSpeed * 1.6 * dtNorm;
         }
 
         // Problema 2: Interação contínua sempre ativa (quantas vezes o mouse passar)
