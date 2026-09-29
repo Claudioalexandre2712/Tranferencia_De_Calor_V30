@@ -53,12 +53,13 @@
     .aleta-particle {
       position: absolute;
       top: 0;
+      transform: translateY(130vh); /* Garante nascimento 100% fora da tela, abaixo do rodapé */
       pointer-events: none;
       will-change: transform;
       animation-name: vx-rise;
       animation-timing-function: linear;
       animation-iteration-count: 1;
-      animation-fill-mode: forwards;
+      animation-fill-mode: both; /* Aplica o keyframe 0% antes de começar e 100% após o fim */
     }
     .aleta-particle img {
       display: block; width: 100%; height: auto;
@@ -66,13 +67,12 @@
       will-change: transform;
     }
 
-    /* Igual ao floatAnim antigo: translateY(110vh) → translateY(-20vh), giro completo 0→360deg.
-       Só acrescenta uma deriva horizontal suave (via --drift, definido por elemento no JS)
-       para não ser uma linha reta — sem tornar o movimento sutil ou lento. */
+    /* Voo contínuo: nasce 130vh (bem abaixo do rodapé) e sobe até -40vh (bem acima do topo).
+       NUNCA aparece ou desaparece do nada no meio da tela. */
     @keyframes vx-rise {
-      0%   { transform: translateY(110vh) translateX(0) rotate(0deg); }
+      0%   { transform: translateY(130vh) translateX(0) rotate(0deg); }
       50%  { transform: translateY(45vh) translateX(var(--drift, 2vw)) rotate(180deg); }
-      100% { transform: translateY(-35vh) translateX(0) rotate(360deg); }
+      100% { transform: translateY(-40vh) translateX(0) rotate(360deg); }
     }
 
     /* ── Camada 3: conteúdo — headline + índice do produto, mesma coluna ──
@@ -465,10 +465,15 @@
       // ── PASSO 2: Colisão Mútua Entre Aletas (Problema 4 - Não se sobrepõem) ──
       const particles = Array.from(window.__aletaParticles);
       const total = particles.length;
+      const screenH = window.innerHeight;
       for (let i = 0; i < total; i++) {
         const p1 = particles[i];
+        // Apenas aletas visíveis ou quase entrando na tela participam da colisão
+        if (p1._cy > screenH + 50) continue;
+
         for (let j = i + 1; j < total; j++) {
           const p2 = particles[j];
+          if (p2._cy > screenH + 50) continue;
           const cdx = p2._cx - p1._cx;
           const cdy = p2._cy - p1._cy;
           const cdist = Math.hypot(cdx, cdy);
