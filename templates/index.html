@@ -72,7 +72,7 @@
     @keyframes vx-rise {
       0%   { transform: translateY(110vh) translateX(0) rotate(0deg); }
       50%  { transform: translateY(45vh) translateX(var(--drift, 2vw)) rotate(180deg); }
-      100% { transform: translateY(-20vh) translateX(0) rotate(360deg); }
+      100% { transform: translateY(-35vh) translateX(0) rotate(360deg); }
     }
 
     /* ── Camada 3: conteúdo — headline + índice do produto, mesma coluna ──
@@ -285,19 +285,10 @@
         size: size
       };
 
-      // Problema 1: A aleta NUNCA some na cara do usuário no meio da tela.
-      // animationend só remove se a posição real visível já estiver fora da viewport (topo).
+      // NUNCA remove prematuramente aqui: a remoção é controlada exclusivamente
+      // pelo loop do RAF quando a imagem estiver 100% fora do topo da tela.
       wrap.addEventListener('animationend', function () {
-        const r = wrap.getBoundingClientRect();
-        const realBottom = r.top + r.height + particle.oy;
-        if (realBottom < 0) {
-          wrap.remove();
-          window.__aletaParticles.delete(particle);
-        } else {
-          // Se ainda está visível na tela (ex: foi empurrada para baixo),
-          // mantém ativa até subir e sair da tela pelo loop de física.
-          particle.pendingRemove = true;
-        }
+        particle.cssDone = true;
       });
 
       plume.appendChild(wrap);
@@ -366,18 +357,20 @@
         const aletaTop    = cy - halfH;
         const aletaBottom = cy + halfH;
 
-        // Apenas é removida quando estiver COMPLETAMENTE FORA da tela pelo topo (invisível ao usuário)
-        if (aletaBottom <= -15) {
+        // ── Checagem de saída da tela (EXCLUSIVAMENTE fora do campo de visão) ──
+        const imgRect = p.img.getBoundingClientRect();
+        // A aleta SÓ é removida quando a borda inferior da imagem real já ultrapassou o topo da janela
+        if (imgRect.bottom < -20) {
           toRemove.push(p);
           continue;
         }
 
         // Subida térmica contínua: após a interação se acalmar, a aleta
         // retoma suavemente sua subida rumo ao topo até sair da tela
-        p.vy -= 0.035 * dtNorm;
-        if (p.vy < -2.2) p.vy = -2.2;
+        p.vy -= 0.04 * dtNorm;
+        if (p.vy < -2.4) p.vy = -2.4;
 
-        if (p.pendingRemove) {
+        if (p.cssDone) {
           p.oy -= p.riseSpeed * 1.6 * dtNorm;
         }
 
@@ -487,11 +480,12 @@
             const nx = cdx / cdist;
             const ny = cdy / cdist;
 
-            // Afasta suavemente cada aleta metade da sobreposição
-            p1.ox -= nx * overlap * 0.5;
-            p1.oy -= ny * overlap * 0.5;
-            p2.ox += nx * overlap * 0.5;
-            p2.oy += ny * overlap * 0.5;
+            // Afasta suavemente cada aleta com limite seguro por quadro (sem solavancos)
+            const sepMax = Math.min(overlap * 0.25, 3.5);
+            p1.ox -= nx * sepMax;
+            p1.oy -= ny * sepMax;
+            p2.ox += nx * sepMax;
+            p2.oy += ny * sepMax;
 
             // Troca de impulso elástico
             const relVx = p2.vx - p1.vx;
