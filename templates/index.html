@@ -70,9 +70,9 @@
     /* Voo contínuo: nasce 130vh (bem abaixo do rodapé) e sobe até -40vh (bem acima do topo).
        NUNCA aparece ou desaparece do nada no meio da tela. */
     @keyframes vx-rise {
-      0%   { transform: translateY(130vh) translateX(0) rotate(0deg); }
-      50%  { transform: translateY(45vh) translateX(var(--drift, 2vw)) rotate(180deg); }
-      100% { transform: translateY(-40vh) translateX(0) rotate(360deg); }
+      0%   { transform: translateY(130vh) translateX(0); }
+      50%  { transform: translateY(45vh) translateX(var(--drift, 2vw)); }
+      100% { transform: translateY(-40vh) translateX(0); }
     }
 
     /* ── Camada 3: conteúdo — headline + índice do produto, mesma coluna ──
@@ -279,6 +279,8 @@
         vx: 0,
         vy: 0,
         rot: 0,
+        baseRot: ale(0, 360),
+        rotSpeed: ale(12, 26) * (Math.random() < 0.5 ? 1 : -1),
         bounced: false,
         hasInteracted: false,
         riseSpeed: ale(1.2, 1.8),
@@ -347,23 +349,23 @@
 
       // ── PASSO 1: Atualização individual (Cursor, Paredes, Inércia) ──────────
       for (const p of window.__aletaParticles) {
-        const r = p.wrap.getBoundingClientRect();
-        const halfW = r.width / 2;
-        const halfH = r.height / 2;
-        const cx = r.left + halfW + p.ox;
-        const cy = r.top + halfH + p.oy;
-        const aletaLeft   = cx - halfW;
-        const aletaRight  = cx + halfW;
-        const aletaTop    = cy - halfH;
-        const aletaBottom = cy + halfH;
+        // Coordenadas visuais reais da imagem na tela (100% precisas em todas as interações)
+        const imgRect = p.img.getBoundingClientRect();
 
         // ── Checagem de saída da tela (EXCLUSIVAMENTE fora do campo de visão) ──
-        const imgRect = p.img.getBoundingClientRect();
-        // A aleta SÓ é removida quando a borda inferior da imagem real já ultrapassou o topo da janela
         if (imgRect.bottom < -20) {
           toRemove.push(p);
           continue;
         }
+
+        const halfW = imgRect.width / 2;
+        const halfH = imgRect.height / 2;
+        const cx = imgRect.left + halfW;
+        const cy = imgRect.top + halfH;
+        const aletaLeft   = imgRect.left;
+        const aletaRight  = imgRect.right;
+        const aletaTop    = imgRect.top;
+        const aletaBottom = imgRect.bottom;
 
         // Subida térmica contínua: após a interação se acalmar, a aleta
         // retoma suavemente sua subida rumo ao topo até sair da tela
@@ -517,15 +519,13 @@
 
       // ── PASSO 3: Renderização dos Transforms Visuais ────────────────────────
       for (const p of window.__aletaParticles) {
+        p.baseRot = (p.baseRot + (p.rotSpeed || 15) * dt) % 360;
         const targetRot = Math.max(-5, Math.min(5, p.vx * 0.65));
         p.rot += (targetRot - p.rot) * (1 - Math.pow(0.86, dtNorm));
         if (Math.abs(p.rot) < 0.02) p.rot = 0;
 
-        if (Math.abs(p.ox) > 0.04 || Math.abs(p.oy) > 0.04 || Math.abs(p.rot) > 0.04) {
-          p.img.style.transform = `translate(${p.ox.toFixed(2)}px, ${p.oy.toFixed(2)}px) rotate(${p.rot.toFixed(2)}deg)`;
-        } else if (p.img.style.transform !== '') {
-          p.img.style.transform = '';
-        }
+        const totalRot = p.baseRot + p.rot;
+        p.img.style.transform = `translate(${p.ox.toFixed(2)}px, ${p.oy.toFixed(2)}px) rotate(${totalRot.toFixed(1)}deg)`;
       }
 
       if (hasActiveMotion || mouseX !== -9999) {
